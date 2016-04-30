@@ -1,0 +1,42 @@
+{
+  "name": "ecr-image-ci",
+  "version": "0.0.1",
+  "description": "CI to build Docker images on Github commits",
+  "engines": {
+    "node": "^4.4.2"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "./bin/ecr-image-ci.js",
+    "test": "nyc tape test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rclark/ecr-image-ci.git"
+  },
+  "keywords": [
+    "AWS",
+    "ECR",
+    "ECS",
+    "CI",
+    "Docker"
+  ],
+  "author": "Mapbox",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rclark/ecr-image-ci/issues"
+  },
+  "homepage": "https://github.com/rclark/ecr-image-ci#readme",
+  "devDependencies": {
+    "eslint": "^2.9.0",
+    "nyc": "^6.4.0",
+    "tape": "^4.5.1"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.3.7",
+    "binary-split": "^1.0.2",
+    "d3-queue": "^2.0.3",
+    "fastlog": "^1.1.0",
+    "rimraf": "^2.5.2"
+  }
+}
