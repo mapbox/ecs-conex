@@ -23,10 +23,10 @@
         "WatchbotGitSha": {
             "Description": "The SHA of Watchbot to use",
             "Type": "String",
-            "Default": "v4.2.0"
+            "Default": "fce338c38d8b1d52458a4c0d6e466e1414226656"
         },
         "WatchbotCluster": {
-            "Description": "The ECS cluster to run on. Note: these EC2s must have docker installed",
+            "Description": "The ECS cluster to run on",
             "Type": "String"
         },
         "WatchbotClusterRole": {
@@ -351,7 +351,7 @@
                                     {
                                         "Ref": "AWS::AccountId"
                                     },
-                                    ".dkr.ecr.",
+                                    "234858372212.dkr.ecr.",
                                     {
                                         "Ref": "AWS::Region"
                                     },
@@ -509,6 +509,10 @@
                                 "SourceVolume": "logs"
                             },
                             {
+                                "ContainerPath": "/mnt/data",
+                                "SourceVolume": "data"
+                            },
+                            {
                                 "ContainerPath": "/var/run/docker.sock",
                                 "SourceVolume": "docker"
                             }
@@ -522,6 +526,12 @@
                             "SourcePath": "/var/log"
                         }
                     },
+                    {
+                        "Name": "data",
+                        "Host": {
+                            "SourcePath": "/mnt/data"
+                        }
+                    }
                     {
                         "Name": "docker",
                         "Host": {

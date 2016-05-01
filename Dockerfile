@@ -21,8 +21,9 @@ COPY ./ecr-image-ci.sh ./ecr-image-ci.sh
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
 VOLUME /var/run/docker.sock
 
-# Logs written to the host
+# Logs and tmp data written to the host
 VOLUME /mnt/log
+VOLUME /mnt/data
 
 # Run the watcher
 CMD ["/bin/sh", "-c", "./ecr-image-ci.sh 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecr-image-ci] '[${MessageId}] fastlog info >> /mnt/log/application.log"]
