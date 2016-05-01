@@ -489,6 +489,7 @@
                                 }
                             }
                         ],
+                        "Privileged": true,
                         "MountPoints": [
                             {
                                 "ContainerPath": "/mnt/log",
