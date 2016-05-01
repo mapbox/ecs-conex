@@ -3,7 +3,6 @@
 set -eu
 
 echo "docker setup"
-service docker > /dev/null
 docker version > /dev/null
 
 ref=$(node -e "console.log(${Message}.ref);")
