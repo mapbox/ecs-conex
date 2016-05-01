@@ -69,12 +69,12 @@ for region in "${regions[@]}"; do
   login ${region}
 
   echo "pushing ${after} to ${region}"
-  docker tag ${repo}:latest "$(after_image ${region})"
+  docker tag -f ${repo}:latest "$(after_image ${region})"
   docker push "$(after_image ${region})"
 
   if [ -z "${tag}" ]; then
     echo "pushing ${tag} to ${region}"
-    docker tag ${repo}:latest "$(after_image ${region} ${tag})" || :
+    docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
     docker push "$(after_image ${region} ${tag})"
   fi
 done
