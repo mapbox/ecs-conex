@@ -24,6 +24,7 @@ function before_image() {
 
 function after_image() {
   local region=$1
+  local sha=${2:-${after}}
   echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${after}
 }
 
@@ -52,24 +53,30 @@ git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
 trap "cleanup" EXIT
 cd ${tmpdir} && git checkout -q $after || exit 3
 if git describe --tags --exact-match 2> /dev/null; then
-  after="$(git describe --tags --exact-match)"
+  tag="$(git describe --tags --exact-match)"
 fi
 
-echo "fetching previous image"
-insure_repo us-east-1
-login us-east-1
-docker pull "$(before_image us-east-1)" > /dev/null 2>&1 || :
+echo "fetching previous image from ${StackRegion}"
+insure_repo ${StackRegion}
+login ${StackRegion}
+docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
 echo "building new image"
 docker build --tag ${repo} ${tmpdir}
 
 regions=(us-east-1 us-west-2 eu-west-1)
 for region in "${regions[@]}"; do
-  echo "pushing to ${region}"
-  docker tag ${repo}:latest "$(after_image ${region})"
   insure_repo ${region}
   login ${region}
+
+  echo "pushing ${after} to ${region}"
+  docker tag ${repo}:latest "$(after_image ${region})"
   docker push "$(after_image ${region})"
+
+  if [ -z "${tag}" ]; then
+    echo "pushing ${tag} to ${region}"
+    docker tag ${repo}:latest "$(after_image ${region} ${tag})"
+    docker push "$(after_image ${region} ${tag})"
 done
 
 echo "completed successfully"
