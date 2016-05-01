@@ -72,7 +72,7 @@ for region in "${regions[@]}"; do
   docker tag -f ${repo}:latest "$(after_image ${region})"
   docker push "$(after_image ${region})"
 
-  if [ -z "${tag}" ]; then
+  if [ -n "${tag}" ]; then
     echo "pushing ${tag} to ${region}"
     docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
     docker push "$(after_image ${region} ${tag})"
