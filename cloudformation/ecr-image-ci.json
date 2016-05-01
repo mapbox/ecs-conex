@@ -11,6 +11,10 @@
             "Description": "The SHA of the task repository to use",
             "Type": "String"
         },
+        "GithubAccessToken": {
+            "Description": "A Github access token with permission to clone private repositories",
+            "Type": "String"
+        },
         "TaskMemory": {
             "Description": "The number of MB of memory to reserve for each task",
             "Type": "Number",
@@ -486,6 +490,12 @@
                                 "Name": "AccountId",
                                 "Value": {
                                     "Ref": "AWS::AccountId"
+                                }
+                            },
+                            {
+                                "Name": "GithubAccessToken",
+                                "Value": {
+                                    "Ref": "GithubAccessToken"
                                 }
                             }
                         ],
