@@ -2,7 +2,7 @@
 
 set -eu
 
-echo "docker setup"
+echo "checking docker configuration"
 docker version > /dev/null
 
 ref=$(node -e "console.log(${Message}.ref);")
@@ -41,7 +41,7 @@ function insure_repo() {
 
 function create_repo() {
   local region=$1
-  aws ecr create-repository --region ${region} --repository-name ${repo}
+  aws ecr create-repository --region ${region} --repository-name ${repo} > /dev/null
 }
 
 function cleanup() {
@@ -51,8 +51,10 @@ function cleanup() {
 git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
 trap "cleanup" EXIT
 cd ${tmpdir} && git checkout -q $after || exit 3
-if git describe --tags --exact-match 2> /dev/null; then
-  tag="$(git describe --tags --exact-match)"
+
+if [ ! -f ./Dockerfile ]; then
+  echo "no Dockerfile found"
+  exit 0
 fi
 
 echo "fetching previous image from ${StackRegion}"
