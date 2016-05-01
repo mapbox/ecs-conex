@@ -74,7 +74,7 @@ for region in "${regions[@]}"; do
 
   if [ -z "${tag}" ]; then
     echo "pushing ${tag} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
+    docker tag ${repo}:latest "$(after_image ${region} ${tag})" || :
     docker push "$(after_image ${region} ${tag})"
   fi
 done
