@@ -26,7 +26,7 @@
             "Default": "v4.2.0"
         },
         "WatchbotCluster": {
-            "Description": "The ECS cluster to run on",
+            "Description": "The ECS cluster to run on. Note: these EC2s must have docker installed",
             "Type": "String"
         },
         "WatchbotClusterRole": {
@@ -506,8 +506,8 @@
                                 "SourceVolume": "logs"
                             },
                             {
-                                "ContainerPath": "/mnt/data",
-                                "SourceVolume": "data"
+                                "ContainerPath": "/var/run/docker.sock",
+                                "SourceVolume": "docker"
                             }
                         ]
                     }
@@ -520,9 +520,9 @@
                         }
                     },
                     {
-                        "Name": "data",
+                        "Name": "docker",
                         "Host": {
-                            "SourcePath": "/mnt/data"
+                            "SourcePath": "/var/run/docker.sock"
                         }
                     }
                 ]

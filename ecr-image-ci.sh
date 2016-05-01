@@ -2,9 +2,9 @@
 
 set -eu
 
-echo "insure docker daemon is running"
-service docker start > /dev/null 2>&1
-docker version > /dev/null 2>&1
+echo "docker setup"
+service docker > /dev/null
+docker version > /dev/null
 
 ref=$(node -e "console.log(${Message}.ref);")
 after=$(node -e "console.log(${Message}.after);")
@@ -25,7 +25,7 @@ function before_image() {
 function after_image() {
   local region=$1
   local sha=${2:-${after}}
-  echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${after}
+  echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${sha}
 }
 
 function login() {
@@ -77,6 +77,7 @@ for region in "${regions[@]}"; do
     echo "pushing ${tag} to ${region}"
     docker tag ${repo}:latest "$(after_image ${region} ${tag})"
     docker push "$(after_image ${region} ${tag})"
+  fi
 done
 
 echo "completed successfully"
