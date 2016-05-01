@@ -316,7 +316,10 @@
                                 "ecr:CreateRepository",
                                 "ecr:DescribeRepositories",
                                 "ecr:GetAuthorizationToken",
-                                "ecr:SetRepositoryPolicy"
+                                "ecr:InitiateLayerUpload",
+                                "ecr:CompleteLayerUpload",
+                                "ecr:UploadLayerPart",
+                                "ecr:PutImage"
                             ],
                             "Resource": "*"
                         }
