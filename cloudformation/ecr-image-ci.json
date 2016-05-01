@@ -23,7 +23,7 @@
         "WatchbotGitSha": {
             "Description": "The SHA of Watchbot to use",
             "Type": "String",
-            "Default": "fce338c38d8b1d52458a4c0d6e466e1414226656"
+            "Default": "e9fc8c4fb59911f3f0fb699ac07ff0f18993faeb"
         },
         "WatchbotCluster": {
             "Description": "The ECS cluster to run on",
@@ -213,7 +213,7 @@
             }
         },
         "WatchbotWatcherPolicy": {
-            "Type": "AWS::IAM::Role",
+            "Type": "AWS::IAM::Policy",
             "Description": "The IAM policy used by Watchbot's watcher container(s)",
             "Properties": {
                 "Roles": [
@@ -225,7 +225,7 @@
                     "Fn::Join": [
                         "",
                         [
-                            "watchbot-task-",
+                            "watchbot-watcher-",
                             {
                                 "Ref": "AWS::StackName"
                             }
@@ -242,7 +242,10 @@
                                 "sqs:ChangeMessageVisibility"
                             ],
                             "Resource": {
-                                "Ref": "WatchbotQueue"
+                                "Fn::GetAtt": [
+                                    "WatchbotQueue",
+                                    "Arn"
+                                ]
                             }
                         },
                         {
@@ -289,7 +292,7 @@
             }
         },
         "WatchbotTaskPolicy": {
-            "Type": "AWS::IAM::Role",
+            "Type": "AWS::IAM::Policy",
             "Description": "The IAM policy required by your task",
             "Properties": {
                 "Roles": [
@@ -351,7 +354,7 @@
                                     {
                                         "Ref": "AWS::AccountId"
                                     },
-                                    "234858372212.dkr.ecr.",
+                                    ".dkr.ecr.",
                                     {
                                         "Ref": "AWS::Region"
                                     },
@@ -436,7 +439,7 @@
             "Description": "Maintains the desired number of watcher containers",
             "DependsOn": "WatchbotTask",
             "Properties": {
-                "WatchbotCluster": {
+                "Cluster": {
                     "Ref": "WatchbotCluster"
                 },
                 "DesiredCount": {
@@ -531,7 +534,7 @@
                         "Host": {
                             "SourcePath": "/mnt/data"
                         }
-                    }
+                    },
                     {
                         "Name": "docker",
                         "Host": {
