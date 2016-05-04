@@ -23,7 +23,7 @@
         "WatchbotGitSha": {
             "Description": "The SHA of Watchbot to use",
             "Type": "String",
-            "Default": "e9fc8c4fb59911f3f0fb699ac07ff0f18993faeb"
+            "Default": "55a9d10467b805a51d6a3f2a87ec428f5b37e77a"
         },
         "WatchbotCluster": {
             "Description": "The ECS cluster to run on",
@@ -76,6 +76,16 @@
             "Description": "Number of seconds before a message is dropped from the queue",
             "Type": "Number",
             "Default": 1209600
+        },
+        "LogLevel": {
+            "Description": "Log verbosity",
+            "Type": "String",
+            "Default": "info",
+            "AllowedValues": [
+                "debug",
+                "info",
+                "error"
+            ]
         }
     },
     "Resources": {
@@ -413,6 +423,12 @@
                                 "Name": "ExponentialBackoff",
                                 "Value": {
                                     "Ref": "WatchbotBackoff"
+                                }
+                            },
+                            {
+                                "Name": "LogLevel",
+                                "Value": {
+                                    "Ref": "LogLevel"
                                 }
                             }
                         ],
