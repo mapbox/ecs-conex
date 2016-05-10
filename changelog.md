@@ -1,3 +1,3 @@
-### v0.0.1 (in progress)
+### v0.0.1
 
-- First sketch of ecs container express
+- First sketch of ECS container express
