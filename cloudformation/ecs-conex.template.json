@@ -2,13 +2,8 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Watchbot",
     "Parameters": {
-        "TaskRepo": {
-            "Description": "The name of the task repository",
-            "Type": "String",
-            "Default": "ecs-conex"
-        },
-        "TaskGitSha": {
-            "Description": "The SHA of the task repository to use",
+        "GitSha": {
+            "Description": "The SHA of ecs-conex to use",
             "Type": "String"
         },
         "GithubAccessToken": {
@@ -41,60 +36,27 @@
         "WatchbotTasks": {
             "Description": "Max number of concurrent tasks to run per watcher",
             "Type": "Number",
-            "Default": 1
-        },
-        "WatchbotUseWebhooks": {
-            "Description": "Provide an HTTP endpoint that can be used to queue messages",
-            "Type": "String",
-            "Default": "false",
-            "AllowedValues": [
-                "true",
-                "false"
-            ]
+            "Default": 4
         },
         "WatchbotNotificationEmail": {
             "Description": "An email address to subscribe to notifications",
             "Type": "String",
             "Default": "devnull@mapbox.com"
         },
-        "WatchbotBackoff": {
-            "Description": "Enable exponential backoff when retrying failed jobs",
-            "Type": "String",
-            "Default": "false",
-            "AllowedValues": [
-                "true",
-                "false"
-            ]
-        },
         "WatchbotMessageTimeout": {
             "Description": "Approx. number of seconds per job",
             "Type": "Number",
-            "Default": 600
+            "Default": 1200
         },
         "WatchbotQueueSizeAlarm": {
             "Description": "Queue depth that triggers alarm",
             "Type": "Number",
-            "Default": 40
+            "Default": 20
         },
         "WatchbotQueueSizeAlarmPeriod": {
             "Description": "Number of 5-min periods of elevated queue depth that will trigger an alarm",
             "Type": "Number",
-            "Default": 24
-        },
-        "WatchbotMessageRetentionPeriod": {
-            "Description": "Number of seconds before a message is dropped from the queue",
-            "Type": "Number",
-            "Default": 1209600
-        }
-    },
-    "Conditions": {
-        "UseWebhooks": {
-            "Fn::Equals": [
-                "true",
-                {
-                    "Ref": "WatchbotUseWebhooks"
-                }
-            ]
+            "Default": 6
         }
     },
     "Resources": {
@@ -108,9 +70,7 @@
                 "QueueName": {
                     "Ref": "AWS::StackName"
                 },
-                "MessageRetentionPeriod": {
-                    "Ref": "WatchbotMessageRetentionPeriod"
-                }
+                "MessageRetentionPeriod": 1209600
             }
         },
         "WatchbotWorkTopic": {
@@ -233,7 +193,6 @@
         },
         "WatchbotWebhookApi": {
             "Type": "AWS::ApiGateway::RestApi",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "Name": {
                     "Fn::Join": [
@@ -251,7 +210,6 @@
         },
         "WatchbotWebhookDeployment": {
             "Type": "AWS::ApiGateway::Deployment",
-            "Condition": "UseWebhooks",
             "DependsOn": "WatchbotWebhookMethod",
             "Properties": {
                 "RestApiId": {
@@ -272,7 +230,6 @@
         },
         "WatchbotWebhookMethod": {
             "Type": "AWS::ApiGateway::Method",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "RestApiId": {
                     "Ref": "WatchbotWebhookApi"
@@ -348,7 +305,6 @@
         },
         "WatchbotWebhookResource": {
             "Type": "AWS::ApiGateway::Resource",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "ParentId": {
                     "Fn::GetAtt": [
@@ -364,7 +320,6 @@
         },
         "WatchbotWebhookFunctionRole": {
             "Type": "AWS::IAM::Role",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "AssumeRolePolicyDocument": {
                     "Statement": [
@@ -411,7 +366,6 @@
         },
         "WatchbotWebhookFunction": {
             "Type": "AWS::Lambda::Function",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "Code": {
                     "ZipFile": {
@@ -500,7 +454,6 @@
         },
         "WatchbotWebhookPermission": {
             "Type": "AWS::Lambda::Permission",
-            "Condition": "UseWebhooks",
             "Properties": {
                 "FunctionName": {
                     "Ref": "WatchbotWebhookFunction"
@@ -698,9 +651,7 @@
                             },
                             {
                                 "Name": "ContainerName",
-                                "Value": {
-                                    "Ref": "TaskRepo"
-                                }
+                                "Value": "ecs-conex"
                             },
                             {
                                 "Name": "Concurrency",
@@ -728,9 +679,7 @@
                             },
                             {
                                 "Name": "ExponentialBackoff",
-                                "Value": {
-                                    "Ref": "WatchbotBackoff"
-                                }
+                                "Value": "true"
                             }
                         ],
                         "MountPoints": [
@@ -778,9 +727,7 @@
             "Properties": {
                 "ContainerDefinitions": [
                     {
-                        "Name": {
-                            "Ref": "TaskRepo"
-                        },
+                        "Name": "ecs-conex",
                         "Image": {
                             "Fn::Join": [
                                 "",
@@ -792,13 +739,9 @@
                                     {
                                         "Ref": "AWS::Region"
                                     },
-                                    ".amazonaws.com/",
+                                    ".amazonaws.com/ecs-conex:",
                                     {
-                                        "Ref": "TaskRepo"
-                                    },
-                                    ":",
-                                    {
-                                        "Ref": "TaskGitSha"
+                                        "Ref": "GitSha"
                                     }
                                 ]
                             ]
@@ -972,7 +915,6 @@
             }
         },
         "WatchbotWebhookEndpoint": {
-            "Condition": "UseWebhooks",
             "Description": "The HTTPS endpoint used to send webhooks to Watchbot",
             "Value": {
                 "Fn::Join": [
