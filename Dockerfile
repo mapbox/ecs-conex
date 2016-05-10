@@ -3,7 +3,7 @@ FROM ubuntu
 # Installations
 RUN apt-get update -qq && apt-get install -y curl git python-pip
 RUN pip install awscli
-RUN curl https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
+RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
 RUN npm install -g fastlog
 
 # Setup application directory
