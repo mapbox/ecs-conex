@@ -231,33 +231,6 @@
                 }
             }
         },
-        "WatchbotWebhookKey": {
-            "Type": "AWS::ApiGateway::ApiKey",
-            "Condition": "UseWebhooks",
-            "DependsOn": "WatchbotWebhookDeployment",
-            "Properties": {
-                "Name": {
-                    "Fn::Join": [
-                        "",
-                        [
-                            "watchbot-webhook-",
-                            {
-                                "Ref": "AWS::StackName"
-                            }
-                        ]
-                    ]
-                },
-                "Enabled": true,
-                "StageKeys": [
-                    {
-                        "RestApiId": {
-                            "Ref": "WatchbotWebhookApi"
-                        },
-                        "StageName": "watchbot"
-                    }
-                ]
-            }
-        },
         "WatchbotWebhookApi": {
             "Type": "AWS::ApiGateway::RestApi",
             "Condition": "UseWebhooks",
@@ -286,7 +259,14 @@
                 },
                 "StageName": "watchbot",
                 "StageDescription": {
-                    "StageName": "watchbot"
+                    "MethodSettings": [
+                        {
+                            "HttpMethod": "*",
+                            "ResourcePath": "/*",
+                            "ThrottlingBurstLimit": 20,
+                            "ThrottlingRateLimit": 5
+                        }
+                    ]
                 }
             }
         },
@@ -300,15 +280,24 @@
                 "ResourceId": {
                     "Ref": "WatchbotWebhookResource"
                 },
-                "ApiKeyRequired": true,
                 "AuthorizationType": "None",
                 "HttpMethod": "POST",
+                "RequestParameters": {
+                    "method.request.header.X-Hub-Signature": true
+                },
                 "Integration": {
                     "Type": "AWS",
                     "IntegrationHttpMethod": "POST",
+                    "RequestTemplates": {
+                        "application/json": "{\"signature\" :\"$input.params('X-Hub-Signature')\",\"body\" :$input.json('$')}"
+                    },
                     "IntegrationResponses": [
                         {
                             "StatusCode": 200
+                        },
+                        {
+                            "StatusCode": 403,
+                            "SelectionPattern": "^invalid.*"
                         },
                         {
                             "StatusCode": 500,
@@ -338,6 +327,12 @@
                 "MethodResponses": [
                     {
                         "StatusCode": "200",
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        }
+                    },
+                    {
+                        "StatusCode": "403",
                         "ResponseModels": {
                             "application/json": "Empty"
                         }
@@ -448,11 +443,28 @@
                                         ]
                                     ]
                                 },
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "var secret = \"",
+                                            {
+                                                "Ref": "WatchbotUserKey"
+                                            },
+                                            "\";"
+                                        ]
+                                    ]
+                                },
+                                "var crypto = require('crypto');",
                                 "module.exports.webhooks = function(event, context) {",
+                                "  var body = event.body",
+                                "  var hash = \"sha1=\" + crypto.createHmac(\"sha1\", secret).update(JSON.stringify(body)).digest(\"hex\");",
+                                "  if (event.signature !== hash) return context.done(\"invalid: signature does not match\");",
+                                "  if (body.zen) return context.done(null, \"ignored ping request\");",
                                 "  var params = {",
                                 "    TopicArn: topic,",
-                                "    Subject: event.Subject || \"webhook\",",
-                                "    Message: event.Message || JSON.stringify(event)",
+                                "    Subject: event.body.Subject || \"webhook\",",
+                                "    Message: event.body.Message || JSON.stringify(event.body)",
                                 "  };",
                                 "  sns.publish(params, function(err) {",
                                 "    if (err) return context.done(\"error: \" + err.message);",
@@ -742,7 +754,11 @@
         "WatchbotService": {
             "Type": "AWS::ECS::Service",
             "Description": "Maintains the desired number of watcher containers",
-            "DependsOn": "WatchbotTask",
+            "DependsOn": [
+                "WatchbotWatcherPolicy",
+                "WatchbotTask",
+                "WatchbotTaskPolicy"
+            ],
             "Properties": {
                 "Cluster": {
                     "Ref": "WatchbotCluster"
@@ -953,13 +969,6 @@
             "Description": "The ARN of an SNS topic where Watchbot will send notifications for failed processing",
             "Value": {
                 "Ref": "WatchbotNotificationTopic"
-            }
-        },
-        "WatchbotWebhookKey": {
-            "Condition": "UseWebhooks",
-            "Description": "The API key required to send webhooks to Watchbot",
-            "Value": {
-                "Ref": "WatchbotWebhookKey"
             }
         },
         "WatchbotWebhookEndpoint": {
