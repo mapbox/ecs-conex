@@ -398,6 +398,15 @@
                                             "Ref": "WatchbotWorkTopic"
                                         }
                                     ]
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Resource": [
+                                        "arn:aws:logs:*:*:*"
+                                    ]
                                 }
                             ]
                         }
