@@ -4,7 +4,8 @@
     "Parameters": {
         "TaskRepo": {
             "Description": "The name of the task repository",
-            "Type": "String"
+            "Type": "String",
+            "Default": "ecs-conex"
         },
         "TaskGitSha": {
             "Description": "The SHA of the task repository to use",
