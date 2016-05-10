@@ -7,15 +7,15 @@ RUN curl https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2
 RUN npm install -g fastlog
 
 # Setup application directory
-RUN mkdir -p /usr/local/src/ecr-image-ci
-WORKDIR /usr/local/src/ecr-image-ci
+RUN mkdir -p /usr/local/src/ecs-conex
+WORKDIR /usr/local/src/ecs-conex
 
 # Install docker binary matching EC2 version
 RUN curl -L https://get.docker.com/builds/Linux/x86_64/docker-1.9.1.tgz > docker-1.9.1.tgz
 RUN tar -xzf docker-1.9.1.tgz && cp usr/local/bin/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
 
 # Copy files into the container
-COPY ./ecr-image-ci.sh ./ecr-image-ci.sh
+COPY ./ecs-conex.sh ./ecs-conex.sh
 
 # Use docker on the host instead of running docker-in-docker
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
@@ -26,4 +26,4 @@ VOLUME /mnt/log
 VOLUME /mnt/data
 
 # Run the watcher
-CMD ["/bin/sh", "-c", "./ecr-image-ci.sh 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecr-image-ci] '[${MessageId}] fastlog info >> /mnt/log/application.log"]
+CMD ["/bin/sh", "-c", "./ecs-conex.sh 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log"]

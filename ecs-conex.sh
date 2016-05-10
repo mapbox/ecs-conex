@@ -5,6 +5,13 @@ set -eu
 echo "checking docker configuration"
 docker version > /dev/null
 
+echo "checking environment configuration"
+Message=${Message}
+AccountId=${AccountId}
+GithubAccessToken=${GithubAccessToken}
+StackRegion=${StackRegion}
+
+echo "parsing received message"
 ref=$(node -e "console.log(${Message}.ref);")
 after=$(node -e "console.log(${Message}.after);")
 before=$(node -e "console.log(${Message}.before);")
@@ -12,8 +19,7 @@ repo=$(node -e "console.log(${Message}.repository.name);")
 owner=$(node -e "console.log(${Message}.repository.owner.name);")
 user=$(node -e "console.log(${Message}.pusher.name);")
 
-echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
-
+regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="/mnt/data/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
 
 function before_image() {
@@ -32,7 +38,7 @@ function login() {
   eval "$(aws ecr get-login --region ${region})"
 }
 
-function insure_repo() {
+function ensure_repo() {
   local region=$1
   aws ecr describe-repositories \
     --region ${region} \
@@ -48,6 +54,8 @@ function cleanup() {
   rm -rf ${tmpdir}
 }
 
+echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
+
 git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
 trap "cleanup" EXIT
 cd ${tmpdir} && git checkout -q $after || exit 3
@@ -57,17 +65,16 @@ if [ ! -f ./Dockerfile ]; then
   exit 0
 fi
 
-echo "fetching previous image from ${StackRegion}"
-insure_repo ${StackRegion}
+echo "attempt to fetch previous image from ${StackRegion}"
+ensure_repo ${StackRegion}
 login ${StackRegion}
 docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
 echo "building new image"
 docker build --tag ${repo} ${tmpdir}
 
-regions=(us-east-1 us-west-2 eu-west-1)
 for region in "${regions[@]}"; do
-  insure_repo ${region}
+  ensure_repo ${region}
   login ${region}
 
   echo "pushing ${after} to ${region}"

@@ -4,8 +4,7 @@
     "Parameters": {
         "TaskRepo": {
             "Description": "The name of the task repository",
-            "Type": "String",
-            "Default": "ecr-image-ci"
+            "Type": "String"
         },
         "TaskGitSha": {
             "Description": "The SHA of the task repository to use",
@@ -23,10 +22,10 @@
         "WatchbotGitSha": {
             "Description": "The SHA of Watchbot to use",
             "Type": "String",
-            "Default": "55a9d10467b805a51d6a3f2a87ec428f5b37e77a"
+            "Default": "v0.0.1"
         },
         "WatchbotCluster": {
-            "Description": "The ECS cluster to run on",
+            "Description": "The ARN of the ECS cluster to run on",
             "Type": "String"
         },
         "WatchbotClusterRole": {
@@ -43,6 +42,15 @@
             "Type": "Number",
             "Default": 1
         },
+        "WatchbotUseWebhooks": {
+            "Description": "Provide an HTTP endpoint that can be used to queue messages",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        },
         "WatchbotNotificationEmail": {
             "Description": "An email address to subscribe to notifications",
             "Type": "String",
@@ -51,7 +59,7 @@
         "WatchbotBackoff": {
             "Description": "Enable exponential backoff when retrying failed jobs",
             "Type": "String",
-            "Default": "true",
+            "Default": "false",
             "AllowedValues": [
                 "true",
                 "false"
@@ -76,15 +84,15 @@
             "Description": "Number of seconds before a message is dropped from the queue",
             "Type": "Number",
             "Default": 1209600
-        },
-        "LogLevel": {
-            "Description": "Log verbosity",
-            "Type": "String",
-            "Default": "info",
-            "AllowedValues": [
-                "debug",
-                "info",
-                "error"
+        }
+    },
+    "Conditions": {
+        "UseWebhooks": {
+            "Fn::Equals": [
+                "true",
+                {
+                    "Ref": "WatchbotUseWebhooks"
+                }
             ]
         }
     },
@@ -218,6 +226,283 @@
                                 }
                             }
                         }
+                    ]
+                }
+            }
+        },
+        "WatchbotWebhookKey": {
+            "Type": "AWS::ApiGateway::ApiKey",
+            "Condition": "UseWebhooks",
+            "DependsOn": "WatchbotWebhookDeployment",
+            "Properties": {
+                "Name": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "watchbot-webhook-",
+                            {
+                                "Ref": "AWS::StackName"
+                            }
+                        ]
+                    ]
+                },
+                "Enabled": true,
+                "StageKeys": [
+                    {
+                        "RestApiId": {
+                            "Ref": "WatchbotWebhookApi"
+                        },
+                        "StageName": "watchbot"
+                    }
+                ]
+            }
+        },
+        "WatchbotWebhookApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "Name": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "watchbot-webhook",
+                            {
+                                "Ref": "AWS::StackName"
+                            }
+                        ]
+                    ]
+                },
+                "FailOnWarnings": true
+            }
+        },
+        "WatchbotWebhookDeployment": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Condition": "UseWebhooks",
+            "DependsOn": "WatchbotWebhookMethod",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "WatchbotWebhookApi"
+                },
+                "StageName": "watchbot",
+                "StageDescription": {
+                    "StageName": "watchbot"
+                }
+            }
+        },
+        "WatchbotWebhookMethod": {
+            "Type": "AWS::ApiGateway::Method",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "WatchbotWebhookApi"
+                },
+                "ResourceId": {
+                    "Ref": "WatchbotWebhookResource"
+                },
+                "ApiKeyRequired": true,
+                "AuthorizationType": "None",
+                "HttpMethod": "POST",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200
+                        },
+                        {
+                            "StatusCode": 500,
+                            "SelectionPattern": "^error.*"
+                        }
+                    ],
+                    "Uri": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "arn:aws:apigateway:",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                ":lambda:path/2015-03-31/functions/",
+                                {
+                                    "Fn::GetAtt": [
+                                        "WatchbotWebhookFunction",
+                                        "Arn"
+                                    ]
+                                },
+                                "/invocations"
+                            ]
+                        ]
+                    }
+                },
+                "MethodResponses": [
+                    {
+                        "StatusCode": "200",
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        }
+                    },
+                    {
+                        "StatusCode": "500",
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        }
+                    }
+                ]
+            }
+        },
+        "WatchbotWebhookResource": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "ParentId": {
+                    "Fn::GetAtt": [
+                        "WatchbotWebhookApi",
+                        "RootResourceId"
+                    ]
+                },
+                "RestApiId": {
+                    "Ref": "WatchbotWebhookApi"
+                },
+                "PathPart": "webhooks"
+            }
+        },
+        "WatchbotWebhookFunctionRole": {
+            "Type": "AWS::IAM::Role",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Sid": "webhookrole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "WatchbotWebhookPolicy",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "sns:Publish"
+                                    ],
+                                    "Resource": [
+                                        {
+                                            "Ref": "WatchbotWorkTopic"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "WatchbotWebhookFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "var AWS = require(\"aws-sdk\");",
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "var sns = new AWS.SNS({ region: \"",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            "\" });"
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "var topic = \"",
+                                            {
+                                                "Ref": "WatchbotWorkTopic"
+                                            },
+                                            "\";"
+                                        ]
+                                    ]
+                                },
+                                "module.exports.webhooks = function(event, context) {",
+                                "  var params = {",
+                                "    TopicArn: topic,",
+                                "    Subject: event.Subject || \"webhook\",",
+                                "    Message: event.Message || JSON.stringify(event)",
+                                "  };",
+                                "  sns.publish(params, function(err) {",
+                                "    if (err) return context.done(\"error: \" + err.message);",
+                                "    context.done(null, \"success\");",
+                                "  });",
+                                "};"
+                            ]
+                        ]
+                    }
+                },
+                "Role": {
+                    "Fn::GetAtt": [
+                        "WatchbotWebhookFunctionRole",
+                        "Arn"
+                    ]
+                },
+                "Description": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "watchbot webhooks for ",
+                            {
+                                "Ref": "AWS::StackName"
+                            }
+                        ]
+                    ]
+                },
+                "Handler": "index.webhooks",
+                "Runtime": "nodejs",
+                "Timeout": 30,
+                "MemorySize": 128
+            }
+        },
+        "WatchbotWebhookPermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Condition": "UseWebhooks",
+            "Properties": {
+                "FunctionName": {
+                    "Ref": "WatchbotWebhookFunction"
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "arn:aws:execute-api:",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            ":",
+                            {
+                                "Ref": "AWS::AccountId"
+                            },
+                            ":",
+                            {
+                                "Ref": "WatchbotWebhookApi"
+                            },
+                            "/*"
+                        ]
                     ]
                 }
             }
@@ -424,12 +709,6 @@
                                 "Value": {
                                     "Ref": "WatchbotBackoff"
                                 }
-                            },
-                            {
-                                "Name": "LogLevel",
-                                "Value": {
-                                    "Ref": "LogLevel"
-                                }
                             }
                         ],
                         "MountPoints": [
@@ -521,7 +800,6 @@
                                 }
                             }
                         ],
-                        "Privileged": true,
                         "MountPoints": [
                             {
                                 "ContainerPath": "/mnt/log",
@@ -616,24 +894,81 @@
         }
     },
     "Outputs": {
-        "SnsTopic": {
-            "Description": "The ARN of ecr-image-ci's SNS topic",
+        "WatchbotSns": {
+            "Description": "The ARN of Watchbot's SNS topic. Send messages to this topic to be processed by Watchbot",
             "Value": {
                 "Ref": "WatchbotWorkTopic"
             }
         },
-        "AccessKeyId": {
-            "Description": "An access key with permission to publish messages to the SNS topic",
+        "WatchbotAccessKeyId": {
+            "Description": "An access key with permission to publish messages to Watchbot",
             "Value": {
                 "Ref": "WatchbotUserKey"
             }
         },
-        "SecretAccessKey": {
-            "Description": "A secret access key with permission to publish messages to the SNS topic",
+        "WatchbotSecretAccessKey": {
+            "Description": "A secret access key with permission to publish messages to Watchbot",
             "Value": {
                 "Fn::GetAtt": [
                     "WatchbotUserKey",
                     "SecretAccessKey"
+                ]
+            }
+        },
+        "WatchbotQueueUrl": {
+            "Description": "The URL of Watchbot's SQS queue",
+            "Value": {
+                "Ref": "WatchbotQueue"
+            }
+        },
+        "WatchbotQueueArn": {
+            "Description": "The ARN of Watchbot's SQS queue",
+            "Value": {
+                "Fn::GetAtt": [
+                    "WatchbotQueue",
+                    "Arn"
+                ]
+            }
+        },
+        "WatchbotQueueName": {
+            "Description": "The name of Watchbot's SQS queue",
+            "Value": {
+                "Fn::GetAtt": [
+                    "WatchbotQueue",
+                    "QueueName"
+                ]
+            }
+        },
+        "WatchbotNotificationTopic": {
+            "Description": "The ARN of an SNS topic where Watchbot will send notifications for failed processing",
+            "Value": {
+                "Ref": "WatchbotNotificationTopic"
+            }
+        },
+        "WatchbotWebhookKey": {
+            "Condition": "UseWebhooks",
+            "Description": "The API key required to send webhooks to Watchbot",
+            "Value": {
+                "Ref": "WatchbotWebhookKey"
+            }
+        },
+        "WatchbotWebhookEndpoint": {
+            "Condition": "UseWebhooks",
+            "Description": "The HTTPS endpoint used to send webhooks to Watchbot",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Ref": "WatchbotWebhookApi"
+                        },
+                        ".execute-api.",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        ".amazonaws.com/watchbot/webhooks"
+                    ]
                 ]
             }
         }
