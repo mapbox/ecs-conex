@@ -26,4 +26,4 @@ VOLUME /mnt/log
 VOLUME /mnt/data
 
 # Run the watcher
-CMD ["/bin/sh", "-c", "./ecs-conex.sh 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log"]
+CMD ["/bin/sh", "-c", "./ecs-conex.sh  >> /mnt/log/application.log"]
