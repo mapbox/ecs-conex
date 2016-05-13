@@ -26,4 +26,4 @@ VOLUME /mnt/log
 VOLUME /mnt/data
 
 # Run the watcher
-CMD ["/bin/sh", "-c", "./ecs-conex.sh"]
+CMD ["/bin/sh", "-c", "./ecs-conex.sh  >> /mnt/log/application.log"]

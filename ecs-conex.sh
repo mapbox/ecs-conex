@@ -95,4 +95,4 @@ function main() {
 }
 
 trap "cleanup" EXIT
-main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log
+main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info
