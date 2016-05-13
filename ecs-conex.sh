@@ -6,9 +6,6 @@ set -o pipefail
 regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 
-trap "cleanup" EXIT
-main | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log
-
 function before_image() {
   local region=$1
   echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${before}
@@ -96,3 +93,6 @@ function main() {
 
   echo "completed successfully"
 }
+
+trap "cleanup" EXIT
+main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log
