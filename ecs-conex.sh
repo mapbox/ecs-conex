@@ -4,7 +4,7 @@ set -eu
 set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
-tmpdir="/mnt/data/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
+tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 
 trap "cleanup" EXIT
 main | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log
