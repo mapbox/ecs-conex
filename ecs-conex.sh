@@ -1,26 +1,13 @@
 #!/usr/bin/env bash
 
 set -eu
-
-echo "checking docker configuration"
-docker version > /dev/null
-
-echo "checking environment configuration"
-Message=${Message}
-AccountId=${AccountId}
-GithubAccessToken=${GithubAccessToken}
-StackRegion=${StackRegion}
-
-echo "parsing received message"
-ref=$(node -e "console.log(${Message}.ref);")
-after=$(node -e "console.log(${Message}.after);")
-before=$(node -e "console.log(${Message}.before);")
-repo=$(node -e "console.log(${Message}.repository.name);")
-owner=$(node -e "console.log(${Message}.repository.owner.name);")
-user=$(node -e "console.log(${Message}.pusher.name);")
+set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="/mnt/data/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
+
+trap "cleanup" EXIT
+main | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info >> /mnt/log/application.log
 
 function before_image() {
   local region=$1
@@ -54,39 +41,58 @@ function cleanup() {
   rm -rf ${tmpdir}
 }
 
-echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
+function main() {
+  echo "checking docker configuration"
+  docker version > /dev/null
 
-git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
-trap "cleanup" EXIT
-cd ${tmpdir} && git checkout -q $after || exit 3
+  echo "checking environment configuration"
+  MessageId=${MessageId}
+  Message=${Message}
+  AccountId=${AccountId}
+  GithubAccessToken=${GithubAccessToken}
+  StackRegion=${StackRegion}
 
-if [ ! -f ./Dockerfile ]; then
-  echo "no Dockerfile found"
-  exit 0
-fi
+  echo "parsing received message"
+  ref=$(node -e "console.log(${Message}.ref);")
+  after=$(node -e "console.log(${Message}.after);")
+  before=$(node -e "console.log(${Message}.before);")
+  repo=$(node -e "console.log(${Message}.repository.name);")
+  owner=$(node -e "console.log(${Message}.repository.owner.name);")
+  user=$(node -e "console.log(${Message}.pusher.name);")
 
-echo "attempt to fetch previous image from ${StackRegion}"
-ensure_repo ${StackRegion}
-login ${StackRegion}
-docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
+  echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 
-echo "building new image"
-docker build --tag ${repo} ${tmpdir}
+  git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
+  cd ${tmpdir} && git checkout -q $after || exit 3
 
-for region in "${regions[@]}"; do
-  ensure_repo ${region}
-  login ${region}
-
-  echo "pushing ${after} to ${region}"
-  docker tag -f ${repo}:latest "$(after_image ${region})"
-  docker push "$(after_image ${region})"
-
-  if git describe --tags --exact-match 2> /dev/null; then
-    tag="$(git describe --tags --exact-match)"
-    echo "pushing ${tag} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
-    docker push "$(after_image ${region} ${tag})"
+  if [ ! -f ./Dockerfile ]; then
+    echo "no Dockerfile found"
+    exit 0
   fi
-done
 
-echo "completed successfully"
+  echo "attempt to fetch previous image from ${StackRegion}"
+  ensure_repo ${StackRegion}
+  login ${StackRegion}
+  docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
+
+  echo "building new image"
+  docker build --tag ${repo} ${tmpdir}
+
+  for region in "${regions[@]}"; do
+    ensure_repo ${region}
+    login ${region}
+
+    echo "pushing ${after} to ${region}"
+    docker tag -f ${repo}:latest "$(after_image ${region})"
+    docker push "$(after_image ${region})"
+
+    if git describe --tags --exact-match 2> /dev/null; then
+      tag="$(git describe --tags --exact-match)"
+      echo "pushing ${tag} to ${region}"
+      docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
+      docker push "$(after_image ${region} ${tag})"
+    fi
+  done
+
+  echo "completed successfully"
+}
