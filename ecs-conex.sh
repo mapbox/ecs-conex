@@ -73,7 +73,7 @@ function main() {
   docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
   echo "building new image"
-  docker build --tag ${repo} ${tmpdir}
+  docker build --quiet --tag ${repo} ${tmpdir}
 
   for region in "${regions[@]}"; do
     ensure_repo ${region}
