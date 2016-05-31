@@ -21,9 +21,8 @@ COPY ./ecs-conex.sh ./ecs-conex.sh
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
 VOLUME /var/run/docker.sock
 
-# Logs and tmp data written to the host
-VOLUME /mnt/log
+# tmp data written to the host
 VOLUME /mnt/data
 
-# Run the watcher
-CMD ["/bin/sh", "-c", "./ecs-conex.sh  >> /mnt/log/application.log"]
+# Run the worker
+CMD ["/bin/sh", "-c", "./ecs-conex.sh"]
