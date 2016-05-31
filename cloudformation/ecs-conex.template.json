@@ -607,10 +607,14 @@
                 },
                 "StageName": "watchbot",
                 "StageDescription": {
-                    "HttpMethod": "*",
-                    "ResourcePath": "/*",
-                    "ThrottlingBurstLimit": 20,
-                    "ThrottlingRateLimit": 5
+                    "MethodSettings": [
+                        {
+                            "HttpMethod": "*",
+                            "ResourcePath": "/*",
+                            "ThrottlingBurstLimit": 20,
+                            "ThrottlingRateLimit": 5
+                        }
+                    ]
                 }
             }
         },
