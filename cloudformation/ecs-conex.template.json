@@ -32,7 +32,7 @@
         "WatchbotGitSha": {
             "Description": "The SHA of Watchbot to use",
             "Type": "String",
-            "Default": "56ce650b68d11472d653c9fec39e4b7bd6d221d2"
+            "Default": "v0.0.4"
         },
         "WatchbotWatchers": {
             "Description": "The number of queue watchers to run",
