@@ -357,7 +357,7 @@
                             },
                             {
                                 "Name": "ContainerName",
-                                "Value": "ecs-conext"
+                                "Value": "ecs-conex"
                             },
                             {
                                 "Name": "Concurrency",
