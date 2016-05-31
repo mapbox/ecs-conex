@@ -498,6 +498,12 @@
                                 "Value": {
                                     "Ref": "AWS::AccountId"
                                 }
+                            },
+                            {
+                                "Name": "GithubAccessToken",
+                                "Value": {
+                                    "Ref": "GithubAccessToken"
+                                }
                             }
                         ],
                         "LogConfiguration": {
