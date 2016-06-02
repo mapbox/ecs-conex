@@ -34,7 +34,26 @@ function create_repo() {
   aws ecr create-repository --region ${region} --repository-name ${repo} > /dev/null
 }
 
+function github_status() {
+  local status=$1
+  local description=$2
+
+  curl \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conext\"}"
+    ${status_url}
+}
+
 function cleanup() {
+  exit_code=$?
+
+  if [ "${exit_code}" == "0" ]; then
+    github_status "success" "ecs-conex successfully completed"
+  else
+    github_status "failure" "ecs-conex failed to build an image"
+  fi
+
   rm -rf ${tmpdir}
 }
 
@@ -58,6 +77,9 @@ function main() {
   user=$(node -e "console.log(${Message}.pusher.name);")
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
+
+  export status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${sha}?access_token=${GithubAccessToken}"
+  github_status "pending" "ecs-conex is building an image"
 
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
