@@ -34,7 +34,40 @@ function create_repo() {
   aws ecr create-repository --region ${region} --repository-name ${repo} > /dev/null
 }
 
+function github_status() {
+  local status=$1
+  local description=$2
+
+  echo "sending ${status} status to github"
+
+  curl -s \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" \
+    ${status_url} > /dev/null
+}
+
+function parse_message() {
+  ref=$(node -e "console.log(${Message}.ref);")
+  after=$(node -e "console.log(${Message}.after);")
+  before=$(node -e "console.log(${Message}.before);")
+  repo=$(node -e "console.log(${Message}.repository.name);")
+  owner=$(node -e "console.log(${Message}.repository.owner.name);")
+  user=$(node -e "console.log(${Message}.pusher.name);")
+  status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
+}
+
 function cleanup() {
+  exit_code=$?
+
+  parse_message
+
+  if [ "${exit_code}" == "0" ]; then
+    github_status "success" "ecs-conex successfully completed"
+  else
+    github_status "failure" "ecs-conex failed to build an image"
+  fi
+
   rm -rf ${tmpdir}
 }
 
@@ -50,15 +83,11 @@ function main() {
   StackRegion=${StackRegion}
 
   echo "parsing received message"
-  ref=$(node -e "console.log(${Message}.ref);")
-  after=$(node -e "console.log(${Message}.after);")
-  before=$(node -e "console.log(${Message}.before);")
-  repo=$(node -e "console.log(${Message}.repository.name);")
-  owner=$(node -e "console.log(${Message}.repository.owner.name);")
-  user=$(node -e "console.log(${Message}.pusher.name);")
+  parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 
+  github_status "pending" "ecs-conex is building an image"
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
@@ -67,7 +96,7 @@ function main() {
     exit 0
   fi
 
-  echo "attempt to fetch previous image from ${StackRegion}"
+  echo "attempt to fetch previous image ${before} from ${StackRegion}"
   ensure_repo ${StackRegion}
   login ${StackRegion}
   docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
