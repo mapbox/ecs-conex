@@ -54,6 +54,7 @@ function parse_message() {
   repo=$(node -e "console.log(${Message}.repository.name);")
   owner=$(node -e "console.log(${Message}.repository.owner.name);")
   user=$(node -e "console.log(${Message}.pusher.name);")
+  deleted=$(node -e "console.log(${Message}.deleted);")
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
 }
 
@@ -86,8 +87,9 @@ function main() {
   parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
-
   github_status "pending" "ecs-conex is building an image"
+  [ "${deleted}" == "true" ] && exit 0
+
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
