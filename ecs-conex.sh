@@ -54,7 +54,7 @@ function parse_message() {
   repo=$(node -e "console.log(${Message}.repository.name);")
   owner=$(node -e "console.log(${Message}.repository.owner.name);")
   user=$(node -e "console.log(${Message}.pusher.name);")
-  deleted=$(node -e "console.log(${Message}).deleted")
+  deleted=$(node -e "console.log(${Message}.deleted);")
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
 }
 
