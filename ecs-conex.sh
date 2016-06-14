@@ -68,6 +68,19 @@ function credentials() {
   accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
   secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
   sessionToken=$(node -e "console.log(${creds}.SessionToken)")
+
+  args=""
+  if grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${accessKeyId}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${accessKeyId} "
+  fi
+
+  if grep -O "ARG AWS_SECRET_ACCESS_KEY" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${secretAccessKey}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${secretAccessKey} "
+  fi
+
+  if grep -O "ARG AWS_SESSION_TOKEN" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${sessionToken}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
+  fi
 }
 
 function cleanup() {
@@ -117,19 +130,6 @@ function main() {
 
   echo "gather local credentials and setup --build-arg"
   credentials
-
-  args=""
-  if grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
-    [ -n "${accessKeyId}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${accessKeyId} "
-  fi
-
-  if grep -O "ARG AWS_SECRET_ACCESS_KEY" ./Dockerfile > /dev/null 2>&1; then
-    [ -n "${secretAccessKey}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${secretAccessKey} "
-  fi
-
-  if grep -O "ARG AWS_SESSION_TOKEN" ./Dockerfile > /dev/null 2>&1; then
-    [ -n "${sessionToken}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
-  fi
 
   echo "building new image"
   docker build --quiet ${args} --tag ${repo} ${tmpdir}
