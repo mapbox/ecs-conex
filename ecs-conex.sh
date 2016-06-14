@@ -58,6 +58,18 @@ function parse_message() {
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
 }
 
+function credentials() {
+  role=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
+  if [ -z "${role}" ]; then
+    return
+  fi
+
+  creds=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
+  accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
+  secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
+  sessionToken=$(node -e "console.log(${creds}.SessionToken)")
+}
+
 function cleanup() {
   exit_code=$?
 
@@ -103,8 +115,24 @@ function main() {
   login ${StackRegion}
   docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
+  echo "gather local credentials and setup --build-arg"
+  credentials
+
+  args=""
+  if grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${accessKeyId}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${accessKeyId} "
+  fi
+
+  if grep -O "ARG AWS_SECRET_ACCESS_KEY" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${secretAccessKey}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${secretAccessKey} "
+  fi
+
+  if grep -O "ARG AWS_SESSION_TOKEN" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${sessionToken}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
+  fi
+
   echo "building new image"
-  docker build --quiet --tag ${repo} ${tmpdir}
+  docker build --quiet ${args} --tag ${repo} ${tmpdir}
 
   for region in "${regions[@]}"; do
     ensure_repo ${region}
