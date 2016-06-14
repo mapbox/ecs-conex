@@ -59,12 +59,12 @@ function parse_message() {
 }
 
 function credentials() {
-  role=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
+  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
   if [ -z "${role}" ]; then
     return
   fi
 
-  creds=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
+  creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
   accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
   secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
   sessionToken=$(node -e "console.log(${creds}.SessionToken)")
