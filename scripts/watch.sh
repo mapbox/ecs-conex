@@ -13,7 +13,7 @@ secret=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey =
 url=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey === 'WatchbotWebhookEndpoint'}).OutputValue);")
 
 remote=$(git config --get remote.origin.url)
-repo=$(node -e "console.log(require('path').basename('${remote}'));")
+repo=$(node -e "console.log(require('path').basename('${remote}', '.git'));")
 owner=$(node -e "console.log(require('path').dirname('${remote}').split(':').slice(-1)[0].split('/').slice(-1)[0]);")
 
 hooks=$(curl -sL https://api.github.com/repos/${owner}/${repo}/hooks?access_token=${GithubAccessToken})
