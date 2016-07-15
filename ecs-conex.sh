@@ -154,9 +154,6 @@ function main() {
     fi
   done
 
-  echo "removing npmrc"
-  rm -f ./.npmrc
-
   echo "completed successfully"
 }
 
