@@ -107,6 +107,10 @@ function main() {
   AccountId=${AccountId}
   GithubAccessToken=${GithubAccessToken}
   StackRegion=${StackRegion}
+  NPMToken=${NPMToken}
+
+  echo "creating npmrc"
+  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ./.npmrc
 
   echo "parsing received message"
   parse_message
@@ -149,6 +153,9 @@ function main() {
       docker push "$(after_image ${region} ${tag})"
     fi
   done
+
+  echo "removing npmrc"
+  rm -f ./.npmrc
 
   echo "completed successfully"
 }

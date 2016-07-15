@@ -57,6 +57,10 @@
             "Description": "The number of MB of memory to reserve for each task",
             "Type": "Number",
             "Default": 512
+        },
+        "NPMToken": {
+            "Type": "String",
+            "Description": "npm access token used to install private packages"
         }
     },
     "Resources": {
@@ -503,6 +507,12 @@
                                 "Name": "GithubAccessToken",
                                 "Value": {
                                     "Ref": "GithubAccessToken"
+                                }
+                            },
+                            {
+                                "Name": "NPMToken",
+                                "Value": {
+                                    "Ref": "NPMToken"
                                 }
                             }
                         ],
