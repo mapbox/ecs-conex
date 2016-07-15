@@ -6,6 +6,24 @@ ECS Container Express: a continuous integration service for building Docker imag
 
 Will create one ECR repository for each Github repository, and each time a push is made to the Github repository, a Docker image will be created for the most recent commit in the push. The image will be tagged with the SHA of that most recent commit. Also, if the most recent commit represents a git tag, the tag's name will also become an image in the ECR repository.
 
+## Logging
+
+Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s (assuming you're running ecs-conex on a EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)).
+
+The logs will be formatted using [fastlog](https://github.com/willwhite/fastlog), allowing you to separate them from other logs that may be written to the same file. An example log output:
+
+```
+[Tue, 05 Jul 2016 06:10:51 GMT] [ecs-conex] [39340547-4ec7-413f-bcd4-cdfbdf21a61c] processing commit abcd by chuck to refs/heads/my-branch of my-org/my-repo
+```
+
+This log breaks down as follows:
+
+```
+[timestamp] [ecs-conex] [job id] message
+```
+
+... where `job id` is a common identifier for all the ecs-conex logs related to processing a single push.
+
 ## Setup ecs-conex in your AWS account
 
 This only needs to be performed once per account. More instruction and scripts coming soon.
