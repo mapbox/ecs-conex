@@ -81,6 +81,10 @@ function credentials() {
   if grep -O "ARG AWS_SESSION_TOKEN" ./Dockerfile > /dev/null 2>&1; then
     [ -n "${sessionToken}" ] && args="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
   fi
+
+  if grep -O "ARG NPMToken" ./Dockerfile > /dev/null 2>&1; then
+    [ -n "${NPMToken}" ] && args="--build-arg NPMToken=${NPMToken}"
+  fi
 }
 
 function cleanup() {
@@ -108,9 +112,6 @@ function main() {
   GithubAccessToken=${GithubAccessToken}
   StackRegion=${StackRegion}
   NPMToken=${NPMToken}
-
-  echo "creating npmrc"
-  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ./.npmrc
 
   echo "parsing received message"
   parse_message
