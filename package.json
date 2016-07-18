@@ -1,0 +1,19 @@
+{
+  "name": "ecs-conex",
+  "version": "0.1.0",
+  "description": "ECS Container Express",
+  "main": "ecs-conex.sh",
+  "scripts": {
+    "test": "test/utils.test.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mapbox/ecs-conex.git"
+  },
+  "author": "Mapbox",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mapbox/ecs-conex/issues"
+  },
+  "homepage": "https://github.com/mapbox/ecs-conex#readme"
+}

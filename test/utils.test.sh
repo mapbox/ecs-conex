@@ -1,11 +1,25 @@
 #!/usr/bin/env bash
 
 set -eu
-source ../utils.sh
+source utils.sh
 
-# before_image()
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-before_image us-east-1
+# credentials
+
+function curl () {
+  role=test_role
+  creds=test_creds
+
+  if [[ $2 == *"${role}"* ]]; then
+    echo ${creds}
+  else
+    echo ${role}
+  fi
+}
+
+export NPMToken=test_NPMToken
+credentials ./test/fixtures/Dockerfile
+echo $args
+echo $NPMToken
+if [[ *"$args"* == $NPMToken ]]; then
+  echo PASS
+fi

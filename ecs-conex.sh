@@ -53,7 +53,7 @@ function main() {
   docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
   echo "gather local credentials and setup --build-arg"
-  credentials
+  credentials ./Dockerfile
 
   echo "building new image"
   docker build --quiet ${args} --tag ${repo} ${tmpdir}
