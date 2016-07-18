@@ -61,28 +61,28 @@ function credentials() {
 
   npmToken=$(printenv | grep NPMToken | sed 's/.*=//')
   if [[ -n $npmToken ]] && grep -O "ARG NPMToken" ${filepath} > /dev/null 2>&1; then
-    args+="--build-arg NPMToken=${npmToken} "
+    args+="--build-arg NPMToken=${npmToken}"
   fi
 
-  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
-  if [ -z "${role}" ]; then
+  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+  if [[ -z $role ]]; then
     return
   fi
 
-  # creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
-  # accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
-  # secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
-  # sessionToken=$(node -e "console.log(${creds}.SessionToken)")
+  creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
+  accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
+  secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
+  sessionToken=$(node -e "console.log(${creds}.SessionToken)")
 
-  # if [ -n "${accessKeyId}" ] && grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
-  #   args+="--build-arg AWS_ACCESS_KEY_ID=${accessKeyId}"
-  # fi
-  #
-  # if [ -n "${secretAccessKey}" ] && grep -O "ARG AWS_SECRET_ACCESS_KEY" ./Dockerfile > /dev/null 2>&1; then
-  #   args+="--build-arg AWS_SECRET_ACCESS_KEY=${secretAccessKey}"
-  # fi
-  #
-  # if [ -n "${sessionToken}" ] && grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
-  #   args+="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
-  # fi
+  if [[ -n $accessKeyId ]] && [[ $accessKeyId != "undefined" ]] && grep -O "ARG AWS_ACCESS_KEY_ID" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg AWS_ACCESS_KEY_ID=${accessKeyId}"
+  fi
+
+  if [[ -n $secretAccessKey ]] && [[ $secretAccessKey != "undefined" ]] && grep -O "ARG AWS_SECRET_ACCESS_KEY" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg AWS_SECRET_ACCESS_KEY=${secretAccessKey}"
+  fi
+
+  if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep -O "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
+  fi
 }
