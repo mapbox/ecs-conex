@@ -155,6 +155,7 @@ fi
 
 # login()
 alias oldaws='aws'
+export region=us-east-1
 function aws() {
   if [ "$1" != "ecr" ]; then
     FAILED=1
@@ -164,11 +165,16 @@ function aws() {
       FAILED=1
       echo "echo \"Second argument must be get-login\""
     else
-      echo "echo \"all good\""
+      if [ "$4" != "${region}" ]; then
+        FAILED=1
+        echo "echo \"Must pass in region to aws ecr\""
+      else
+        echo "echo \"all good\""
+      fi
     fi
   fi
 }
-log=$(login us-east-1)
+log=$(login ${region})
 if [ "${log}" != "all good" ]; then
   FAILED=1
   echo "FAILED login()"
