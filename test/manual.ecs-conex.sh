@@ -20,7 +20,7 @@ AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
 NPMToken=${NPMToken}
 
-docker build -qt ecs-conex ./ > /dev/null
+docker build -t ecs-conex ./
 docker run \
   -v $TMPDIR:/mnt/data \
   -v /var/run/docker.sock:/var/run/docker.sock \
