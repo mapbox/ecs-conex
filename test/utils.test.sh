@@ -2,6 +2,7 @@
 
 set -eu
 source $(dirname $0)/../utils.sh
+source $(dirname $0)/lib/utils.sh
 FAILED=0
 
 # test parse_message
@@ -163,7 +164,6 @@ else
 fi
 
 # login()
-alias oldaws='aws'
 export region=us-east-1
 function aws() {
   if [ "$1" != "ecr" ]; then
@@ -190,11 +190,9 @@ if [ "${log}" != "all good" ]; then
 else
   echo "PASSED login()"
 fi
-alias aws='oldaws'
 
 # ensure_repo()
-alias oldaws='aws'
-eval "$(echo "old_create_repo()"; declare -f create_repo | tail -n +2)"
+copy_func create_repo old_create_repo
 export region=us-east-1
 export FAILURE=""
 function aws() {
@@ -242,15 +240,13 @@ if [ "${log}" != "called create_repo" ] || [ "${FAILURE}" != "" ]; then
 else
   echo "PASSED ensure_repo() does not exist"
 fi
-alias aws='oldaws'
-eval "$(echo "create_repo()"; declare -f old_create_repo | tail -n +2)"
+copy_func old_create_repo create_repo
 
 # create_repo()
 export repo=repo
 export region=us-east-1
 export FAILURE=""
 export CALLED=0
-alias oldaws='aws'
 function aws() {
   if [ "$1" != "ecr" ]; then
     FAILED=1
@@ -281,13 +277,11 @@ if [ "${log}" != "" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
 else
   echo "PASSED create_repo()"
 fi
-alias aws='oldaws'
 
 # github_status()
 export status="good"
 export description="all clear"
 export status_url="https://api.github.com/repos/someone/stuff"
-eval "$(echo "old_curl()"; declare -f curl | tail -n +2)"
 function curl() {
   if [ "$3" != "POST" ]; then
     FAILED=1
@@ -307,7 +301,6 @@ function curl() {
   fi
 }
 log=$(github_status ${status} ${description})
-eval "$(echo "curl()"; declare -f old_curl | tail -n +2)"
 if [ "${log}" != "sending ${status} status to github" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
   FAILED=1
   echo "FAILED github_status()"
