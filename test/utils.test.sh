@@ -74,14 +74,10 @@ function aws() {
       if [ "${4}" != "${test_region}" ]; then
         echo "Fourth argument must be region"
       else
-        echo "All good"
+        echo "echo All good"
       fi
     fi
   fi
-}
-
-function eval() {
-  echo $1
 }
 
 log=$(login ${test_region})
@@ -94,78 +90,78 @@ else
   passed "should be equal"
 fi
 
-# # ensure_repo() setup
-# copy_func create_repo old_create_repo
-# test_region=us-east-1
-# FAILURE_MESSAGE=""
-# CALLED=0
-#
-# function aws() {
-#   if [ "${1}" != "ecr" ]; then
-#     FAILURE_MESSAGE="First argument must be ecr"
-#   else
-#     if [ "${2}" != "describe-repositories" ]; then
-#       FAILURE_MESSAGE="Second argument must be describe-repositories"
-#     else
-#       if [ "${4}" != "${test_region}" ]; then
-#         FAILURE_MESSAGE="Fourth argument must be region"
-#       else
-#         if [ "${6}" == "exists" ]; then
-#           return 0
-#         elif [ "${6}" == "not_exists" ]; then
-#           return 1
-#         fi
-#       fi
-#     fi
-#   fi
-# }
-#
-# function create_repo() {
-#   CALLED=1
-# }
-#
-# # ensure_repo() exists test
-# tag_test "ensure_repo() exists"
-# repo=exists
-#
-# ensure_repo ${test_region}
-#
-# test
-# if [ "${CALLED}" != 0 ]; then
-#   failed "should be equal" "0" "${CALLED}"
-# else
-#   passed "should be equal"
-# fi
-#
-# test
-# if [ "${FAILURE_MESSAGE}" != "" ]; then
-#   failed "should not have any failures" "" "${FAILURE_MESSAGE}"
-# else
-#   passed "should not have any failures"
-# fi
-#
-# # ensure_repo() doesn't exist test
-# tag_test "ensure_repo() doesn't exist"
-# repo="not_exists"
-#
-# ensure_repo ${test_region}
-#
-# test
-# if [ "${CALLED}" != "1" ]; then
-#   failed "should be equal" "1" "${CALLED}"
-# else
-#   passed "should be equal"
-# fi
-#
-# test
-# if [ "${FAILURE_MESSAGE}" != "" ]; then
-#   failed "should not have any failures" "" "${FAILURE_MESSAGE}"
-# else
-#   passed "should not have any failures"
-# fi
-#
-# # ensure_repo() cleanup
-# copy_func old_create_repo create_repo
+# ensure_repo() setup
+copy_func create_repo old_create_repo
+test_region=us-east-1
+FAILURE_MESSAGE=""
+CALLED=0
+
+function aws() {
+  if [ "${1}" != "ecr" ]; then
+    FAILURE_MESSAGE="First argument must be ecr"
+  else
+    if [ "${2}" != "describe-repositories" ]; then
+      FAILURE_MESSAGE="Second argument must be describe-repositories"
+    else
+      if [ "${4}" != "${test_region}" ]; then
+        FAILURE_MESSAGE="Fourth argument must be region"
+      else
+        if [ "${6}" == "exists" ]; then
+          return 0
+        elif [ "${6}" == "not_exists" ]; then
+          return 1
+        fi
+      fi
+    fi
+  fi
+}
+
+function create_repo() {
+  CALLED=1
+}
+
+# ensure_repo() exists test
+tag_test "ensure_repo() exists"
+repo=exists
+
+ensure_repo ${test_region}
+
+test
+if [ "${CALLED}" != 0 ]; then
+  failed "should be equal" "0" "${CALLED}"
+else
+  passed "should be equal"
+fi
+
+test
+if [ "${FAILURE_MESSAGE}" != "" ]; then
+  failed "should not have any failures" "" "${FAILURE_MESSAGE}"
+else
+  passed "should not have any failures"
+fi
+
+# ensure_repo() doesn't exist test
+tag_test "ensure_repo() doesn't exist"
+repo="not_exists"
+
+ensure_repo ${test_region}
+
+test
+if [ "${CALLED}" != "1" ]; then
+  failed "should be equal" "1" "${CALLED}"
+else
+  passed "should be equal"
+fi
+
+test
+if [ "${FAILURE_MESSAGE}" != "" ]; then
+  failed "should not have any failures" "" "${FAILURE_MESSAGE}"
+else
+  passed "should not have any failures"
+fi
+
+# ensure_repo() cleanup
+copy_func old_create_repo create_repo
 
 # create_repo() test
 tag_test "create_repo()"
