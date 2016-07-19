@@ -185,7 +185,7 @@ alias aws='oldaws'
 
 # ensure_repo()
 alias oldaws='aws'
-alias oldcreate_repo='create_repo'
+eval "$(echo "old_create_repo()"; declare -f create_repo | tail -n +2)"
 export region=us-east-1
 export FAILURE=""
 function aws() {
@@ -234,7 +234,78 @@ else
   echo "PASSED ensure_repo() does not exist"
 fi
 alias aws='oldaws'
-alias create_repo='oldcreate_repo'
+eval "$(echo "create_repo()"; declare -f old_create_repo | tail -n +2)"
+
+# create_repo()
+export repo=repo
+export region=us-east-1
+export FAILURE=""
+export CALLED=0
+alias oldaws='aws'
+function aws() {
+  if [ "$1" != "ecr" ]; then
+    FAILED=1
+    FAILURE="First argument must be ecr"
+  else
+    if [ "$2" != "create-repository" ]; then
+      FAILED=1
+      FAILURE="Second argument must be describe-repositories"
+    else
+      if [ "$4" != "${region}" ]; then
+        FAILED=1
+        FAILURE="Must pass in region to aws ecr"
+      else
+        if [ "$6" != "repo" ]; then
+          FAILED=1
+          FAILURE="Must pass in repo to aws ecr"
+        else
+          CALLED=1
+        fi
+      fi
+    fi
+  fi
+}
+log=$(create_repo ${region})
+if [ "${log}" != "" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
+  FAILED=1
+  echo "FAILED create_repo()"
+else
+  echo "PASSED create_repo()"
+fi
+alias aws='oldaws'
+
+# github_status()
+export status="good"
+export description="all clear"
+export status_url="https://api.github.com/repos/someone/stuff"
+eval "$(echo "old_curl()"; declare -f curl | tail -n +2)"
+function curl() {
+  if [ "$3" != "POST" ]; then
+    FAILED=1
+    FAILURE="Must be POST request"
+  else
+    if [ "$7" != "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" ]; then
+      FAILED=1
+      FAILURE="Must post correct body"
+    else
+      if [ "$8" != "${status_url}" ]; then
+        FAILED=1
+        FAILURE="Must post to the status url"
+      else
+        CALLED=1
+      fi
+    fi
+  fi
+}
+log=$(github_status ${status} ${description})
+eval "$(echo "curl()"; declare -f old_curl | tail -n +2)"
+if [ "${log}" != "sending ${status} status to github" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
+  FAILED=1
+  echo "FAILED github_status()"
+else
+  echo "PASSED github_status()"
+fi
+
 
 if [ ${FAILED} == 1 ]
 then
