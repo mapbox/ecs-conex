@@ -36,7 +36,10 @@ function main() {
   parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
-  github_status "pending" "ecs-conex is building an image"
+
+  status="pending"
+  echo "sending ${status} status to github"
+  github_status "${status}" "ecs-conex is building an image"
   [ "${deleted}" == "true" ] && exit 0
 
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}

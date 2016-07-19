@@ -4,6 +4,7 @@ set -eu
 source $(dirname $0)/../utils.sh
 source $(dirname $0)/lib/utils.sh
 FAILED=0
+PASSED=0
 
 # initialize test id counter
 testId=0
@@ -17,6 +18,8 @@ export after=2
 
 log=$(before_image us-east-1)
 expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:1"
+
+test
 if [ "${log}" != "${expected}" ]; then
   failed "should be equal" "${expected}" "${log}"
 else
@@ -32,6 +35,8 @@ export after=2
 
 log=$(after_image us-east-1)
 expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:2"
+
+test
 if [ "${log}" != "${expected}" ]; then
   failed "should be equal" "${expected}" "${log}"
 else
@@ -47,6 +52,8 @@ export after=2
 
 log=$(after_image us-east-1 v1.0.0)
 expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:v1.0.0"
+
+test
 if [ "${log}" != "${expected}" ]; then
   failed "should be equal" "${expected}" "${log}"
 else
@@ -65,7 +72,7 @@ function aws() {
       echo "Second argument must be get-login"
     else
       if [ "${4}" != "${test_region}" ]; then
-        echo "Must pass in region to aws ecr"
+        echo "Fourth argument must be region"
       else
         echo "All good"
       fi
@@ -80,91 +87,105 @@ function eval() {
 log=$(login ${test_region})
 expected="All good"
 
+test
 if [ "${log}" != "${expected}" ]; then
   failed "should be equal" "${expected}" "${log}"
 else
   passed "should be equal"
 fi
 
-# ensure_repo() setup
-copy_func create_repo old_create_repo
+# # ensure_repo() setup
+# copy_func create_repo old_create_repo
+# test_region=us-east-1
+# FAILURE_MESSAGE=""
+# CALLED=0
+#
+# function aws() {
+#   if [ "${1}" != "ecr" ]; then
+#     FAILURE_MESSAGE="First argument must be ecr"
+#   else
+#     if [ "${2}" != "describe-repositories" ]; then
+#       FAILURE_MESSAGE="Second argument must be describe-repositories"
+#     else
+#       if [ "${4}" != "${test_region}" ]; then
+#         FAILURE_MESSAGE="Fourth argument must be region"
+#       else
+#         if [ "${6}" == "exists" ]; then
+#           return 0
+#         elif [ "${6}" == "not_exists" ]; then
+#           return 1
+#         fi
+#       fi
+#     fi
+#   fi
+# }
+#
+# function create_repo() {
+#   CALLED=1
+# }
+#
+# # ensure_repo() exists test
+# tag_test "ensure_repo() exists"
+# repo=exists
+#
+# ensure_repo ${test_region}
+#
+# test
+# if [ "${CALLED}" != 0 ]; then
+#   failed "should be equal" "0" "${CALLED}"
+# else
+#   passed "should be equal"
+# fi
+#
+# test
+# if [ "${FAILURE_MESSAGE}" != "" ]; then
+#   failed "should not have any failures" "" "${FAILURE_MESSAGE}"
+# else
+#   passed "should not have any failures"
+# fi
+#
+# # ensure_repo() doesn't exist test
+# tag_test "ensure_repo() doesn't exist"
+# repo="not_exists"
+#
+# ensure_repo ${test_region}
+#
+# test
+# if [ "${CALLED}" != "1" ]; then
+#   failed "should be equal" "1" "${CALLED}"
+# else
+#   passed "should be equal"
+# fi
+#
+# test
+# if [ "${FAILURE_MESSAGE}" != "" ]; then
+#   failed "should not have any failures" "" "${FAILURE_MESSAGE}"
+# else
+#   passed "should not have any failures"
+# fi
+#
+# # ensure_repo() cleanup
+# copy_func old_create_repo create_repo
+
+# create_repo() test
+tag_test "create_repo()"
+repo=repo
 test_region=us-east-1
-FAILURE=0
+FAILURE_MESSAGE=""
+CALLED=0
 
 function aws() {
   if [ "${1}" != "ecr" ]; then
-    echo "First argument must be ecr"
-    FAILURE=1
-  else
-    if [ "${2}" != "describe-repositories" ]; then
-      echo "Second argument must be describe-repositories"
-      FAILURE=1
-    else
-      if [ "${4}" != "${test_region}" ]; then
-        echo "Must pass in region to aws ecr"
-        FAILURE=1
-      else
-        if [ "${6}" == "not_exists" ]; then
-          return 1
-        elif [ "${6}" == "exists" ]; then
-          return 2
-        fi
-      fi
-    fi
-  fi
-}
-
-function create_repo() {
-  echo "called create_repo"
-}
-
-# ensure_repo() exists test
-tag_test "ensure_repo() exists"
-repo=exists
-
-log=$(ensure_repo ${test_region})
-if [ "${log}" == "called create_repo" ]; then
-  failed "should not be equal" "undefined" ${log}
-elif [ "${FAILURE}" != 0 ]; then
-  failed "should not have any failures" "" ${FAILURE}
-else
-  passed "repo should exist"
-fi
-
-# ensure_repo() doesn't exist
-tag_test "ensure_repo() doesn't exist"
-export repo="not_exists"
-
-log=$(ensure_repo ${region})
-expected="called create_repo"
-if [ "${log}" != "${expected}" ]; then
-  failed "should be equal" ${expected} ${log}
-elif [ "${FAILURE}" != "" ]; then
-  failed "should not have any failures" "" ${FAILURE}
-else
-  passed "repo should not exist"
-fi
-
-copy_func old_create_repo create_repo
-
-# create_repo()
-tag_test "create_repo()"
-export repo=repo
-export region=us-east-1
-export FAILURE=""
-export CALLED=0
-function aws() {
-  if [ "$1" != "ecr" ]; then
-    failed "should be equal" "ecr" $1
+    FAILURE_MESSAGE="First argument must be ecr"
   else
     if [ "$2" != "create-repository" ]; then
-      failed "should be equal" "create-repository" $2
+      FAILURE_MESSAGE="Second argument must be create-repository"
     else
-      if [ "$4" != "${region}" ]; then
-        failed "should be equal" ${region} ${4}
+      if [ "$4" != "${test_region}" ]; then
+        FAILURE_MESSAGE="Fourth argument must be region"
       else
         if [ "$6" != "repo" ]; then
-          failed "should be equal" "repo" ${6}
+          FAILURE_MESSAGE="Sixth argument must be repo"
         else
           CALLED=1
         fi
@@ -173,71 +194,76 @@ function aws() {
   fi
 }
 
-log=$(create_repo ${region})
-if [ "${log}" != "" ]; then
-  failed "should not have a log" "" ${log}
-elif [ "${FAILURE}" != "" ]; then
-  failed "should not have any failures" "" ${FAILURE}
-elif [ "${CALLED}" != 0 ]; then
-  failed "should be equal" "0" ${CALLED}
+create_repo ${test_region}
+
+test
+if [ "${FAILURE_MESSAGE}" != "" ]; then
+  failed "should not have any failures" "" "${FAILURE_MESSAGE}"
 else
-  passed "repo should be created"
+  passed "should not have any failures"
 fi
 
+test
+if [ "${CALLED}" != 1 ]; then
+  failed "should be equal" "1" "${CALLED}"
+else
+  passed "should be equal"
+fi
 
+# github_status() test
+tag_test "github_status()"
+test_status="good"
+test_description="clear"
+status_url="https://api.github.com/repos/someone/stuff"
+FAILURE_MESSAGE=""
+CALLED=0
 
-# # github_status()
-# tag_test "github_status()"
-# status="good"
-# description="clear"
-# status_url="https://api.github.com/repos/someone/stuff"
-# FAILURE=""
-# CALLED=""
-#
-# function curl() {
-#   echo "hi"
-  # if [ "$3" != "POST" ]; then
-  #   message="should be POST request"
-  #   failed ${message} "POST" ${3}
-  #   FAILURE=${message}
-  # else
-  #   if [ "$7" != "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" ]; then
-  #     FAILED=1
-  #     FAILURE="Must post correct body"
-  #   else
-  #     if [ "$8" != "${status_url}" ]; then
-  #       FAILED=1
-  #       FAILURE="Must post to the status url"
-  #     else
-  #       CALLED=1
-  #     fi
-  #   fi
-  # fi
-# }
+function curl() {
+  if [ "${3}" != "POST" ]; then
+    FAILURE_MESSAGE="Must be a POST request"
+  else
+    if [ "${7}" != "{\"state\":\"${test_status}\",\"description\":\"${test_description}\",\"context\":\"ecs-conex\"}" ]; then
+      FAILURE_MESSAGE="Must post correct body"
+    else
+      if [ "${8}" != "${status_url}" ]; then
+        FAILURE_MESSAGE="Must post to the status url"
+      else
+        CALLED=1
+      fi
+    fi
+  fi
+}
 
-# log=$(github_status ${status} ${description})
-# github_status ${status} ${description}
-# if [ "${log}" != "sending ${status} status to github" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
-#   FAILED=1
-#   echo "FAILED github_status()"
-# else
-#   echo "PASSED github_status()"
-# fi
+github_status ${test_status} ${test_description}
 
+test
+if [ "${FAILURE_MESSAGE}" != "" ]; then
+  failed "should not have any failures" "" "${FAILURE_MESSAGE}"
+else
+  passed "should not have any failures"
+fi
 
+test
+if [ "${CALLED}" != 1 ]; then
+  failed "should be equal" "1" "${CALLED}"
+else
+  passed "should be equal"
+fi
 
-# test parse_message
+# parse_message() test
+tag_test "parse_message()"
 Message=$(cat ./test/fixtures/message.test.json)
 GithubAccessToken=test
 parse_message
+
+test
 if [[ ${status_url} != "https://api.github.com/repos/test/test/statuses/test?access_token=test" ]]; then
-  echo FAILED \${Message} parsed incorrectly
+  failed "should be equal" "https://api.github.com/repos/test/test/statuses/test?access_token=test" "${status_url}"
 else
-  echo PASSED \${Message} parsed correctly
+  passed "should be equal"
 fi
 
-# test credentials (setup)
-
+# credentials() (setup)
 function curl () {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')
   role=test_role
@@ -251,7 +277,6 @@ function curl () {
   fi
 }
 
-# set up
 export NPMToken=""
 creds=$(cat ./test/fixtures/creds.test.json)
 echo "ARG NPMToken" > /tmp/Dockerfile.test
@@ -259,95 +284,108 @@ echo "ARG AWS_ACCESS_KEY_ID" >> /tmp/Dockerfile.test
 echo "ARG AWS_SECRET_ACCESS_KEY" >> /tmp/Dockerfile.test
 echo "ARG AWS_SESSION_TOKEN" >> /tmp/Dockerfile.test
 
-# test credentials (missing npm token in env)
+# credentials() no npm token in env test
+tag_test "credentials() missing npm token in env"
+
 credentials /tmp/Dockerfile.test
-if [[ ${args} != *"NPMToken=${NPMToken}"* ]]; then
-  echo PASSED \${args} should not contain \${NPMToken}
+
+test
+if [[ ${args} == *"NPMToken=${NPMToken}"* ]]; then
+  failed "args should not contain NPM token" "false" "true"
 else
-  FAILED=1
-  echo FAILED \${args} contains \${NPMToken}
+  passed "args should not contain NPM token"
 fi
 
-# test credentials (missing npm token in dockerfile)
+# credentials() no npm token in dockerfile test
+tag_test "credentials() missing npm token in dockerfile"
 export NPMToken=test_NPMToken
 dockerfile=$(cat /tmp/Dockerfile.test)
 echo "" > /tmp/Dockerfile.test
+
 credentials /tmp/fakeDockerfile.test
-if [[ ${args} != *"NPMToken=${NPMToken}"* ]]; then
-  echo PASSED \${args} should not contain \${NPMToken}
+
+test
+if [[ ${args} == *"NPMToken=${NPMToken}"* ]]; then
+  failed "args should not contain NPM token" "false" "true"
 else
-  FAILED=1
-  echo FAILED \${args} contains \${NPMToken}
+  passed "args should not contain NPM token"
 fi
 echo "${dockerfile}" > /tmp/Dockerfile.test
 
-# test credentials (no role)
+# credentials() no role test
+tag_test "credentials() missing role"
 export nullRole=1
+
 credentials /tmp/Dockerfile.test
-if [[ ${args} == "--build-arg NPMToken=test_NPMToken" ]]; then
-  echo PASSED \${args} should only contain \${NPMToken}
+
+test
+if [[ ${args} != "--build-arg NPMToken=test_NPMToken" ]]; then
+  failed "args should only contain NPM token" "true" "false"
 else
-  FAILED=1
-  echo FAILED \${args} does not only contain \${NPMToken}
+  passed "args should only contain NPM token"
 fi
 
-# test credentials (role)
+# credentials() role test
+tag_test "credentials() role"
 export nullRole=""
+
 credentials /tmp/Dockerfile.test
 
+test
 if [[ ${args} != *"NPMToken=${NPMToken}"* ]]; then
-  FAILED=1
-  echo FAILED \${args} does not contain \${NPMToken}
+  failed "args should contain NPM token" "true" "false"
 else
-  echo PASSED \${args} should only contain \${NPMToken}
+  passed "args should contain NPM token"
 fi
 
+test
 if [[ ${args} != *"AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"* ]]; then
-  FAILED=1
-  echo FAILED \${args} does not contain \${AWS_ACCESS_KEY_ID}
+  failed "args should contain AWS Access Key ID" "true" "false"
 else
-  echo PASSED \${args} should contain \${AWS_ACCESS_KEY_ID}
+  passed "args should contain AWS Access Key ID"
 fi
 
+test
 if [[ ${args} != *"AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"* ]]; then
-  FAILED=1
-  echo FAILED \${args} does not contain \${AWS_SECRET_ACCESS_KEY}
+  failed "args should contain AWS Secret Access Key" "true" "false"
 else
-  echo PASSED \${args} should contain \${AWS_SECRET_ACCESS_KEY}
+  passed "args should contain AWS Secret Access Key"
 fi
 
+test
 if [[ ${args} != *"AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"* ]]; then
-  FAILED=1
-  echo FAILED \${args} does not contain \${AWS_SESSION_TOKEN}
+  failed "args should contain AWS Session Token" "true" "false"
 else
-  echo PASSED \${args} should contain \${AWS_SECRET_ACCESS_KEY}
+  passed "args should contain AWS Session Token"
 fi
 
-# test credentials (missing npm arguments in dockerfile)
+# credentials() missing build arguments in dockerfile test
+tag_test "credentials() missing build arguments in dockerfile"
 dockerfile=$(cat /tmp/Dockerfile.test)
 echo "" > /tmp/Dockerfile.test
+
 credentials /tmp/Dockerfile.test
+
+test
 if [[ -n $args ]]; then
-  FAILED=1
-  echo FAILED \${args} contains unexpected build arguments
+  failed "args should be empty" "true" "false"
 else
-  echo PASSED \${args} should not contain build arguments
+  passed "args should be empty"
 fi
 echo "${dockerfile}" > /tmp/Dockerfile.test
 
-# test credentials (missing npm arguments in creds)
+# credentials() missing build arguments in creds test
+tag_test "credentials() missing build arguments in creds"
 creds="{}"
+
 credentials /tmp/Dockerfile.test
-if [[ ${args} == "--build-arg NPMToken=test_NPMToken" ]]; then
-  echo PASSED \${args} should only contain \${NPMToken}
+
+test
+if [[ ${args} != "--build-arg NPMToken=test_NPMToken" ]]; then
+  failed "args should only contain npm token" "true" "false"
 else
-  FAILED=1
-  echo FAILED \${args} does not only contain \${NPMToken}
+  passed "args should only contain npm token"
 fi
 
-if [ ${FAILED} == 1 ]
-then
-  echo "TESTS FAILED"
-else
-  echo "TESTS PASSED"
-fi
+# summary
+summarize

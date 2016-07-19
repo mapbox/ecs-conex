@@ -10,19 +10,29 @@ function copy_func() {
 
 function tag_test() {
   label=$1
-  echo "# test ${label}"
+  echo -e "\n# test ${label}"
+}
+
+function test () {
   testId=$((testId+1))
 }
 
 function passed() {
+  PASSED=$((PASSED+1))
   message=$1
-  echo -e "ok ${testId} ${message}\n"
+  echo -e "ok ${testId} ${message}"
 }
 
 function failed() {
-  FAILED=1
+  FAILED=$((FAILED+1))
   message=$1
   expected=$2
   actual=$3
-  echo -e "not ok ${testId} ${message}\n  ---\n    expected: ${expected}\n    actual:   ${actual}\n  ---\n"
+  echo -e "not ok ${testId} ${message}\n  ---\n    expected: ${expected}\n    actual:   ${actual}\n  ---"
+}
+
+function summarize() {
+  echo -e "\n# tests $((PASSED + FAILED))"
+  echo -e "# pass  ${PASSED}"
+  echo -e "# fail  ${FAILED}\n"
 }
