@@ -5,6 +5,227 @@ source $(dirname $0)/../utils.sh
 source $(dirname $0)/lib/utils.sh
 FAILED=0
 
+# initialize test id counter
+testId=0
+
+# before_image() test
+tag_test "before_image()"
+export AccountId=1
+export repo=repo
+export before=1
+export after=2
+
+log=$(before_image us-east-1)
+expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:1"
+if [ "${log}" != "${expected}" ]; then
+  failed "should be equal" "${expected}" "${log}"
+else
+  passed "should be equal"
+fi
+
+# after_image() 1 param test
+tag_test "after_image() with 1 param"
+export AccountId=1
+export repo=repo
+export before=1
+export after=2
+
+log=$(after_image us-east-1)
+expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:2"
+if [ "${log}" != "${expected}" ]; then
+  failed "should be equal" "${expected}" "${log}"
+else
+  passed "should be equal"
+fi
+
+# after_image() 2 param test
+tag_test "after_image() with 2 params"
+export AccountId=1
+export repo=repo
+export before=1
+export after=2
+
+log=$(after_image us-east-1 v1.0.0)
+expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:v1.0.0"
+if [ "${log}" != "${expected}" ]; then
+  failed "should be equal" "${expected}" "${log}"
+else
+  passed "should be equal"
+fi
+
+# login() test
+tag_test "login()"
+test_region=us-east-1
+
+function aws() {
+  if [ "${1}" != "ecr" ]; then
+    echo "First argument must be ecr"
+  else
+    if [ "${2}" != "get-login" ]; then
+      echo "Second argument must be get-login"
+    else
+      if [ "${4}" != "${test_region}" ]; then
+        echo "Must pass in region to aws ecr"
+      else
+        echo "All good"
+      fi
+    fi
+  fi
+}
+
+function eval() {
+  echo $1
+}
+
+log=$(login ${test_region})
+expected="All good"
+
+if [ "${log}" != "${expected}" ]; then
+  failed "should be equal" "${expected}" "${log}"
+else
+  passed "should be equal"
+fi
+
+# ensure_repo() setup
+copy_func create_repo old_create_repo
+test_region=us-east-1
+FAILURE=0
+
+function aws() {
+  if [ "${1}" != "ecr" ]; then
+    echo "First argument must be ecr"
+    FAILURE=1
+  else
+    if [ "${2}" != "describe-repositories" ]; then
+      echo "Second argument must be describe-repositories"
+      FAILURE=1
+    else
+      if [ "${4}" != "${test_region}" ]; then
+        echo "Must pass in region to aws ecr"
+        FAILURE=1
+      else
+        if [ "${6}" == "not_exists" ]; then
+          return 1
+        elif [ "${6}" == "exists" ]; then
+          return 2
+        fi
+      fi
+    fi
+  fi
+}
+
+function create_repo() {
+  echo "called create_repo"
+}
+
+# ensure_repo() exists test
+tag_test "ensure_repo() exists"
+repo=exists
+
+log=$(ensure_repo ${test_region})
+if [ "${log}" == "called create_repo" ]; then
+  failed "should not be equal" "undefined" ${log}
+elif [ "${FAILURE}" != 0 ]; then
+  failed "should not have any failures" "" ${FAILURE}
+else
+  passed "repo should exist"
+fi
+
+# ensure_repo() doesn't exist
+tag_test "ensure_repo() doesn't exist"
+export repo="not_exists"
+
+log=$(ensure_repo ${region})
+expected="called create_repo"
+if [ "${log}" != "${expected}" ]; then
+  failed "should be equal" ${expected} ${log}
+elif [ "${FAILURE}" != "" ]; then
+  failed "should not have any failures" "" ${FAILURE}
+else
+  passed "repo should not exist"
+fi
+
+copy_func old_create_repo create_repo
+
+# create_repo()
+tag_test "create_repo()"
+export repo=repo
+export region=us-east-1
+export FAILURE=""
+export CALLED=0
+function aws() {
+  if [ "$1" != "ecr" ]; then
+    failed "should be equal" "ecr" $1
+  else
+    if [ "$2" != "create-repository" ]; then
+      failed "should be equal" "create-repository" $2
+    else
+      if [ "$4" != "${region}" ]; then
+        failed "should be equal" ${region} ${4}
+      else
+        if [ "$6" != "repo" ]; then
+          failed "should be equal" "repo" ${6}
+        else
+          CALLED=1
+        fi
+      fi
+    fi
+  fi
+}
+
+log=$(create_repo ${region})
+if [ "${log}" != "" ]; then
+  failed "should not have a log" "" ${log}
+elif [ "${FAILURE}" != "" ]; then
+  failed "should not have any failures" "" ${FAILURE}
+elif [ "${CALLED}" != 0 ]; then
+  failed "should be equal" "0" ${CALLED}
+else
+  passed "repo should be created"
+fi
+
+
+
+# # github_status()
+# tag_test "github_status()"
+# status="good"
+# description="clear"
+# status_url="https://api.github.com/repos/someone/stuff"
+# FAILURE=""
+# CALLED=""
+#
+# function curl() {
+#   echo "hi"
+  # if [ "$3" != "POST" ]; then
+  #   message="should be POST request"
+  #   failed ${message} "POST" ${3}
+  #   FAILURE=${message}
+  # else
+  #   if [ "$7" != "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" ]; then
+  #     FAILED=1
+  #     FAILURE="Must post correct body"
+  #   else
+  #     if [ "$8" != "${status_url}" ]; then
+  #       FAILED=1
+  #       FAILURE="Must post to the status url"
+  #     else
+  #       CALLED=1
+  #     fi
+  #   fi
+  # fi
+# }
+
+# log=$(github_status ${status} ${description})
+# github_status ${status} ${description}
+# if [ "${log}" != "sending ${status} status to github" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
+#   FAILED=1
+#   echo "FAILED github_status()"
+# else
+#   echo "PASSED github_status()"
+# fi
+
+
+
 # test parse_message
 Message=$(cat ./test/fixtures/message.test.json)
 GithubAccessToken=test
@@ -123,191 +344,6 @@ else
   FAILED=1
   echo FAILED \${args} does not only contain \${NPMToken}
 fi
-
-# before_image()
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-log=$(before_image us-east-1)
-if [ "${log}" != "1.dkr.ecr.us-east-1.amazonaws.com/repo:1" ]; then
-  FAILED=1
-  echo "FAILED before_image"
-else
-  echo "PASSED before_image"
-fi
-
-# after_image() 1 param
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-log=$(after_image us-east-1)
-if [ "${log}" != "1.dkr.ecr.us-east-1.amazonaws.com/repo:2" ]; then
-  FAILED=1
-  echo "FAILED after_image() 1 param"
-else
-  echo "PASSED before_image() 1 param"
-fi
-
-# after_image() 2 param
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-log=$(after_image us-east-1 v1.0.0)
-if [ "${log}" != "1.dkr.ecr.us-east-1.amazonaws.com/repo:v1.0.0" ]; then
-  FAILED=1
-  echo "FAILED after_image() 2 param"
-else
-  echo "PASSED before_image() 2 param"
-fi
-
-# login()
-export region=us-east-1
-function aws() {
-  if [ "$1" != "ecr" ]; then
-    FAILED=1
-    echo "echo \"First argument must be ecr\""
-  else
-    if [ "$2" != "get-login" ]; then
-      FAILED=1
-      echo "echo \"Second argument must be get-login\""
-    else
-      if [ "$4" != "${region}" ]; then
-        FAILED=1
-        echo "echo \"Must pass in region to aws ecr\""
-      else
-        echo "echo \"all good\""
-      fi
-    fi
-  fi
-}
-log=$(login ${region})
-if [ "${log}" != "all good" ]; then
-  FAILED=1
-  echo "FAILED login()"
-else
-  echo "PASSED login()"
-fi
-
-# ensure_repo()
-copy_func create_repo old_create_repo
-export region=us-east-1
-export FAILURE=""
-function aws() {
-  if [ "$1" != "ecr" ]; then
-    FAILED=1
-    FAILURE="First argument must be ecr"
-  else
-    if [ "$2" != "describe-repositories" ]; then
-      FAILED=1
-      FAILURE="Second argument must be describe-repositories"
-    else
-      if [ "$4" != "${region}" ]; then
-        FAILED=1
-        FAILURE="Must pass in region to aws ecr"
-      else
-        if [ "$6" == "exists" ]; then
-          return 0
-        elif [ "$6" == "not_exists" ]; then
-          return 1
-        fi
-      fi
-    fi
-  fi
-}
-function create_repo() {
-  echo "called create_repo"
-}
-
-# ensure_repo() exists
-export repo=exists
-log=$(ensure_repo ${region})
-if [ "${log}" == "called create_repo" ] || [ "${FAILURE}" != "" ]; then
-  FAILED=1
-  echo "FAILED ensure_repo() exists"
-else
-  echo "PASSED ensure_repo() exists"
-fi
-
-# ensure_repo() doesn't exist
-export repo="not_exists"
-log=$(ensure_repo ${region})
-if [ "${log}" != "called create_repo" ] || [ "${FAILURE}" != "" ]; then
-  FAILED=1
-  echo "FAILED ensure_repo() does not exist"
-else
-  echo "PASSED ensure_repo() does not exist"
-fi
-copy_func old_create_repo create_repo
-
-# create_repo()
-export repo=repo
-export region=us-east-1
-export FAILURE=""
-export CALLED=0
-function aws() {
-  if [ "$1" != "ecr" ]; then
-    FAILED=1
-    FAILURE="First argument must be ecr"
-  else
-    if [ "$2" != "create-repository" ]; then
-      FAILED=1
-      FAILURE="Second argument must be describe-repositories"
-    else
-      if [ "$4" != "${region}" ]; then
-        FAILED=1
-        FAILURE="Must pass in region to aws ecr"
-      else
-        if [ "$6" != "repo" ]; then
-          FAILED=1
-          FAILURE="Must pass in repo to aws ecr"
-        else
-          CALLED=1
-        fi
-      fi
-    fi
-  fi
-}
-log=$(create_repo ${region})
-if [ "${log}" != "" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
-  FAILED=1
-  echo "FAILED create_repo()"
-else
-  echo "PASSED create_repo()"
-fi
-
-# github_status()
-export status="good"
-export description="all clear"
-export status_url="https://api.github.com/repos/someone/stuff"
-function curl() {
-  if [ "$3" != "POST" ]; then
-    FAILED=1
-    FAILURE="Must be POST request"
-  else
-    if [ "$7" != "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" ]; then
-      FAILED=1
-      FAILURE="Must post correct body"
-    else
-      if [ "$8" != "${status_url}" ]; then
-        FAILED=1
-        FAILURE="Must post to the status url"
-      else
-        CALLED=1
-      fi
-    fi
-  fi
-}
-log=$(github_status ${status} ${description})
-if [ "${log}" != "sending ${status} status to github" ] || [ "${FAILURE}" != "" ] || [ "${CALLED}" != 0 ]; then
-  FAILED=1
-  echo "FAILED github_status()"
-else
-  echo "PASSED github_status()"
-fi
-
 
 if [ ${FAILED} == 1 ]
 then

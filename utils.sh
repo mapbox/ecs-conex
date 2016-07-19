@@ -35,13 +35,8 @@ function github_status() {
   local status=$1
   local description=$2
 
-  echo "sending ${status} status to github"
-
-  curl -s \
-    --request POST \
-    --header "Content-Type: application/json" \
-    --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" \
-    ${status_url} > /dev/null
+  # echo "sending ${status} status to github"
+  request=$(curl -s --request GET --header "Content-Type: application/json" --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" ${status_url} > /dev/null)
 }
 
 function parse_message() {
