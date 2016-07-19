@@ -3,9 +3,18 @@
 set -eu
 source utils.sh
 
-# test credentials
+# test parse_message
+Message=$(cat ./test/fixtures/message.test.json)
+GithubAccessToken=test
+parse_message
+if [[ ${status_url} != "https://api.github.com/repos/test/test/statuses/test?access_token=test" ]]; then
+  echo FAILED \${Message} parsed incorrectly
+else
+  echo PASSED \${Message} parsed correctly
+fi
 
-# mock curl function
+# test credentials (setup)
+
 function curl () {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')
   role=test_role
