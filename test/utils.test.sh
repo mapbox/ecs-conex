@@ -183,6 +183,59 @@ else
 fi
 alias aws='oldaws'
 
+# ensure_repo()
+alias oldaws='aws'
+alias oldcreate_repo='create_repo'
+export region=us-east-1
+export FAILURE=""
+function aws() {
+  if [ "$1" != "ecr" ]; then
+    FAILED=1
+    FAILURE="First argument must be ecr"
+  else
+    if [ "$2" != "describe-repositories" ]; then
+      FAILED=1
+      FAILURE="Second argument must be describe-repositories"
+    else
+      if [ "$4" != "${region}" ]; then
+        FAILED=1
+        FAILURE="Must pass in region to aws ecr"
+      else
+        if [ "$6" == "exists" ]; then
+          return 0
+        elif [ "$6" == "not_exists" ]; then
+          return 1
+        fi
+      fi
+    fi
+  fi
+}
+function create_repo() {
+  echo "called create_repo"
+}
+
+# ensure_repo() exists
+export repo=exists
+log=$(ensure_repo ${region})
+if [ "${log}" == "called create_repo" ] || [ "${FAILURE}" != "" ]; then
+  FAILED=1
+  echo "FAILED ensure_repo() exists"
+else
+  echo "PASSED ensure_repo() exists"
+fi
+
+# ensure_repo() doesn't exist
+export repo="not_exists"
+log=$(ensure_repo ${region})
+if [ "${log}" != "called create_repo" ] || [ "${FAILURE}" != "" ]; then
+  FAILED=1
+  echo "FAILED ensure_repo() does not exist"
+else
+  echo "PASSED ensure_repo() does not exist"
+fi
+alias aws='oldaws'
+alias create_repo='oldcreate_repo'
+
 if [ ${FAILED} == 1 ]
 then
   echo "TESTS FAILED"
