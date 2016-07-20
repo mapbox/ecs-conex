@@ -67,7 +67,7 @@ function credentials() {
   args=""
 
   npmToken=$(printenv | grep NPMToken | sed 's/.*=//')
-  if [[ -n $npmToken ]] && grep -O "ARG NPMToken" ${filepath} > /dev/null 2>&1; then
+  if [[ -n $npmToken ]] && grep "ARG NPMToken" ${filepath} > /dev/null 2>&1; then
     args+="--build-arg NPMToken=${npmToken}"
   fi
 
@@ -81,15 +81,15 @@ function credentials() {
   secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
   sessionToken=$(node -e "console.log(${creds}.SessionToken)")
 
-  if [[ -n $accessKeyId ]] && [[ $accessKeyId != "undefined" ]] && grep -O "ARG AWS_ACCESS_KEY_ID" ${filepath} > /dev/null 2>&1; then
+  if [[ -n $accessKeyId ]] && [[ $accessKeyId != "undefined" ]] && grep "ARG AWS_ACCESS_KEY_ID" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_ACCESS_KEY_ID=${accessKeyId}"
   fi
 
-  if [[ -n $secretAccessKey ]] && [[ $secretAccessKey != "undefined" ]] && grep -O "ARG AWS_SECRET_ACCESS_KEY" ${filepath} > /dev/null 2>&1; then
+  if [[ -n $secretAccessKey ]] && [[ $secretAccessKey != "undefined" ]] && grep "ARG AWS_SECRET_ACCESS_KEY" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_SECRET_ACCESS_KEY=${secretAccessKey}"
   fi
 
-  if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep -O "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
+  if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
   fi
 }
