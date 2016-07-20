@@ -49,16 +49,12 @@ test_region=us-east-1
 function aws() {
   if [ "${1}" != "ecr" ]; then
     echo "First argument must be ecr"
+  elif [ "${2}" != "get-login" ]; then
+    echo "Second argument must be get-login"
+  elif [ "${4}" != "${test_region}" ]; then
+    echo "Fourth argument must be region"
   else
-    if [ "${2}" != "get-login" ]; then
-      echo "Second argument must be get-login"
-    else
-      if [ "${4}" != "${test_region}" ]; then
-        echo "Fourth argument must be region"
-      else
-        echo "echo All good"
-      fi
-    fi
+    echo "echo All good"
   fi
 }
 
@@ -75,20 +71,16 @@ CALLED=0
 function aws() {
   if [ "${1}" != "ecr" ]; then
     FAILURE_MESSAGE="First argument must be ecr"
+  elif [ "${2}" != "describe-repositories" ]; then
+    FAILURE_MESSAGE="Second argument must be describe-repositories"
+  elif [ "${4}" != "${test_region}" ]; then
+    FAILURE_MESSAGE="Fourth argument must be region"
+  elif [ "${6}" == "exists" ]; then
+    return 0
+  elif [ "${6}" == "not_exists" ]; then
+    return 1
   else
-    if [ "${2}" != "describe-repositories" ]; then
-      FAILURE_MESSAGE="Second argument must be describe-repositories"
-    else
-      if [ "${4}" != "${test_region}" ]; then
-        FAILURE_MESSAGE="Fourth argument must be region"
-      else
-        if [ "${6}" == "exists" ]; then
-          return 0
-        elif [ "${6}" == "not_exists" ]; then
-          return 1
-        fi
-      fi
-    fi
+    FAILURE_MESSAGE="${6} must be exists or not_exists"
   fi
 }
 
@@ -125,20 +117,14 @@ CALLED=0
 function aws() {
   if [ "${1}" != "ecr" ]; then
     FAILURE_MESSAGE="First argument must be ecr"
+  elif [ "$2" != "create-repository" ]; then
+    FAILURE_MESSAGE="Second argument must be create-repository"
+  elif [ "$4" != "${test_region}" ]; then
+    FAILURE_MESSAGE="Fourth argument must be region"
+  elif [ "$6" != "repo" ]; then
+    FAILURE_MESSAGE="Sixth argument must be repo"
   else
-    if [ "$2" != "create-repository" ]; then
-      FAILURE_MESSAGE="Second argument must be create-repository"
-    else
-      if [ "$4" != "${test_region}" ]; then
-        FAILURE_MESSAGE="Fourth argument must be region"
-      else
-        if [ "$6" != "repo" ]; then
-          FAILURE_MESSAGE="Sixth argument must be repo"
-        else
-          CALLED=1
-        fi
-      fi
-    fi
+    CALLED=1
   fi
 }
 
@@ -157,16 +143,12 @@ CALLED=0
 function curl() {
   if [ "${3}" != "POST" ]; then
     FAILURE_MESSAGE="Must be a POST request"
+  elif [ "${7}" != "{\"state\":\"${test_status}\",\"description\":\"${test_description}\",\"context\":\"ecs-conex\"}" ]; then
+    FAILURE_MESSAGE="Must post correct body"
+  elif [ "${8}" != "${status_url}" ]; then
+    FAILURE_MESSAGE="Must post to the status url"
   else
-    if [ "${7}" != "{\"state\":\"${test_status}\",\"description\":\"${test_description}\",\"context\":\"ecs-conex\"}" ]; then
-      FAILURE_MESSAGE="Must post correct body"
-    else
-      if [ "${8}" != "${status_url}" ]; then
-        FAILURE_MESSAGE="Must post to the status url"
-      else
-        CALLED=1
-      fi
-    fi
+    CALLED=1
   fi
 }
 
@@ -286,6 +268,8 @@ function docker() {
     assert "equal" "${4}" "some_after_image"
   elif [ ${1} == "push" ]; then
     assert "equal" "${2}" "some_after_image"
+  else
+    FAILURE="should call docker tag or docker push"
   fi
 }
 
@@ -323,6 +307,8 @@ function docker() {
     assert "equal" "${4}" "some_after_image"
   elif [ ${1} == "push" ]; then
     assert "equal" "${2}" "some_after_image"
+  else
+    FAILURE="should call docker tag or docker push"
   fi
 }
 
