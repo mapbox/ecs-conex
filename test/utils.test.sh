@@ -175,6 +175,7 @@ assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
 # check_dockerfile() test
+tag_test "check_dockerfile()"
 filepath="/fake/file/path"
 log=$(check_dockerfile ${filepath})
 assert "equal" "${log}" "no Dockerfile found"
@@ -261,7 +262,82 @@ creds="{}"
 credentials /tmp/Dockerfile.test
 assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
 
+# exact_match() test
+region=us-east-1
+repo=test
+FAILURE=""
+
+function git () {
+  echo "test_tag"
+}
+
+function after_image {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into after_image"
+  elif [ "${2}" != "test_tag" ]; then
+    FAILURE="Tag not passed into after_image"
+  else
+    echo "some_after_image"
+  fi
+}
+
+function docker() {
+  if [ ${1} == "tag" ]; then
+    assert "equal" "${4}" "some_after_image"
+  elif [ ${1} == "push" ]; then
+    assert "equal" "${2}" "some_after_image"
+  fi
+}
+
+exact_match
+assert "equal" "${FAILURE}" ""
+
+# docker_push() test
+regions=(us-east-1)
+repo=test
+after=test
+FAILURE=""
+
+function ensure_repo() {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into ensure_repo"
+  fi
+}
+
+function login() {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into login"
+  fi
+}
+
+function after_image {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into after_image"
+  else
+    echo "some_after_image"
+  fi
+}
+
+function docker() {
+  if [ ${1} == "tag" ]; then
+    assert "equal" "${4}" "some_after_image"
+  elif [ ${1} == "push" ]; then
+    assert "equal" "${2}" "some_after_image"
+  fi
+}
+
+function git() {
+  exit 1
+}
+
+function exact_match() {
+  assert "equal" "${FAILURE}" ""
+}
+
+docker_push
+
 # cleanup()
+tag_test "cleanup()"
 tmpdir=$(mktemp -d /tmp/ecs-conex-test-XXXXXX)
 Message=$(cat ./test/fixtures/message.test.json)
 GithubAccessToken=test

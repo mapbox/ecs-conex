@@ -44,22 +44,7 @@ function main() {
 
   echo "building new image"
   docker build --quiet ${args} --tag ${repo} ${tmpdir}
-
-  for region in "${regions[@]}"; do
-    ensure_repo ${region}
-    login ${region}
-
-    echo "pushing ${after} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region})"
-    docker push "$(after_image ${region})"
-
-    if git describe --tags --exact-match 2> /dev/null; then
-      tag="$(git describe --tags --exact-match)"
-      echo "pushing ${tag} to ${region}"
-      docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
-      docker push "$(after_image ${region} ${tag})"
-    fi
-  done
+  docker_push
 
   echo "completed successfully"
 }
