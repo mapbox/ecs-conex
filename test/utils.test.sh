@@ -352,3 +352,9 @@ assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # summary
 summarize
+
+if [[ ${FAILED} != 0 ]]; then
+  exit 1
+else
+  exit 0
+fi
