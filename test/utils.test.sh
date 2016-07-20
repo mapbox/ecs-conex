@@ -174,7 +174,10 @@ GithubAccessToken=test
 parse_message
 assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/test?access_token=test"
 
-# credentials() (setup)
+# credentials() setup
+tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
+tmpcreds=$(cat ./test/fixtures/creds.test.json)
+
 function curl () {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')
   role=test_role
@@ -188,41 +191,44 @@ function curl () {
   fi
 }
 
-export NPMToken=""
-creds=$(cat ./test/fixtures/creds.test.json)
-echo "ARG NPMToken" > /tmp/Dockerfile.test
-echo "ARG AWS_ACCESS_KEY_ID" >> /tmp/Dockerfile.test
-echo "ARG AWS_SECRET_ACCESS_KEY" >> /tmp/Dockerfile.test
-echo "ARG AWS_SESSION_TOKEN" >> /tmp/Dockerfile.test
+function write_dockerfile() {
+  creds=$1
+  echo "ARG NPMToken" > ${tmpdocker}
+  echo "ARG AWS_ACCESS_KEY_ID" >> ${tmpdocker}
+  echo "ARG AWS_SECRET_ACCESS_KEY" >> ${tmpdocker}
+  echo "ARG AWS_SESSION_TOKEN" >> ${tmpdocker}
+}
+
+function clear_dockerfile() {
+  echo "" > ${tmpdocker}
+}
 
 # credentials() no npm token in env test
 tag_test "credentials() missing npm token in env"
-
-credentials /tmp/Dockerfile.test
+export NPMToken=""
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMToken=${NPMToken}"
 
 # credentials() no npm token in dockerfile test
 tag_test "credentials() missing npm token in dockerfile"
 export NPMToken=test_NPMToken
-dockerfile=$(cat /tmp/Dockerfile.test)
-echo "" > /tmp/Dockerfile.test
-
-credentials /tmp/fakeDockerfile.test
+clear_dockerfile
+credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMToken=${NPMToken}"
-echo "${dockerfile}" > /tmp/Dockerfile.test
 
 # credentials() no role test
 tag_test "credentials() missing role"
 export nullRole=1
-
-credentials /tmp/Dockerfile.test
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
 
 # credentials() role test
 tag_test "credentials() role"
 export nullRole=""
-
-credentials /tmp/Dockerfile.test
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
 assert "contains" "${args}" "NPMToken=${NPMToken}"
 assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
 assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
@@ -230,18 +236,14 @@ assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.S
 
 # credentials() missing build arguments in dockerfile test
 tag_test "credentials() missing build arguments in dockerfile"
-dockerfile=$(cat /tmp/Dockerfile.test)
-echo "" > /tmp/Dockerfile.test
-
-credentials /tmp/Dockerfile.test
+clear_dockerfile
+credentials ${tmpdocker}
 assert "equal" "${args}" "" "should be empty"
-echo "${dockerfile}" > /tmp/Dockerfile.test
 
 # credentials() missing build arguments in creds test
 tag_test "credentials() missing build arguments in creds"
-creds="{}"
-
-credentials /tmp/Dockerfile.test
+write_dockerfile "{}"
+credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
 
 # exact_match() test
