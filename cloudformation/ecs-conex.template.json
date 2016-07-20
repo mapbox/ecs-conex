@@ -389,10 +389,7 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
-                            "Options": {
-                                "syslog-address": "udp://localhost:514"
-                            }
+                            "LogDriver": "syslog"
                         }
                     }
                 ]
@@ -507,10 +504,7 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
-                            "Options": {
-                                "syslog-address": "udp://localhost:514"
-                            }
+                            "LogDriver": "syslog"
                         },
                         "MountPoints": [
                             {
