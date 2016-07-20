@@ -43,6 +43,14 @@ function github_status() {
     ${status_url} > /dev/null
 }
 
+function check_dockerfile() {
+  filepath=$1
+  if [ ! -f ${filepath} ]; then
+    echo "no Dockerfile found"
+    exit 0
+  fi
+}
+
 function parse_message() {
   ref=$(node -e "console.log(${Message}.ref);")
   after=$(node -e "console.log(${Message}.after);")
@@ -84,4 +92,18 @@ function credentials() {
   if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep -O "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
   fi
+}
+
+function cleanup() {
+  exit_code=$1
+
+  parse_message
+
+  if [ "${exit_code}" == "0" ]; then
+    github_status "success" "ecs-conex successfully completed"
+  else
+    github_status "failure" "ecs-conex failed to build an image"
+  fi
+
+  rm -rf ${tmpdir}
 }

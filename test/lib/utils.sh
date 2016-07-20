@@ -39,9 +39,6 @@ function assert () {
       message="should not equal"
     fi
 
-    echo "${result}"
-    echo ${expected}
-
     if [ "${result}" == "${expected}" ]; then
       failed "${message}" "${expected}" "${result}"
     else

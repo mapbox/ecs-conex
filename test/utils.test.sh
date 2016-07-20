@@ -174,6 +174,16 @@ github_status ${test_status} ${test_description}
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
+# check_dockerfile() test
+filepath="/fake/file/path"
+log=$(check_dockerfile ${filepath})
+assert "equal" "${log}" "no Dockerfile found"
+assert "equal" "$?" "0"
+
+filepath="ecs-conex.sh"
+log=$(check_dockerfile ${filepath})
+assert "equal" "${log}" ""
+
 # parse_message() test
 tag_test "parse_message()"
 Message=$(cat ./test/fixtures/message.test.json)
@@ -250,6 +260,33 @@ creds="{}"
 
 credentials /tmp/Dockerfile.test
 assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
+
+# cleanup()
+tmpdir=$(mktemp -d /tmp/ecs-conex-test-XXXXXX)
+Message=$(cat ./test/fixtures/message.test.json)
+GithubAccessToken=test
+status=""
+message=""
+FAILURE=""
+
+function github_status() {
+  github_status=$1
+  github_message=$2
+}
+
+cleanup 1
+assert "equal" "${github_status}" "failure"
+assert "equal" "${github_message}" "ecs-conex failed to build an image"
+
+cleanup 0
+assert "equal" "${github_status}" "success"
+assert "equal" "${github_message}" "ecs-conex successfully completed"
+
+if [ -d ${tmpdir} ]; then
+  FAILURE="directory was not deleted"
+  rm -rf ${tmpdir}
+fi
+assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # summary
 summarize

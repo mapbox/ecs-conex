@@ -7,20 +7,6 @@ regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 source utils.sh
 
-function cleanup() {
-  exit_code=$?
-
-  parse_message
-
-  if [ "${exit_code}" == "0" ]; then
-    github_status "success" "ecs-conex successfully completed"
-  else
-    github_status "failure" "ecs-conex failed to build an image"
-  fi
-
-  rm -rf ${tmpdir}
-}
-
 function main() {
   echo "checking docker configuration"
   docker version > /dev/null
@@ -45,10 +31,8 @@ function main() {
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
-  if [ ! -f ./Dockerfile ]; then
-    echo "no Dockerfile found"
-    exit 0
-  fi
+  echo "looking for dockerfile"
+  check_dockerfile ./Dockerfile
 
   echo "attempt to fetch previous image ${before} from ${StackRegion}"
   ensure_repo ${StackRegion}
@@ -80,5 +64,5 @@ function main() {
   echo "completed successfully"
 }
 
-trap "cleanup" EXIT
+trap "cleanup $?" EXIT
 main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info
