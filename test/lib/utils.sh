@@ -13,8 +13,67 @@ function tag_test() {
   echo -e "\n# test ${label}"
 }
 
-function test () {
+function assert () {
   testId=$((testId+1))
+  evaluation=$1
+  result=$2
+  expected=$3
+  message=${4:-""}
+
+  # equal
+  if [ "${evaluation}" == "equal" ]; then
+    if [[ -z ${message} ]]; then
+      message="should be equal"
+    fi
+
+    if [ "${result}" != "${expected}" ]; then
+      failed "${message}" "${expected}" "${result}"
+    else
+      passed "${message}"
+    fi
+  fi
+
+  # not equal
+  if [ "${evaluation}" == "notEqual" ]; then
+    if [ !${message} ]; then
+      message="should not equal"
+    fi
+
+    echo "${result}"
+    echo ${expected}
+
+    if [ "${result}" == "${expected}" ]; then
+      failed "${message}" "${expected}" "${result}"
+    else
+      passed "${message}"
+    fi
+  fi
+
+  # contains
+  if [ "${evaluation}" == "contains" ]; then
+    if [ !${message} ]; then
+      message="should contain"
+    fi
+
+    if [[ "${result}" != *"${expected}"* ]]; then
+      failed "${message}" "string that contains: \"${expected}\"" "${result}"
+    else
+      passed "${message}"
+    fi
+  fi
+
+  # does not contain
+  if [ "${evaluation}" == "doesNotContain" ]; then
+    if [ !${message} ]; then
+      message="should not contain"
+    fi
+
+    if [[ "${result}" == *"${expected}"* ]]; then
+      failed "${message}" "string that does not contain: \"${expected}\"" "${result}"
+    else
+      passed "${message}"
+    fi
+  fi
 }
 
 function passed() {
