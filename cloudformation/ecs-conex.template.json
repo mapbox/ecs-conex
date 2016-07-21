@@ -395,7 +395,22 @@
                         "LogConfiguration": {
                             "LogDriver": "syslog",
                             "Options": {
-                                "syslog-address": "udp://localhost:514"
+                                "tag": {
+                                    "Fn::Join": [
+                                        "-",
+                                        [
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            {
+                                                "Ref": "GitSha"
+                                            }
+                                        ]
+                                    ]
+                                }
                             }
                         }
                     }
@@ -517,10 +532,7 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
-                            "Options": {
-                                "syslog-address": "udp://localhost:514"
-                            }
+                            "LogDriver": "syslog"
                         },
                         "MountPoints": [
                             {

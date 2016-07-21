@@ -15,7 +15,7 @@ RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.11.1.tgz > dock
 RUN tar -xzf docker-1.11.1.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
 
 # Copy files into the container
-COPY ./ecs-conex.sh ./ecs-conex.sh
+COPY ./*.sh ./
 
 # Use docker on the host instead of running docker-in-docker
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/

@@ -5,110 +5,7 @@ set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
-
-function before_image() {
-  local region=$1
-  echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${before}
-}
-
-function after_image() {
-  local region=$1
-  local sha=${2:-${after}}
-  echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${sha}
-}
-
-function login() {
-  local region=$1
-  eval "$(aws ecr get-login --region ${region})"
-}
-
-function ensure_repo() {
-  local region=$1
-  aws ecr describe-repositories \
-    --region ${region} \
-    --repository-names ${repo} > /dev/null 2>&1 || create_repo ${region}
-}
-
-function create_repo() {
-  local region=$1
-  aws ecr create-repository --region ${region} --repository-name ${repo} > /dev/null
-}
-
-function github_status() {
-  local status=$1
-  local description=$2
-
-  echo "sending ${status} status to github"
-
-  curl -s \
-    --request POST \
-    --header "Content-Type: application/json" \
-    --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" \
-    ${status_url} > /dev/null
-}
-
-function parse_message() {
-  ref=$(node -e "console.log(${Message}.ref);")
-  after=$(node -e "console.log(${Message}.after);")
-  before=$(node -e "console.log(${Message}.before);")
-  repo=$(node -e "console.log(${Message}.repository.name);")
-  owner=$(node -e "console.log(${Message}.repository.owner.name);")
-  user=$(node -e "console.log(${Message}.pusher.name);")
-  deleted=$(node -e "console.log(${Message}.deleted);")
-  status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
-}
-
-function credentials() {
-  args=""
-
-  # if [ -n "${NPMToken}" ]
-  # then
-  #   echo "I have token ${NPMToken}"
-  # fi
-
-  if grep -O "ARG NPMToken" ./Dockerfile > /dev/null 2>&1
-  then
-    echo "Grep succeeded"
-    args+="--build-arg NPMToken=${NPMToken} "
-    # echo "Added ${NPMToken}"
-  fi
-
-  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
-  if [ -z "${role}" ]; then
-    return
-  fi
-
-  creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
-  accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
-  secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
-  sessionToken=$(node -e "console.log(${creds}.SessionToken)")
-
-  if [ -n "${accessKeyId}" ] && grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
-    args+="--build-arg AWS_ACCESS_KEY_ID=${accessKeyId}"
-  fi
-
-  if [ -n "${secretAccessKey}" ] && grep -O "ARG AWS_SECRET_ACCESS_KEY" ./Dockerfile > /dev/null 2>&1; then
-    args+="--build-arg AWS_SECRET_ACCESS_KEY=${secretAccessKey}"
-  fi
-
-  if [ -n "${sessionToken}" ] && grep -O "ARG AWS_ACCESS_KEY_ID" ./Dockerfile > /dev/null 2>&1; then
-    args+="--build-arg AWS_ACCESS_KEY_ID=${sessionToken}"
-  fi
-}
-
-function cleanup() {
-  exit_code=$?
-
-  parse_message
-
-  if [ "${exit_code}" == "0" ]; then
-    github_status "success" "ecs-conex successfully completed"
-  else
-    github_status "failure" "ecs-conex failed to build an image"
-  fi
-
-  rm -rf ${tmpdir}
-}
+source utils.sh
 
 function main() {
   echo "checking docker configuration"
@@ -120,21 +17,26 @@ function main() {
   AccountId=${AccountId}
   GithubAccessToken=${GithubAccessToken}
   StackRegion=${StackRegion}
+  ApproximateReceiveCount=${ApproximateReceiveCount}
+
+  echo "checking job receive count"
+  check_receives
 
   echo "parsing received message"
   parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
-  github_status "pending" "ecs-conex is building an image"
+
+  status="pending"
+  echo "sending ${status} status to github"
+  github_status "${status}" "ecs-conex is building an image"
   [ "${deleted}" == "true" ] && exit 0
 
   git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
-  if [ ! -f ./Dockerfile ]; then
-    echo "no Dockerfile found"
-    exit 0
-  fi
+  echo "looking for dockerfile"
+  check_dockerfile ./Dockerfile
 
   echo "attempt to fetch previous image ${before} from ${StackRegion}"
   ensure_repo ${StackRegion}
@@ -142,29 +44,14 @@ function main() {
   docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
 
   echo "gather local credentials and setup --build-arg"
-  credentials
+  credentials ./Dockerfile
 
   echo "building new image"
   docker build --quiet ${args} --tag ${repo} ${tmpdir}
-
-  for region in "${regions[@]}"; do
-    ensure_repo ${region}
-    login ${region}
-
-    echo "pushing ${after} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region})"
-    docker push "$(after_image ${region})"
-
-    if git describe --tags --exact-match 2> /dev/null; then
-      tag="$(git describe --tags --exact-match)"
-      echo "pushing ${tag} to ${region}"
-      docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
-      docker push "$(after_image ${region} ${tag})"
-    fi
-  done
+  docker_push
 
   echo "completed successfully"
 }
 
-trap "cleanup" EXIT
+trap "cleanup $?" EXIT
 main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info
