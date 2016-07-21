@@ -17,6 +17,10 @@ function main() {
   AccountId=${AccountId}
   GithubAccessToken=${GithubAccessToken}
   StackRegion=${StackRegion}
+  ApproximateReceiveCount=${ApproximateReceiveCount}
+
+  echo "checking job receive count"
+  check_receives
 
   echo "parsing received message"
   parse_message

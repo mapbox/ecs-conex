@@ -51,6 +51,13 @@ function check_dockerfile() {
   fi
 }
 
+function check_receives() {
+  if [ $ApproximateReceiveCount -gt 3 ]; then
+    echo "Job received $ApproximateReceiveCount times, aborting build"
+    return 3
+  fi
+}
+
 function parse_message() {
   ref=$(node -e "console.log(${Message}.ref);")
   after=$(node -e "console.log(${Message}.after);")
