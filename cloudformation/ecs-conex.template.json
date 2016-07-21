@@ -389,7 +389,25 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog"
+                            "LogDriver": "syslog",
+                            "Options": {
+                                "tag": {
+                                    "Fn::Join": [
+                                        "-",
+                                        [
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            {
+                                                "Ref": "GitSha"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }
                         }
                     }
                 ]
