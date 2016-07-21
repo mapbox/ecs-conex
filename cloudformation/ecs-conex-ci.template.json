@@ -1,0 +1,69 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "test user for ecs-conex",
+    "Resources": {
+        "User": {
+            "Type": "AWS::IAM::User",
+            "Properties": {
+                "Policies": [
+                    {
+                        "PolicyName": "validate-templates",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "ecr:*"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Join": [
+                                            "",
+                                            [
+                                                "arn:aws:ecr:*:",
+                                                {
+                                                    "Ref": "AWS::AccountId"
+                                                },
+                                                ":repository/ecs-conex-test"
+                                            ]
+                                        ]
+                                    }
+                                },
+                                {
+                                    "Action": [
+                                        "ecr:GetAuthorizationToken",
+                                        "ecr:CreateRepository"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "AccessKey": {
+            "Type": "AWS::IAM::AccessKey",
+            "Properties": {
+                "UserName": {
+                    "Ref": "User"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "AccessKeyId": {
+            "Value": {
+                "Ref": "AccessKey"
+            }
+        },
+        "SecretAccessKey": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "AccessKey",
+                    "SecretAccessKey"
+                ]
+            }
+        }
+    }
+}

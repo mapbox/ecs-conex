@@ -9,6 +9,16 @@ PASSED=0
 # initialize test id counter
 testId=0
 
+# stash real credentials
+stashedAccessKey=${AWS_ACCESS_KEY_ID:-}
+stashedSecretKey=${AWS_SECRET_ACCESS_KEY:-}
+stashedToken=${AWS_SESSION_TOKEN:-}
+stashedGithub=${GithubAccessToken:-}
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export AWS_SESSION_TOKEN=
+export GithubAccessToken=
+
 # before_image() test
 tag_test "before_image()"
 export AccountId=1
@@ -360,6 +370,60 @@ if [ -d ${tmpdir} ]; then
   rm -rf ${tmpdir}
 fi
 assert "equal" "${FAILURE}" "" "should not have any failures"
+
+tag_test "build image"
+assert success "$(which docker) build -t ecs-conex ./ --no-cache" "built image"
+
+# restore stashed AWS vars for integration test
+export AWS_ACCESS_KEY_ID=${stashedAccessKey}
+export AWS_SECRET_ACCESS_KEY=${stashedSecretKey}
+export AWS_SESSION_TOKEN=${stashedToken}
+export GithubAccessToken=${stashedGithub}
+
+tag_test "build a repo's image"
+
+# clone ecs-conex-test
+local_repo=$(mktemp -d /tmp/ecs-conex-test-XXXXXX)
+git=$(which git)
+$git clone https://${GithubAccessToken}@github.com/mapbox/ecs-conex-test ${local_repo} > /dev/null 2>&1
+cwd=$(pwd) && cd ${local_repo}
+
+# push an empty commit to a random branch
+branch=$(node -e "console.log(require('crypto').randomBytes(8).toString('hex'))")
+$git checkout -b ${branch} > /dev/null 2>&1
+before=$($git rev-parse head)
+$git commit -m "integration test" --allow-empty > /dev/null 2>&1
+after=$($git rev-parse head)
+$git push --set-upstream origin ${branch} > /dev/null 2>&1
+
+# Ask ecs-conex to build the commit that was made
+cd ${cwd}
+assert success \
+  "$(dirname $0)/manual.ecs-conex.sh mapbox ecs-conex-test 234858372212 ${after} ${before}" \
+  "ran ecs-conex"
+
+# Check that images landed in all THREE regions
+awscli=$(which aws)
+list=$(${awscli} ecr list-images \
+  --region us-east-1 \
+  --repository-name ecs-conex-test \
+  --query "imageIds[?imageTag == '${after}'].imageTag" \
+  --output text)
+assert equal "${list}" "${after}" "wrote image to us-east-1"
+
+list=$(${awscli} ecr list-images \
+  --region us-west-2 \
+  --repository-name ecs-conex-test \
+  --query "imageIds[?imageTag == '${after}'].imageTag" \
+  --output text)
+assert equal "${list}" "${after}" "wrote image to us-west-2"
+
+list=$(${awscli} ecr list-images \
+  --region eu-west-1 \
+  --repository-name ecs-conex-test \
+  --query "imageIds[?imageTag == '${after}'].imageTag" \
+  --output text)
+assert equal "${list}" "${after}" "wrote image to eu-west-1"
 
 # summary
 summarize
