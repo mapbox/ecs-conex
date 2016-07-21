@@ -167,6 +167,14 @@ filepath="ecs-conex.sh"
 log=$(check_dockerfile ${filepath})
 assert "equal" "${log}" ""
 
+# check_receives() test
+tag_test "check_receives()"
+ApproximateReceiveCount=3
+check_receives && assert "equal" "$?" "0"
+
+ApproximateReceiveCount=4
+check_receives || assert "equal" "$?" "3"
+
 # parse_message() test
 tag_test "parse_message()"
 Message=$(cat ./test/fixtures/message.test.json)
