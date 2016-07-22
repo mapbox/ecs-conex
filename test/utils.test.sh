@@ -202,7 +202,7 @@ function curl () {
 
 function write_dockerfile() {
   creds=$1
-  echo "ARG NPMToken" > ${tmpdocker}
+  echo "ARG NPMAccessToken" > ${tmpdocker}
   echo "ARG AWS_ACCESS_KEY_ID" >> ${tmpdocker}
   echo "ARG AWS_SECRET_ACCESS_KEY" >> ${tmpdocker}
   echo "ARG AWS_SESSION_TOKEN" >> ${tmpdocker}
@@ -214,31 +214,31 @@ function clear_dockerfile() {
 
 # credentials() no npm token in env test
 tag_test "credentials() missing npm token in env"
-export NPMToken=""
+export NPMAccessToken=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "NPMToken=${NPMToken}"
+assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
 # credentials() no npm token in dockerfile test
 tag_test "credentials() missing npm token in dockerfile"
-export NPMToken=test_NPMToken
+export NPMAccessToken=test_NPMAccessToken
 clear_dockerfile
 credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "NPMToken=${NPMToken}"
+assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
 # credentials() no role test
 tag_test "credentials() missing role"
 export nullRole=1
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
 
 # credentials() role test
 tag_test "credentials() role"
 export nullRole=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "contains" "${args}" "NPMToken=${NPMToken}"
+assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
 assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
 assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
 assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
@@ -253,7 +253,7 @@ assert "equal" "${args}" "" "should be empty"
 tag_test "credentials() missing build arguments in creds"
 write_dockerfile "{}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMToken=test_NPMToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
 
 # exact_match() test
 region=us-east-1

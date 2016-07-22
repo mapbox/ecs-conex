@@ -73,9 +73,9 @@ function credentials() {
   filepath=${1}
   args=""
 
-  npmToken=$(printenv | grep NPMToken | sed 's/.*=//')
-  if [[ -n $npmToken ]] && grep "ARG NPMToken" ${filepath} > /dev/null 2>&1; then
-    args+="--build-arg NPMToken=${npmToken}"
+  NPMAccessToken=$(printenv | grep NPMAccessToken | sed 's/.*=//')
+  if [[ -n $NPMAccessToken ]] && grep "ARG NPMAccessToken" ${filepath} > /dev/null 2>&1; then
+    args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
   if [ ${MessageId} == "test" ]; then

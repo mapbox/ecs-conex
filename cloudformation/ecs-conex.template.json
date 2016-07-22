@@ -58,7 +58,7 @@
             "Type": "Number",
             "Default": 512
         },
-        "NPMToken": {
+        "NPMAccessToken": {
             "Type": "String",
             "Description": "npm access token used to install private packages"
         }
@@ -525,9 +525,9 @@
                                 }
                             },
                             {
-                                "Name": "NPMToken",
+                                "Name": "NPMAccessToken",
                                 "Value": {
-                                    "Ref": "NPMToken"
+                                    "Ref": "NPMAccessToken"
                                 }
                             }
                         ],
