@@ -8,6 +8,7 @@ set -eu
 # - AWS_ACCESS_KEY_ID
 # - AWS_SECRET_ACCESS_KEY
 # - AWS_SESSION_TOKEN (optional)
+# - TMPDIR
 
 Owner=$1
 Repo=$2
@@ -18,8 +19,10 @@ GithubAccessToken=${GithubAccessToken}
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+NPMToken=${NPMToken}
+ApproximateReceiveCount="0"
 
-docker build -qt ecs-conex ./ > /dev/null
+docker build -t ecs-conex ./
 docker run \
   -v $TMPDIR:/mnt/data \
   -v /var/run/docker.sock:/var/run/docker.sock \
@@ -31,4 +34,6 @@ docker run \
   -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
   -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
   -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
+  -e NPMToken=${NPMToken} \
+  -e ApproximateReceiveCount=${ApproximateReceiveCount} \
   ecs-conex
