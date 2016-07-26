@@ -54,5 +54,5 @@ function main() {
   echo "completed successfully"
 }
 
-trap "cleanup $?" EXIT
+trap "cleanup" EXIT
 main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info
