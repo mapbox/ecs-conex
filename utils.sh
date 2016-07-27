@@ -138,7 +138,7 @@ function cleanup() {
 
   rm -rf ${tmpdir}
 
-  if docker info ${repo}:${after} > /dev/null; then
+  if docker inspect ${repo}:${after} > /dev/null; then
     docker rmi ${repo}:${after}
   fi
 }

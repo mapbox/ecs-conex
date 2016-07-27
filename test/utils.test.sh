@@ -348,10 +348,10 @@ message=""
 FAILURE=""
 
 function docker() {
-  if [ ${1} == "info" ] || [ ${1} == "rmi" ]; then
+  if [ ${1} == "inspect" ] || [ ${1} == "rmi" ]; then
     assert "contains" "${2}" "test:test"
   else
-    FAILURE="should call docker info or docker rmi"
+    FAILURE="should call docker inspect or docker rmi"
   fi
 }
 
