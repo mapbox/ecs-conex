@@ -311,6 +311,14 @@
                                 "ecs:DescribeTaskDefinition"
                             ],
                             "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": "*"
                         }
                     ]
                 }
