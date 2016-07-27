@@ -372,7 +372,9 @@ fi
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 tag_test "build image"
-assert success "$(which docker) build -t ecs-conex ./ --no-cache" "built image"
+echo "docker version: $($(which docker) --version)"
+echo "build command: $(which docker) build --no-cache -t ecs-conex ./"
+assert success "$(which docker) build --no-cache -t ecs-conex ./" "built image"
 
 # restore stashed AWS vars for integration test
 export AWS_ACCESS_KEY_ID=${stashedAccessKey}
@@ -390,14 +392,16 @@ cwd=$(pwd) && cd ${local_repo}
 
 # push an empty commit to a random branch
 branch=$(node -e "console.log(require('crypto').randomBytes(8).toString('hex'))")
-$git checkout -b ${branch} > /dev/null 2>&1
-before=$($git rev-parse head)
-$git commit -m "integration test" --allow-empty > /dev/null 2>&1
-after=$($git rev-parse head)
-$git push --set-upstream origin ${branch} > /dev/null 2>&1
+$git checkout -b ${branch}
+before=$($git rev-parse HEAD)
+$git commit -m "integration test" --allow-empty
+after=$($git rev-parse HEAD)
+$git push --set-upstream origin ${branch}
 
 # Ask ecs-conex to build the commit that was made
 cd ${cwd}
+export TMPDIR=$(mktemp -d)
+echo "TMPDIR: ${TMPDIR}"
 assert success \
   "$(dirname $0)/manual.ecs-conex.sh mapbox ecs-conex-test 234858372212 ${after} ${before}" \
   "ran ecs-conex"
