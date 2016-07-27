@@ -197,6 +197,12 @@
                 ]
             }
         },
+        "WatchbotLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "RetentionInDays": 14
+            }
+        },
         "WatchbotWatcherPolicy": {
             "Type": "AWS::IAM::Policy",
             "Description": "The IAM policy used by Watchbot's watcher container(s)",
@@ -393,23 +399,13 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
+                            "LogDriver": "awslogs",
                             "Options": {
-                                "tag": {
-                                    "Fn::Join": [
-                                        "-",
-                                        [
-                                            {
-                                                "Ref": "AWS::StackName"
-                                            },
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            {
-                                                "Ref": "GitSha"
-                                            }
-                                        ]
-                                    ]
+                                "awslogs-group": {
+                                    "Ref": "WatchbotLogGroup"
+                                },
+                                "awslogs-region": {
+                                    "Ref": "AWS::Region"
                                 }
                             }
                         }
@@ -533,23 +529,13 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
+                            "LogDriver": "awslogs",
                             "Options": {
-                                "tag": {
-                                    "Fn::Join": [
-                                        "-",
-                                        [
-                                            {
-                                                "Ref": "AWS::StackName"
-                                            },
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            {
-                                                "Ref": "GitSha"
-                                            }
-                                        ]
-                                    ]
+                                "awslogs-group": {
+                                    "Ref": "WatchbotLogGroup"
+                                },
+                                "awslogs-region": {
+                                    "Ref": "AWS::Region"
                                 }
                             }
                         },
@@ -964,6 +950,12 @@
             "Description": "The ARN of an SNS topic where Watchbot will send notifications for failed processing",
             "Value": {
                 "Ref": "WatchbotNotificationTopic"
+            }
+        },
+        "WatchbotLogGroup": {
+            "Description": "The name of the CloudWatch LogGroup that logs will be written to",
+            "Value": {
+                "Ref": "WatchbotLogGroup"
             }
         },
         "WatchbotAccessKeyId": {

@@ -50,4 +50,4 @@ function main() {
 }
 
 trap "cleanup" EXIT
-main 2>&1 | FASTLOG_PREFIX='[${timestamp}] [ecs-conex] '[${MessageId}] fastlog info
+main 2>&1 | watchbot-log
