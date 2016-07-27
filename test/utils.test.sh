@@ -294,30 +294,37 @@ after=test
 FAILURE=""
 
 function ensure_repo() {
-  if [ "${1}" != "us-east-1" ]; then
+  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
     FAILURE="Region not passed into ensure_repo"
   fi
 }
 
 function login() {
-  if [ "${1}" != "us-east-1" ]; then
+  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
     FAILURE="Region not passed into login"
   fi
 }
 
 function after_image {
-  if [ "${1}" != "us-east-1" ]; then
+  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
     FAILURE="Region not passed into after_image"
   else
-    echo "some_after_image"
+    echo "${1}/some_after_image"
   fi
 }
 
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "equal" "${4}" "some_after_image"
+    assert "contains" "${4}" "some_after_image"
   elif [ ${1} == "push" ]; then
-    assert "equal" "${2}" "some_after_image"
+    assert "contains" "${2}" "some_after_image"
+  elif [ ${1} == "pull" ]; then
+    assert "contains" "${2}" "some_after_image"
+    if [ "${2}" == "us-east-1/some_after_image" ]; then
+      return 1
+    else
+      return 0
+    fi
   else
     FAILURE="should call docker tag or docker push"
   fi
@@ -331,7 +338,18 @@ function exact_match() {
   assert "equal" "${FAILURE}" ""
 }
 
-docker_push
+log=$(docker_push)
+assert "equal" "$?" "0"
+assert "contains" "${log}" "pushing test to us-east-1"
+assert "equal" "${FAILURE}" "" "should not have any failures"
+
+# docker_push() test to region with existing images
+regions=(us-east-1 us-west-2)
+log=$(docker_push)
+assert "equal" "$?" "0"
+assert "contains" "${log}" "pushing test to us-east-1"
+assert "contains" "${log}" "found existing image for test in us-west-2, skipping push"
+assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()
 tag_test "cleanup()"

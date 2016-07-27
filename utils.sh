@@ -119,6 +119,11 @@ function docker_push() {
     ensure_repo ${region}
     login ${region}
 
+    if docker pull "$(after_image ${region})" 2> /dev/null; then
+      echo "found existing image for ${after} in ${region}, skipping push"
+      continue
+    fi
+
     echo "pushing ${after} to ${region}"
     docker tag -f ${repo}:latest "$(after_image ${region})"
     docker push "$(after_image ${region})"
