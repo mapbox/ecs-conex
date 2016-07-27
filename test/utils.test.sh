@@ -9,22 +9,10 @@ PASSED=0
 # initialize test id counter
 testId=0
 
-# before_image() test
-tag_test "before_image()"
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-
-log=$(before_image us-east-1)
-expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:1"
-assert "equal" "${log}" "${expected}"
-
 # after_image() 1 param test
 tag_test "after_image() with 1 param"
 export AccountId=1
 export repo=repo
-export before=1
 export after=2
 
 log=$(after_image us-east-1)
@@ -35,7 +23,6 @@ assert "equal" "${log}" "${expected}"
 tag_test "after_image() with 2 params"
 export AccountId=1
 export repo=repo
-export before=1
 export after=2
 
 log=$(after_image us-east-1 v1.0.0)
@@ -131,6 +118,20 @@ function aws() {
 create_repo ${test_region}
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
+
+# image_exists() test
+tag_test "image_exists()"
+
+function aws() {
+  if [ ${1} == "us-east-1" ]; then
+    echo "IMAGES"
+  else
+    echo "FAILURES"
+  fi
+}
+
+repo=repo after=test image_exists us-east-1 && assert "equal" "$?" "0" "finds existing image"
+repo=repo after=test image_exists us-west-1 || assert "equal" "$?" "1" "finds no image"
 
 # github_status() test
 tag_test "github_status()"
@@ -305,6 +306,10 @@ function login() {
   fi
 }
 
+function image_exists {
+  return 1
+}
+
 function after_image {
   if [ "${1}" != "us-east-1" ]; then
     FAILURE="Region not passed into after_image"
@@ -331,7 +336,26 @@ function exact_match() {
   assert "equal" "${FAILURE}" ""
 }
 
-docker_push
+log=$(docker_push)
+assert "equal" "$?" "0"
+assert "contains" "${log}" "pushing test to us-east-1"
+assert "equal" "${FAILURE}" "" "should not have any failures"
+
+# docker_push() test to region with existing images
+function image_exists() {
+  if [ "$1" == "us-west-2" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+regions=(us-east-1 us-west-2)
+log=$(docker_push)
+assert "equal" "$?" "0"
+assert "contains" "${log}" "pushing test to us-east-1"
+assert "contains" "${log}" "found existing image for test in us-west-2, skipping push"
+assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()
 tag_test "cleanup()"
@@ -341,6 +365,14 @@ GithubAccessToken=test
 status=""
 message=""
 FAILURE=""
+
+function docker() {
+  if [ ${1} == "inspect" ] || [ ${1} == "rmi" ]; then
+    assert "contains" "${2}" "test:test"
+  else
+    FAILURE="should call docker inspect or docker rmi"
+  fi
+}
 
 function github_status() {
   github_status=$1

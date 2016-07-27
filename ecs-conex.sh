@@ -39,16 +39,11 @@ function main() {
   echo "looking for dockerfile"
   check_dockerfile ./Dockerfile
 
-  echo "attempt to fetch previous image ${before} from ${StackRegion}"
-  ensure_repo ${StackRegion}
-  login ${StackRegion}
-  docker pull "$(before_image ${StackRegion})" 2> /dev/null || :
-
   echo "gather local credentials and setup --build-arg"
   credentials ./Dockerfile
 
   echo "building new image"
-  docker build --quiet ${args} --tag ${repo} ${tmpdir}
+  docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 
   echo "completed successfully"

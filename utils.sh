@@ -3,11 +3,6 @@
 set -eu
 set -o pipefail
 
-function before_image() {
-  local region=$1
-  echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${before}
-}
-
 function after_image() {
   local region=$1
   local sha=${2:-${after}}
@@ -31,6 +26,15 @@ function create_repo() {
   aws ecr create-repository \
     --region ${region} \
     --repository-name ${repo} > /dev/null
+}
+
+function image_exists() {
+  local region=$1
+  aws ecr batch-get-image \
+    --region ${region} \
+    --repository-name ${repo} \
+    --image-ids imageTag=${after} \
+    --output text | grep -q IMAGES
 }
 
 function github_status() {
@@ -61,7 +65,6 @@ function check_receives() {
 function parse_message() {
   ref=$(node -e "console.log(${Message}.ref);")
   after=$(node -e "console.log(${Message}.after);")
-  before=$(node -e "console.log(${Message}.before);")
   repo=$(node -e "console.log(${Message}.repository.name);")
   owner=$(node -e "console.log(${Message}.repository.owner.name);")
   user=$(node -e "console.log(${Message}.pusher.name);")
@@ -109,7 +112,7 @@ function exact_match() {
   if git describe --tags --exact-match 2> /dev/null; then
     tag="$(git describe --tags --exact-match)"
     echo "pushing ${tag} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region} ${tag})"
+    docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
     docker push "$(after_image ${region} ${tag})"
   fi
 }
@@ -119,8 +122,13 @@ function docker_push() {
     ensure_repo ${region}
     login ${region}
 
+    if image_exists ${region}; then
+      echo "found existing image for ${after} in ${region}, skipping push"
+      continue
+    fi
+
     echo "pushing ${after} to ${region}"
-    docker tag -f ${repo}:latest "$(after_image ${region})"
+    docker tag -f ${repo}:${after} "$(after_image ${region})"
     docker push "$(after_image ${region})"
     exact_match
   done
@@ -138,4 +146,8 @@ function cleanup() {
   fi
 
   rm -rf ${tmpdir}
+
+  if docker inspect ${repo}:${after} > /dev/null; then
+    docker rmi ${repo}:${after}
+  fi
 }
