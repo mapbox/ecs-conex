@@ -83,15 +83,12 @@ function credentials() {
 
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
   if [[ -z $role ]] && [[ -n ${AWS_ACCESS_KEY_ID} ]]; then
-    echo "env creds"
     accessKeyId=${AWS_ACCESS_KEY_ID}
     secretAccessKey=${AWS_SECRET_ACCESS_KEY}
     sessionToken=${AWS_SESSION_TOKEN}
   elif [[ -z $role ]]; then
-    echo "no creds"
     return
   else
-    echo "ec2 creds"
     creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
     accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
     secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
