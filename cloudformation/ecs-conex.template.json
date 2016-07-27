@@ -462,6 +462,7 @@
                         {
                             "Effect": "Allow",
                             "Action": [
+                                "ecr:BatchGetImage",
                                 "ecr:CreateRepository",
                                 "ecr:DescribeRepositories",
                                 "ecr:GetAuthorizationToken",

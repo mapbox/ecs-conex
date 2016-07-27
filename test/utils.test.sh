@@ -119,6 +119,20 @@ create_repo ${test_region}
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
+# image_exists() test
+tag_test "image_exists()"
+
+function aws() {
+  if [ ${1} == "us-east-1" ]; then
+    echo "IMAGES"
+  else
+    echo "FAILURES"
+  fi
+}
+
+repo=repo after=test image_exists us-east-1 && assert "equal" "$?" "0" "finds existing image"
+repo=repo after=test image_exists us-west-1 || assert "equal" "$?" "1" "finds no image"
+
 # github_status() test
 tag_test "github_status()"
 test_status="good"
@@ -281,37 +295,34 @@ after=test
 FAILURE=""
 
 function ensure_repo() {
-  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
+  if [ "${1}" != "us-east-1" ]; then
     FAILURE="Region not passed into ensure_repo"
   fi
 }
 
 function login() {
-  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
+  if [ "${1}" != "us-east-1" ]; then
     FAILURE="Region not passed into login"
   fi
 }
 
+function image_exists {
+  return 1
+}
+
 function after_image {
-  if [ "${1}" != "us-east-1" ] && [ "${1}" != "us-west-2" ] ; then
+  if [ "${1}" != "us-east-1" ]; then
     FAILURE="Region not passed into after_image"
   else
-    echo "${1}/some_after_image"
+    echo "some_after_image"
   fi
 }
 
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "contains" "${4}" "some_after_image"
+    assert "equal" "${4}" "some_after_image"
   elif [ ${1} == "push" ]; then
-    assert "contains" "${2}" "some_after_image"
-  elif [ ${1} == "pull" ]; then
-    assert "contains" "${2}" "some_after_image"
-    if [ "${2}" == "us-east-1/some_after_image" ]; then
-      return 1
-    else
-      return 0
-    fi
+    assert "equal" "${2}" "some_after_image"
   else
     FAILURE="should call docker tag or docker push"
   fi
@@ -331,6 +342,14 @@ assert "contains" "${log}" "pushing test to us-east-1"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # docker_push() test to region with existing images
+function image_exists() {
+  if [ "$1" == "us-west-2" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 regions=(us-east-1 us-west-2)
 log=$(docker_push)
 assert "equal" "$?" "0"

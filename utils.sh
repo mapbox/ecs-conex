@@ -28,6 +28,15 @@ function create_repo() {
     --repository-name ${repo} > /dev/null
 }
 
+function image_exists() {
+  local region=$1
+  aws ecr batch-get-image \
+    --region ${region} \
+    --repository-name ${repo} \
+    --image-ids imageTag=${after} \
+    --output text | grep -q IMAGES
+}
+
 function github_status() {
   local status=$1
   local description=$2
@@ -113,7 +122,7 @@ function docker_push() {
     ensure_repo ${region}
     login ${region}
 
-    if docker pull "$(after_image ${region})" 2> /dev/null; then
+    if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"
       continue
     fi
