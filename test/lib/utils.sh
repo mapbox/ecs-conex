@@ -15,9 +15,9 @@ function tag_test() {
 
 function assert () {
   testId=$((testId+1))
-  evaluation=$1
-  result=$2
-  expected=$3
+  evaluation=${1:-}
+  result=${2:-}
+  expected=${3:-}
   message=${4:-""}
 
   # equal
@@ -35,7 +35,7 @@ function assert () {
 
   # not equal
   if [ "${evaluation}" == "notEqual" ]; then
-    if [ !${message} ]; then
+    if [ ! ${message} ]; then
       message="should not equal"
     fi
 
@@ -48,7 +48,7 @@ function assert () {
 
   # contains
   if [ "${evaluation}" == "contains" ]; then
-    if [ !${message} ]; then
+    if [ ! ${message} ]; then
       message="should contain"
     fi
 
@@ -61,7 +61,7 @@ function assert () {
 
   # does not contain
   if [ "${evaluation}" == "doesNotContain" ]; then
-    if [ !${message} ]; then
+    if [ ! ${message} ]; then
       message="should not contain"
     fi
 
@@ -69,6 +69,15 @@ function assert () {
       failed "${message}" "string that does not contain: \"${expected}\"" "${result}"
     else
       passed "${message}"
+    fi
+  fi
+
+  # success
+  if [ "${evaluation}" == "success" ]; then
+    if $result; then
+      passed "${expected}"
+    else
+      failed "${expected}" "exit 0" "exit $?"
     fi
   fi
 }

@@ -73,8 +73,7 @@ function credentials() {
   filepath=${1}
   args=""
 
-  NPMAccessToken=$(printenv | grep NPMAccessToken | sed 's/.*=//')
-  if [[ -n $NPMAccessToken ]] && grep "ARG NPMAccessToken" ${filepath} > /dev/null 2>&1; then
+  if [[ -n ${NPMAccessToken:-} ]] && grep "ARG NPMAccessToken" ${filepath} > /dev/null 2>&1; then
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
@@ -82,15 +81,19 @@ function credentials() {
     return
   fi
 
-  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
-  if [[ -z $role ]]; then
+  role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) || :
+  if [[ -z $role ]] && [[ -n ${AWS_ACCESS_KEY_ID} ]]; then
+    accessKeyId=${AWS_ACCESS_KEY_ID}
+    secretAccessKey=${AWS_SECRET_ACCESS_KEY}
+    sessionToken=${AWS_SESSION_TOKEN}
+  elif [[ -z $role ]]; then
     return
+  else
+    creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
+    accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
+    secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
+    sessionToken=$(node -e "console.log(${creds}.SessionToken)")
   fi
-
-  creds=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${role})
-  accessKeyId=$(node -e "console.log(${creds}.AccessKeyId)")
-  secretAccessKey=$(node -e "console.log(${creds}.SecretAccessKey)")
-  sessionToken=$(node -e "console.log(${creds}.SessionToken)")
 
   if [[ -n $accessKeyId ]] && [[ $accessKeyId != "undefined" ]] && grep "ARG AWS_ACCESS_KEY_ID" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_ACCESS_KEY_ID=${accessKeyId}"
