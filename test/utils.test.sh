@@ -348,8 +348,11 @@ message=""
 FAILURE=""
 
 function docker() {
-  assert "equal" ${1} "rmi"
-  assert "contains" "${2}" "test:test"
+  if [ ${1} == "info" ] || [ ${1} == "rmi" ]; then
+    assert "contains" "${2}" "test:test"
+  else
+    FAILURE="should call docker info or docker rmi"
+  fi
 }
 
 function github_status() {
