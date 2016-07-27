@@ -43,7 +43,7 @@ function main() {
   credentials ./Dockerfile
 
   echo "building new image"
-  docker build --no-cache --quiet ${args} --tag ${repo} ${tmpdir}
+  docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 
   echo "completed successfully"
