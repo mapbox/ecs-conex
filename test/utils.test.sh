@@ -347,11 +347,12 @@ function github_status() {
   github_message=$2
 }
 
-cleanup 1
+false || cleanup
 assert "equal" "${github_status}" "failure"
 assert "equal" "${github_message}" "ecs-conex failed to build an image"
 
-cleanup 0
+true
+cleanup
 assert "equal" "${github_status}" "success"
 assert "equal" "${github_message}" "ecs-conex successfully completed"
 

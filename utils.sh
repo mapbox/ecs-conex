@@ -127,7 +127,7 @@ function docker_push() {
 }
 
 function cleanup() {
-  exit_code=$1
+  exit_code=$?
 
   parse_message
 
