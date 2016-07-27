@@ -9,22 +9,10 @@ PASSED=0
 # initialize test id counter
 testId=0
 
-# before_image() test
-tag_test "before_image()"
-export AccountId=1
-export repo=repo
-export before=1
-export after=2
-
-log=$(before_image us-east-1)
-expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:1"
-assert "equal" "${log}" "${expected}"
-
 # after_image() 1 param test
 tag_test "after_image() with 1 param"
 export AccountId=1
 export repo=repo
-export before=1
 export after=2
 
 log=$(after_image us-east-1)
@@ -35,7 +23,6 @@ assert "equal" "${log}" "${expected}"
 tag_test "after_image() with 2 params"
 export AccountId=1
 export repo=repo
-export before=1
 export after=2
 
 log=$(after_image us-east-1 v1.0.0)
@@ -359,6 +346,11 @@ GithubAccessToken=test
 status=""
 message=""
 FAILURE=""
+
+function docker() {
+  assert "equal" ${1} "rmi"
+  assert "contains" "${2}" "test:test"
+}
 
 function github_status() {
   github_status=$1
