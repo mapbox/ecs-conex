@@ -113,11 +113,13 @@ function exact_match() {
     tag="$(git describe --tags --exact-match)"
     echo "pushing ${tag} to ${region}"
     docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
-    docker push "$(after_image ${region} ${tag})"
+    echo "$(after_image ${region} ${tag})"
   fi
 }
 
 function docker_push() {
+  local queue=""
+
   for region in "${regions[@]}"; do
     ensure_repo ${region}
     login ${region}
@@ -128,10 +130,16 @@ function docker_push() {
     fi
 
     echo "pushing ${after} to ${region}"
+
+    # tag + add current image to queue by gitsha
     docker tag -f ${repo}:${after} "$(after_image ${region})"
-    docker push "$(after_image ${region})"
-    exact_match
+    queue="${queue} $(after_image ${region})"
+
+    # tag + add current image to queue by exact tag match (omitted if no exact match)
+    queue="${queue} $(exact_match)"
   done
+
+  parallel docker push {} ::: $queue
 }
 
 function cleanup() {

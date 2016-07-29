@@ -327,6 +327,8 @@ function docker() {
     FAILURE="should call docker tag or docker push"
   fi
 }
+# export functions explicitly for parallel called from within docker_push
+export -f assert passed failed docker
 
 function git() {
   exit 1
