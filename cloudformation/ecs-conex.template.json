@@ -316,7 +316,8 @@
                             "Effect": "Allow",
                             "Action": [
                                 "logs:CreateLogStream",
-                                "logs:PutLogEvents"
+                                "logs:PutLogEvents",
+                                "logs:FilterLogEvents"
                             ],
                             "Resource": "*"
                         }
@@ -404,6 +405,15 @@
                             {
                                 "Name": "ExponentialBackoff",
                                 "Value": "true"
+                            },
+                            {
+                                "Name": "LogGroupArn",
+                                "Value": {
+                                    "Fn::GetAtt": [
+                                        "WatchbotLogGroup",
+                                        "Arn"
+                                    ]
+                                }
                             }
                         ],
                         "LogConfiguration": {
