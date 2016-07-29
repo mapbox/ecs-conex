@@ -44,6 +44,11 @@
             "Type": "Number",
             "Default": 4
         },
+        "LogAggregationFunction": {
+            "Description": "The ARN of a Lambda function that will receive log events from CloudWatch",
+            "Type": "String",
+            "Default": "none"
+        },
         "WatchbotNotificationEmail": {
             "Description": "An email address to subscribe to notifications",
             "Type": "String",
@@ -61,6 +66,20 @@
         "NPMAccessToken": {
             "Type": "String",
             "Description": "npm access token used to install private packages"
+        }
+    },
+    "Conditions": {
+        "ForwardLogs": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "LogAggregationFunction"
+                        },
+                        "none"
+                    ]
+                }
+            ]
         }
     },
     "Resources": {
@@ -201,6 +220,19 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
                 "RetentionInDays": 14
+            }
+        },
+        "WatchbotLogForwarding": {
+            "Type": "AWS::Logs::SubscriptionFilter",
+            "Condition": "ForwardLogs",
+            "Properties": {
+                "DestinationArn": {
+                    "Ref": "LogAggregationFunction"
+                },
+                "LogGroupName": {
+                    "Ref": "WatchbotLogGroup"
+                },
+                "FilterPattern": ""
             }
         },
         "WatchbotWatcherPolicy": {
