@@ -44,6 +44,11 @@
             "Type": "Number",
             "Default": 4
         },
+        "LogAggregationFunction": {
+            "Description": "The ARN of a Lambda function that will receive log events from CloudWatch",
+            "Type": "String",
+            "Default": "none"
+        },
         "WatchbotNotificationEmail": {
             "Description": "An email address to subscribe to notifications",
             "Type": "String",
@@ -61,6 +66,20 @@
         "NPMAccessToken": {
             "Type": "String",
             "Description": "npm access token used to install private packages"
+        }
+    },
+    "Conditions": {
+        "ForwardLogs": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "LogAggregationFunction"
+                        },
+                        "none"
+                    ]
+                }
+            ]
         }
     },
     "Resources": {
@@ -197,6 +216,25 @@
                 ]
             }
         },
+        "WatchbotLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "RetentionInDays": 14
+            }
+        },
+        "WatchbotLogForwarding": {
+            "Type": "AWS::Logs::SubscriptionFilter",
+            "Condition": "ForwardLogs",
+            "Properties": {
+                "DestinationArn": {
+                    "Ref": "LogAggregationFunction"
+                },
+                "LogGroupName": {
+                    "Ref": "WatchbotLogGroup"
+                },
+                "FilterPattern": ""
+            }
+        },
         "WatchbotWatcherPolicy": {
             "Type": "AWS::IAM::Policy",
             "Description": "The IAM policy used by Watchbot's watcher container(s)",
@@ -305,6 +343,15 @@
                                 "ecs:DescribeTaskDefinition"
                             ],
                             "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents",
+                                "logs:FilterLogEvents"
+                            ],
+                            "Resource": "*"
                         }
                     ]
                 }
@@ -390,26 +437,25 @@
                             {
                                 "Name": "ExponentialBackoff",
                                 "Value": "true"
+                            },
+                            {
+                                "Name": "LogGroupArn",
+                                "Value": {
+                                    "Fn::GetAtt": [
+                                        "WatchbotLogGroup",
+                                        "Arn"
+                                    ]
+                                }
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
+                            "LogDriver": "awslogs",
                             "Options": {
-                                "tag": {
-                                    "Fn::Join": [
-                                        "-",
-                                        [
-                                            {
-                                                "Ref": "AWS::StackName"
-                                            },
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            {
-                                                "Ref": "GitSha"
-                                            }
-                                        ]
-                                    ]
+                                "awslogs-group": {
+                                    "Ref": "WatchbotLogGroup"
+                                },
+                                "awslogs-region": {
+                                    "Ref": "AWS::Region"
                                 }
                             }
                         }
@@ -533,23 +579,13 @@
                             }
                         ],
                         "LogConfiguration": {
-                            "LogDriver": "syslog",
+                            "LogDriver": "awslogs",
                             "Options": {
-                                "tag": {
-                                    "Fn::Join": [
-                                        "-",
-                                        [
-                                            {
-                                                "Ref": "AWS::StackName"
-                                            },
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            {
-                                                "Ref": "GitSha"
-                                            }
-                                        ]
-                                    ]
+                                "awslogs-group": {
+                                    "Ref": "WatchbotLogGroup"
+                                },
+                                "awslogs-region": {
+                                    "Ref": "AWS::Region"
                                 }
                             }
                         },
@@ -964,6 +1000,12 @@
             "Description": "The ARN of an SNS topic where Watchbot will send notifications for failed processing",
             "Value": {
                 "Ref": "WatchbotNotificationTopic"
+            }
+        },
+        "WatchbotLogGroup": {
+            "Description": "The name of the CloudWatch LogGroup that logs will be written to",
+            "Value": {
+                "Ref": "WatchbotLogGroup"
             }
         },
         "WatchbotAccessKeyId": {
