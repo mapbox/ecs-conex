@@ -5,7 +5,6 @@ set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
-echo "sourcing utility functions"
 source utils.sh
 
 function main() {
