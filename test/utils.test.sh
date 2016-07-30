@@ -367,8 +367,11 @@ message=""
 FAILURE=""
 
 function docker() {
-  if [ ${1} == "inspect" ] || [ ${1} == "rmi" ]; then
-    assert "contains" "${2}" "test:test"
+  if [ ${1} == "images" ]; then
+    assert "equal" "$*" "images -q test:test" "calls images with repo:tag" >&2
+    echo "12345678"
+  elif [ ${1} == "rmi" ]; then
+    assert "equal" "$*" "rmi -f 12345678" "calls rmi with image ID" >&2
   else
     FAILURE="should call docker inspect or docker rmi"
   fi
