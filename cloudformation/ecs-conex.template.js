@@ -1,6 +1,7 @@
 var watchbot = require('watchbot');
 var cf = require('cloudfriend');
 
+// Build watchbot resources
 var watcher = watchbot.template({
   prefix: 'Watchbot',
   service: 'ecs-conex',
@@ -25,6 +26,7 @@ var watcher = watchbot.template({
   messageTimeout: 1200
 });
 
+// Main ecs-conex template
 var conex = {
   Parameters: {
     GitSha: {
@@ -129,4 +131,54 @@ var conex = {
   }
 };
 
+// Override aspects of watchbot's default webhook
+watcher.Resources.WatchbotWebhookFunction.Properties.Code.ZipFile = cf.join('\n', [
+  'var AWS = require("aws-sdk");',
+  cf.join(['var sns = new AWS.SNS({ region: "', cf.region, '" });']),
+  cf.join(['var topic = "', watcher.ref.topic, '";']),
+  cf.join(['var secret = "', watcher.ref.accessKeyId, '";']),
+  'var crypto = require("crypto");',
+  'module.exports.webhooks = function(event, context) {',
+  '  var body = event.body',
+  '  var hash = "sha1=" + crypto.createHmac("sha1", secret).update(JSON.stringify(body)).digest("hex");',
+  '  if (event.signature !== hash) return context.done("invalid: signature does not match");',
+  '  if (body.zen) return context.done(null, "ignored ping request");',
+  '  var push = {',
+  '    ref: event.body.ref,',
+  '    after: event.body.after,',
+  '    before: event.body.before,',
+  '    deleted: event.body.deleted,',
+  '    repository: {',
+  '      name: event.body.repository.name,',
+  '      owner: { name: event.body.repository.owner.name }',
+  '    },',
+  '    pusher: { name: event.body.pusher.name }',
+  '  };',
+  '  var params = {',
+  '    TopicArn: topic,',
+  '    Subject: "webhook",',
+  '    Message: JSON.stringify(push)',
+  '  };',
+  '  sns.publish(params, function(err) {',
+  '    if (err) return context.done("error: " + err.message);',
+  '    context.done(null, "success");',
+  '  });',
+  '};'
+]);
+
+watcher.Resources.WatchbotWebhookMethod.Properties.RequestTemplates = {
+  'application/json': '{"signature":"$input.params(\'X-Hub-Signature\')","body":$input.json(\'$\')}'
+};
+
+watcher.Resources.WatchbotWebhookMethod.Properties.Integration.IntegrationResponses.push({
+  StatusCode: 403,
+  SelectionPattern: '^invalid.*'
+});
+
+watcher.Resources.WatchbotWebhookMethod.Properties.MethodResponses.push({
+  StatusCode: '403',
+  ResponseModels: { 'application/json': 'Empty' }
+});
+
+// Rollup the template
 module.exports = watchbot.merge(watcher, conex);
