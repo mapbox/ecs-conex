@@ -36,7 +36,7 @@ function main() {
   cd ${tmpdir} && git checkout -q $after || exit 3
 
   echo "looking for dockerfile"
-  check_dockerfile ./Dockerfile
+  check_dockerfile ./Dockerfile || exit 0
 
   echo "gather local credentials and setup --build-arg"
   credentials ./Dockerfile
