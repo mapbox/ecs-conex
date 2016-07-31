@@ -166,7 +166,7 @@ watcher.Resources.WatchbotWebhookFunction.Properties.Code.ZipFile = cf.join('\n'
   '};'
 ]);
 
-watcher.Resources.WatchbotWebhookMethod.Properties.RequestTemplates = {
+watcher.Resources.WatchbotWebhookMethod.Properties.Integration.RequestTemplates = {
   'application/json': '{"signature":"$input.params(\'X-Hub-Signature\')","body":$input.json(\'$\')}'
 };
 
