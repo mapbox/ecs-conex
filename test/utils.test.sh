@@ -373,7 +373,7 @@ function docker() {
   elif [ ${1} == "rmi" ]; then
     assert "equal" "$*" "rmi -f 12345678" "calls rmi with image ID" >&2
   else
-    FAILURE="should call docker inspect or docker rmi"
+    FAILURE="should call docker images or docker rmi"
   fi
 }
 
@@ -385,11 +385,22 @@ function github_status() {
 false || cleanup
 assert "equal" "${github_status}" "failure"
 assert "equal" "${github_message}" "ecs-conex failed to build an image"
+assert "equal" "${FAILURE}" "" "should not have any failures"
+
+function docker() {
+  if [ ${1} == "images" ]; then
+    assert "equal" "$*" "images -q test:test" "calls images with repo:tag" >&2
+    echo ""
+  else [ ${1} == "rmi" ];
+    FAILURE="should call docker images only"
+  fi
+}
 
 true
 cleanup
 assert "equal" "${github_status}" "success"
 assert "equal" "${github_message}" "ecs-conex successfully completed"
+assert "equal" "${FAILURE}" "" "should not have any failures"
 
 if [ -d ${tmpdir} ]; then
   FAILURE="directory was not deleted"

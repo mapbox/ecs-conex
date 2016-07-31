@@ -148,7 +148,7 @@ function cleanup() {
   rm -rf ${tmpdir}
 
   local imageId=$(docker images -q ${repo}:${after})
-  if [ -n ${imageId} ]; then
+  if [ -n "${imageId}" ]; then
     docker rmi -f ${imageId}
   fi
 }
