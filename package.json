@@ -4,7 +4,9 @@
   "description": "ECS Container Express",
   "main": "ecs-conex.sh",
   "scripts": {
-    "test": "test/utils.test.sh"
+    "pretest": "eslint cloudformation test",
+    "test": "test/utils.test.sh && tape test/template.test.js",
+    "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
   "bin": {
     "ecs-conex-watch": "scripts/watch.sh"
@@ -18,5 +20,13 @@
   "bugs": {
     "url": "https://github.com/mapbox/ecs-conex/issues"
   },
-  "homepage": "https://github.com/mapbox/ecs-conex#readme"
+  "homepage": "https://github.com/mapbox/ecs-conex#readme",
+  "dependencies": {
+    "cloudfriend": "https://github.com/mapbox/cloudfriend/tarball/master",
+    "watchbot": "https://github.com/mapbox/ecs-watchbot/tarball/template-api"
+  },
+  "devDependencies": {
+    "eslint": "^3.2.0",
+    "tape": "^4.6.0"
+  }
 }
