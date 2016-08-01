@@ -185,7 +185,6 @@ assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/
 # credentials() setup
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
 tmpcreds=$(cat ./test/fixtures/creds.test.json)
-MessageId=not_test
 
 function curl () {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')

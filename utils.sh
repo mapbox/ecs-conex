@@ -78,10 +78,6 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
-  if [ ${MessageId} == "test" ]; then
-    return
-  fi
-
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   if [[ -z $role ]]; then
     return
