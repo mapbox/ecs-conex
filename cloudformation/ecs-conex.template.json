@@ -65,7 +65,8 @@
         },
         "NPMAccessToken": {
             "Type": "String",
-            "Description": "npm access token used to install private packages"
+            "Description": "npm access token used to install private packages",
+            "Default": ""
         }
     },
     "Conditions": {
