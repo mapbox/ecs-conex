@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
-    "cloudfriend": "https://github.com/mapbox/cloudfriend/tarball/master",
+    "cloudfriend": "^1.0.0",
     "watchbot": "https://github.com/mapbox/ecs-watchbot/tarball/template-api"
   },
   "devDependencies": {
