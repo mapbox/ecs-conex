@@ -6,6 +6,9 @@
   "scripts": {
     "test": "test/utils.test.sh"
   },
+  "bin": {
+    "ecs-conex-watch": "scripts/watch.sh"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mapbox/ecs-conex.git"
