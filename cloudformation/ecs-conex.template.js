@@ -36,7 +36,7 @@ var conex = {
     WatchbotVersion: {
       Description: 'The version of Watchbot to use',
       Type: 'String',
-      Default: 'c48625c6649f8790fae33dd55b1bed55f63505bd'
+      Default: 'v0.0.7'
     },
     GithubAccessToken: {
       Description: 'A Github access token with permission to clone private repositories',
