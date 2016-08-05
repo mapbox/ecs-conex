@@ -18,26 +18,34 @@ ecr.listImages(params, function (err, data) {
   var results = data.imageIds;
 
   var q = queue(10);
-  for (image in results) {
-    var commit = results[image]['imageTag'];
-    var options = {
-      url: 'https://api.github.com/repos/' + user + '/' + repo + '/commits/' + commit + '?access_token=' + GithubAccessToken,
-      headers: { 'User-agent': 'request' }
-    };
-
-    q.defer(request, options);
+  for (var i = 0; i < results.length; i++) {
+    var commit = results[i].imageTag;
+    if (commit === undefined) {
+      console.log('Image digest '+ results[i].imageDigest + ' did not have an image tag.');
+    } else {
+      var options = {
+        url: 'https://api.github.com/repos/' + user + '/' + repo + '/commits/' + commit + '?access_token=' + GithubAccessToken,
+        headers: { 'User-agent': 'request' }
+      };
+      q.defer(request, options);
+    }
   }
 
   q.awaitAll(function (error, response) {
     if (error) throw new Error(error);
     var results = [];
     for (var i = 0; i < response.length; i++) {
-      var result = JSON.parse(response[i].body);
-      var object = {
-        imageTag: result.sha,
-        date: moment(result.commit.author.date).unix()
-      };
-      results.push(object);
+      if (response[i].statusCode !== 200) {
+        var commit = response[i].request.uri.pathname.match(/\/([a-z0-9]*)$/)[1];
+        console.log('Image tag ' + commit + ' could not be retrieved from GitHub.');
+      } else {
+        var result = JSON.parse(response[i].body);
+        var object = {
+          imageTag: result.sha,
+          date: moment(result.commit.author.date).unix()
+        };
+        results.push(object);
+      }
     };
     var sorted = _.sortBy(results, function(o) { return o.date; });
     console.log(sorted);
