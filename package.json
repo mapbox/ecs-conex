@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/mapbox/ecs-conex/issues"
   },
-  "homepage": "https://github.com/mapbox/ecs-conex#readme"
+  "homepage": "https://github.com/mapbox/ecs-conex#readme",
+  "dependencies": {
+    "aws-sdk": "^2.4.13",
+    "d3-queue": "^3.0.2",
+    "moment": "^2.14.1",
+    "underscore": "^1.8.3"
+  }
 }
