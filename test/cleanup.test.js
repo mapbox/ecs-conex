@@ -92,16 +92,30 @@ test('tests mergeByProperty', function(assert) {
 test('tests toDelete', function(assert) {
   var toDelete = cleanup.toDelete;
   var results = [
-    { imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48', ableToDelete: true,  date: 1471209422931 },
-    { imageTag: '55ee14c984e9de11b5a1e9186b2dc6846bc10148', ableToDelete: true,  date: 1471295822931 },
-    { imageTag: 'c9c0a271f985e51d4f6d7f9a545925822d4f6730', ableToDelete: true,  date: 1471123022931 },
-    { imageTag: '48a2a3e507ecb46e675d113cfa17e135e636b62b', ableToDelete: false, date: 1471235822931 },
-    { imageTag: 'a22b587d422aa18f25417838f6584144b5204e0c', ableToDelete: true,  date: 1471245822931 },
+    { imageTag: 'a', imageDigest: 'b', ableToDelete: true,  date: 5 },
+    { imageTag: 'c', imageDigest: 'd', ableToDelete: true,  date: 4 },
+    { imageTag: 'e', imageDigest: 'f', ableToDelete: true,  date: 3 },
+    { imageTag: 'g', imageDigest: 'h', ableToDelete: true, date: 2 },
+    { imageTag: 'i', imageDigest: 'j', ableToDelete: false,  date: 1 },
   ];
 
-  assert.deepEqual(toDelete(results, { maximumImages: 1 }), [{ ableToDelete: true, date: 1471295822931, imageTag: '55ee14c984e9de11b5a1e9186b2dc6846bc10148' }, { ableToDelete: true, date: 1471245822931, imageTag: 'a22b587d422aa18f25417838f6584144b5204e0c' }, { ableToDelete: true, date: 1471209422931, imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48' }, { ableToDelete: true, date: 1471123022931, imageTag: 'c9c0a271f985e51d4f6d7f9a545925822d4f6730' }]);
-  assert.deepEqual(toDelete(results, { maximumImages: 2 }), [{ ableToDelete: true, date: 1471245822931, imageTag: 'a22b587d422aa18f25417838f6584144b5204e0c' }, { ableToDelete: true, date: 1471209422931, imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48' }, { ableToDelete: true, date: 1471123022931, imageTag: 'c9c0a271f985e51d4f6d7f9a545925822d4f6730' }]);
-  assert.deepEqual(toDelete(results, { maximumImages: 4 }), [{ ableToDelete: true, date: 1471123022931, imageTag: 'c9c0a271f985e51d4f6d7f9a545925822d4f6730' }]);
+  assert.deepEqual(toDelete(results, { maximumImages: 1 }), [{ imageTag: 'g', imageDigest: 'h', ableToDelete: true,  date: 2 }, { imageTag: 'e', imageDigest: 'f', ableToDelete: true,  date: 3 }, { imageTag: 'c', imageDigest: 'd', ableToDelete: true,  date: 4 }, { imageTag: 'a', imageDigest: 'b', ableToDelete: true, date: 5 }]);
+  assert.deepEqual(toDelete(results, { maximumImages: 2 }), [{ imageTag: 'g', imageDigest: 'h', ableToDelete: true,  date: 2 }, { imageTag: 'e', imageDigest: 'f', ableToDelete: true,  date: 3 }, { imageTag: 'c', imageDigest: 'd', ableToDelete: true, date: 4 }]);
+  assert.deepEqual(toDelete(results, { maximumImages: 4 }), [{ imageTag: 'g', imageDigest: 'h', ableToDelete: true, date: 2 }]);
   assert.deepEqual(toDelete(results, { maximumImages: 5 }), []);
+  assert.end();
+});
+
+test('tests deleteImages', function(assert) {
+  var deleteImages = cleanup.deleteImages;
+  var array = [{ imageTag: 'a', imageDigest: 'b' }];
+  var params = { repo: 'test', registryId: 'test' };
+  var ecr = {
+    batchDeleteImage: function (params) {
+      assert.deepEqual(params, { imageIds: array, repositoryName: 'test', registryId: 'test' });
+    }
+  };
+
+  deleteImages(ecr, params, array);
   assert.end();
 });
