@@ -16,39 +16,63 @@ module.exports = {
   'isBlacklisted': isBlacklisted,
   'getTimeStamps': getTimeStamps,
   'assignTimeStamps': assignTimeStamps,
-  'mergeByProperty': mergeByProperty,
+  'dateCheck': dateCheck,
   'toDelete': toDelete,
   'deleteImages': deleteImages,
-  'printImages': printImages
+  'mergeByProperty': mergeByProperty,
+  'wontDelete': wontDelete,
+  'willDelete': willDelete
 }
 
 if (!module.parent) {
-  validateInputs(function(err, params) {
+  var arguments = process.argv.slice(2);
+  validateInputs(arguments, function(err, params) {
     if (err) throw new Error(err);
     confirmInputs(params, function(confirmation) {
       if (confirmation === false) process.exit(1);
-      params.githubAccessToken = process.env.GithubAccessToken;
-      params.registryId = process.env.RegistryId;
-      params.maximumImages = 90;
-      run(params);
+      var ecr = new AWS.ECR();
+      listImages(ecr, params, function (err, res) {
+        if (err) throw new Error(err);
+        var result = res.imageIds;
+        validateECRSize(result, params);
+        isGitSha(result);
+        isBlacklisted(result, params);
+        getTimeStamps(result, params, function (err, res) {
+          if (err) throw new Error(err);
+          assignTimeStamps(result, res);
+          dateCheck(result);
+          var imagesToDelete = toDelete(result, params);
+          // // Leave this commented out unless you want to delete images:
+          // deleteImages(ecr, params, imagesToDelete, function(err, res) {
+          //   if (err) throw new Error(err);
+          //   else console.log('[info] Successfully removed images from ECR');
+          // })
+        })
+      })
     })
   })
 }
 
-function validateInputs(callback) {
+function validateInputs(arguments, callback) {
   var params = {};
-  var argv = minimist(process.argv.slice(2));
+  var argv = minimist(arguments);
 
   if (!argv._[0] || !argv._[1]) return callback('GitHub user name and repository name are required');
+  if (argv.maximum && !_.isNumber(argv.maximum)) return callback('Desired maximum number of images to leave in ECR should be a number');
+  if (argv.maximum && (argv.maximum < 0 || argv.maximum > 1000)) return callback('Desired maximum number of images to leave in ECR should be between 0 and 1000');
   if (argv.blacklist) try {
     var blacklistArr = argv.blacklist.split(',');
   } catch(err) {
-    return callback('GitSha blacklist must be a comma-separated list');
+    return callback('Blacklisted imageTags must be a comma-separated list');
   }
 
   params.user = argv._[0];
   params.repo = argv._[1];
+  params.maximum = argv.maximum || 750;
   params.blacklist = (blacklistArr) ? blacklistArr : [];
+  params.githubAccessToken = process.env.GithubAccessToken;
+  params.registryId = process.env.RegistryId;
+
   return callback(null, params);
 }
 
@@ -60,32 +84,11 @@ function confirmInputs(params, callback) {
     {
       type: 'confirm',
       name: 'confirmation',
-      message: 'Ready to delete images? Any GitShas not blacklisted above are subject to deletion.',
+      message: 'Ready to delete images? Any imageTags not blacklisted above are subject to deletion.',
       default: false
     }
   ]).then(function(answer) {
     return callback(answer.confirmation);
-  })
-}
-
-function run(params) {
-  var ecr = new AWS.ECR();
-  listImages(ecr, params, function (err, res) {
-    if (err) throw new Error(err);
-    var result = res.imageIds;
-    validateECRSize(result, params);
-    result = isGitSha(result);
-    result = isBlacklisted(result, params);
-    getTimeStamps(result, params, function (err, res) {
-      if (err) throw new Error(err);
-      assignTimeStamps(result, res);
-      var imagesToDelete = toDelete(result, params);
-      // Leave this commented out unless you want to delete images:
-      // deleteImages(ecr, params, imagesToDelete, function(err, res) {
-      //   if (err) throw new Error(err);
-      //   else console.log('[info] Successfully removed images from ECR');
-      // })
-    })
   })
 }
 
@@ -98,8 +101,8 @@ function listImages(ecr, params, callback) {
 
 function validateECRSize(array, params) {
   var count = array.length;
-  if (count < params.maximumImages) {
-    throw new Error('[ecs-conex cleanup] '+ params.repo + ' has ' + count + ' images, which is less than ' + params.maximumImages + '. No clean-up required.');
+  if (count < params.maximum) {
+    throw new Error('The repository ' + params.user + '/' + params.repo + ' has ' + count + ' images, which is less than the desired ' + params.maximum + ' image maximum. No clean-up required.');
   }
 }
 
@@ -108,21 +111,17 @@ function isGitSha(array) {
     if (array[i].imageTag !== undefined && array[i].imageTag.match(/^[a-z0-9]{40}$/)) {
       array[i]['ableToDelete'] = true;
     } else {
-      console.log('[will not delete] Image tag ' + array[i].imageTag + ' did not resemble a GitSha.');
-      array[i]['ableToDelete'] = false;
+      wontDelete(array[i], 'Did not resemble a GitSha', true);
     }
   }
-  return array;
 }
 
 function isBlacklisted(array, params) {
   for (var i = 0; i < array.length; i++) {
     if (params.blacklist !== null && params.blacklist.indexOf(array[i].imageTag) !== -1) {
-      console.log('[will not delete] Image tag ' + array[i].imageTag + ' is whitelisted.');
-      array[i]['ableToDelete'] = false;
+      wontDelete(array[i], 'ImageTag is blacklisted', true);
     }
   }
-  return array;
 }
 
 function getTimeStamps(array, params, callback) {
@@ -149,7 +148,7 @@ function assignTimeStamps(array, response) {
   for (var i = 0; i < response.length; i++) {
     if (response[i].statusCode !== 200) {
       var commit = response[i].request.uri.pathname.match(/\/([a-z0-9]*)$/)[1];
-      console.log('[will not delete] Image tag ' + commit + ' could not be retrieved from GitHub.');
+      wontDelete(array[i], 'ImageTag could not be retrieved from GitHub');
       dates.push({ imageTag: commit, ableToDelete: false });
     } else {
       var result = JSON.parse(response[i].body);
@@ -161,13 +160,12 @@ function assignTimeStamps(array, response) {
   return array;
 }
 
-function mergeByProperty(arr1, arr2, prop) {
-  _.each(arr2, function(arr2object) {
-    var arr1object = _.find(arr1, function(arr1object) {
-      return arr1object[prop] === arr2object[prop];
-    });
-    arr1object ? _.extend(arr1object, arr2object) : console.log('[warning] Image tag ' + arr2object.imageTag + ' was queried for a commit date, but does not map to an ECR image.');
-  })
+function dateCheck(array) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i].ableToDelete === true && !array[i].date) {
+      wontDelete(array[i], 'ImageTag date could not be mapped from GitHub', true);
+    }
+  }
 }
 
 function toDelete(array, params) {
@@ -177,19 +175,18 @@ function toDelete(array, params) {
     if (deletable) ableToDelete.push(array[i]);
   }
 
-  var deleteCount = array.length - params.maximumImages;
+  var deleteCount = array.length - params.maximum;
   var sorted = _.sortBy(ableToDelete, function(o) { return o.date; });
   var toDelete = sorted.splice(0, deleteCount);
   return toDelete;
 }
 
 function deleteImages(ecr, params, array, callback) {
-  console.log('[info] Deleting ' + array.length + ' images:');
-  console.log(printImages(array));
-
   for (var i = 0; i < array.length; i++) {
+    willDelete(array, i);
     array[i] = _.pick(array[i], 'imageTag', 'imageDigest');
   }
+
   var params = {
     imageIds: array,
     repositoryName: params.repo,
@@ -202,10 +199,22 @@ function deleteImages(ecr, params, array, callback) {
   })
 }
 
-function printImages(array) {
-  var string = '';
-  for (var i = 0; i < array.length; i++) {
-    string += ' * ' + array[i].imageTag + '\n';
-  }
-  return string;
+// Utility functions
+
+function mergeByProperty(arr1, arr2, prop) {
+  _.each(arr2, function(arr2object) {
+    var arr1object = _.find(arr1, function(arr1object) {
+      return arr1object[prop] === arr2object[prop];
+    });
+    arr1object ? _.extend(arr1object, arr2object) : console.log('[warning] Image tag ' + arr2object.imageTag + ' was queried for a commit date, but does not map to an ECR image.');
+  })
+}
+
+function wontDelete(object, message, tag) {
+  console.log('[wont-delete] [' + object.imageDigest + '] [' + object.imageTag + '] ' + message);
+  if (tag) object['ableToDelete'] = false;
+}
+
+function willDelete(array, index) {
+  console.log('[will-delete] [' + array[index].imageDigest + '] [' + array[index].imageTag + '] Deleting image ' + (index + 1) + ' of ' + array.length);
 }

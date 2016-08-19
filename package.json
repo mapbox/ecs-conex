@@ -23,6 +23,8 @@
     "inquirer": "^1.1.2",
     "minimist": "^1.2.0",
     "moment": "^2.14.1",
+    "pinkie-promise": "^2.0.1",
+    "sinon": "^1.17.5",
     "underscore": "^1.8.3"
   }
 }
