@@ -1,18 +1,19 @@
 var AWS = require('aws-sdk');
 var fs = require('fs');
+var inquirer = require('inquirer');
+var minimist = require('minimist');
 var moment = require('moment');
-var prompt = require('cfn-config').prompt;
 var queue = require('d3-queue').queue;
 var request = require('request');
 var _ = require('underscore');
 
 module.exports = {
-  'getUserInputs': getUserInputs,
-  'confirmUserInputs': confirmUserInputs,
+  'validateInputs': validateInputs,
+  'confirmInputs': confirmInputs,
   'listImages': listImages,
   'validateECRSize': validateECRSize,
   'isGitSha': isGitSha,
-  'isWhitelisted': isWhitelisted,
+  'isBlacklisted': isBlacklisted,
   'getTimeStamps': getTimeStamps,
   'assignTimeStamps': assignTimeStamps,
   'mergeByProperty': mergeByProperty,
@@ -22,62 +23,48 @@ module.exports = {
 }
 
 if (!module.parent) {
-  getUserInputs(function(err, params) {
-    if (err) {
-      console.log(err);
-      throw err;
-    }
-    confirmUserInputs(params, function(err, confirm) {
-      if (err) console.log(err);
-      if (confirm === false) process.exit(1);
+  validateInputs(function(err, params) {
+    if (err) throw new Error(err);
+    confirmInputs(params, function(confirmation) {
+      if (confirmation === false) process.exit(1);
       params.githubAccessToken = process.env.GithubAccessToken;
       params.registryId = process.env.RegistryId;
-      params.maximumImages = 750;
+      params.maximumImages = 90;
       run(params);
     })
   })
 }
 
-function getUserInputs(callback) {
+function validateInputs(callback) {
   var params = {};
-  prompt.input('Enter the GitHub user name:', function(err, res) {
-    if (err) return callback(err);
-    if (!res) return callback('GitHub user name cannot be empty');
-    params.user = res;
-    prompt.input('Enter the GitHub repository name:', function(err, res) {
-      if (err) return callback(err);
-      if (!res) return callback('GitHub repository name cannot be empty');
-      params.repo = res;
-      prompt.input('Enter the array of whitelisted commit GitShas:', function(err, res) {
-        if (err) return callback(err);
-        if (res) try {
-          var whitelistArr = res.replace(/ /g,'').split(',');
-        }
-        catch(err) {
-          return callback('GitSha whitelist must be comma-separated list');
-        }
-        params.whitelist = (res) ? whitelistArr : [];
-        return callback(null, params);
-      })
-    })
-  })
-}
+  var argv = minimist(process.argv.slice(2));
 
-function confirmUserInputs(inputs, callback) {
-  var br = '\n';
-  var string = 'Parameter confirmation'.bold + br + '*'.repeat(22) + br;
-  string += 'GitHub user ' + inputs['user'].yellow + br;
-  string += 'GitHub repository ' + inputs['repo'].yellow + br;
-  if (inputs['whitelist'] === '') {
-    string += 'GitSha whitelist ' + 'null'.yellow + br;
-  } else {
-    string += 'GitSha whitelist ' + br;
-    _.each(inputs['whitelist'], function(elem) { string += ' * ' + elem.yellow + br });
+  if (!argv._[0] || !argv._[1]) return callback('GitHub user name and repository name are required');
+  if (argv.blacklist) try {
+    var blacklistArr = argv.blacklist.split(',');
+  } catch(err) {
+    return callback('GitSha blacklist must be a comma-separated list');
   }
 
-  prompt.confirm(string + br + 'Are you sure you want to delete images? Any GitShas not whitelisted above are subject to deletion.', function(err, res) {
-    if (err) return callback(err);
-    return callback(null, res);
+  params.user = argv._[0];
+  params.repo = argv._[1];
+  params.blacklist = (blacklistArr) ? blacklistArr : [];
+  return callback(null, params);
+}
+
+function confirmInputs(params, callback) {
+  console.log('');
+  console.log(params);
+  console.log('');
+  inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirmation',
+      message: 'Ready to delete images? Any GitShas not blacklisted above are subject to deletion.',
+      default: false
+    }
+  ]).then(function(answer) {
+    return callback(answer.confirmation);
   })
 }
 
@@ -88,12 +75,11 @@ function run(params) {
     var result = res.imageIds;
     validateECRSize(result, params);
     result = isGitSha(result);
-    result = isWhitelisted(result, params);
+    result = isBlacklisted(result, params);
     getTimeStamps(result, params, function (err, res) {
       if (err) throw new Error(err);
       assignTimeStamps(result, res);
       var imagesToDelete = toDelete(result, params);
-      console.log(imagesToDelete);
       // Leave this commented out unless you want to delete images:
       // deleteImages(ecr, params, imagesToDelete, function(err, res) {
       //   if (err) throw new Error(err);
@@ -129,9 +115,9 @@ function isGitSha(array) {
   return array;
 }
 
-function isWhitelisted(array, params) {
+function isBlacklisted(array, params) {
   for (var i = 0; i < array.length; i++) {
-    if (params.whitelist !== null && params.whitelist.indexOf(array[i].imageTag) !== -1) {
+    if (params.blacklist !== null && params.blacklist.indexOf(array[i].imageTag) !== -1) {
       console.log('[will not delete] Image tag ' + array[i].imageTag + ' is whitelisted.');
       array[i]['ableToDelete'] = false;
     }

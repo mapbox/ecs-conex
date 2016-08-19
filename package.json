@@ -20,6 +20,8 @@
     "aws-sdk": "^2.4.13",
     "cfn-config": "^2.1.0",
     "d3-queue": "^3.0.2",
+    "inquirer": "^1.1.2",
+    "minimist": "^1.2.0",
     "moment": "^2.14.1",
     "underscore": "^1.8.3"
   }

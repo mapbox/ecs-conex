@@ -36,12 +36,12 @@ test('tests isGitSha', function(assert) {
   assert.end();
 });
 
-test('tests isWhitelisted', function(assert) {
-  var isWhitelisted = cleanup.isWhitelisted;
-  var params = { whitelist: ['c5332a6c78cf23d86f28b8987a3ca78af46b7f48'] };
+test('tests isBlacklisted', function(assert) {
+  var isBlacklisted = cleanup.isBlacklisted;
+  var params = { blacklist: ['c5332a6c78cf23d86f28b8987a3ca78af46b7f48'] };
 
-  assert.deepEqual(isWhitelisted([{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48', ableToDelete: true }], params), [{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48', ableToDelete: false }]);
-  assert.deepEqual(isWhitelisted([{ imageTag: '', ableToDelete: true }], params), [{ imageTag: '', ableToDelete: true }]);
+  assert.deepEqual(isBlacklisted([{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48', ableToDelete: true }], params), [{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48', ableToDelete: false }]);
+  assert.deepEqual(isBlacklisted([{ imageTag: '', ableToDelete: true }], params), [{ imageTag: '', ableToDelete: true }]);
   assert.end();
 });
 
