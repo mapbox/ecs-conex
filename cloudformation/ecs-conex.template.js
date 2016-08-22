@@ -140,7 +140,7 @@ watcher.Resources.WatchbotWebhookFunction.Properties.Code.ZipFile = cf.join('\n'
   'var crypto = require("crypto");',
   'module.exports.webhooks = function(event, context) {',
   '  var body = event.body',
-  '  var hash = "sha1=" + crypto.createHmac("sha1", secret).update(JSON.stringify(body)).digest("hex");',
+  '  var hash = "sha1=" + crypto.createHmac("sha1", secret).update(new Buffer(JSON.stringify(body))).digest("hex");',
   '  if (event.signature !== hash) return context.done("invalid: signature does not match");',
   '  if (body.zen) return context.done(null, "ignored ping request");',
   '  var push = {',
