@@ -49,6 +49,18 @@ log=$(login ${test_region})
 expected="All good"
 assert "equal" "${log}" "${expected}"
 
+# ecr_logins() test
+tag_test "ecr_logins()"
+test_regions=(us-east-1 us-west-2 eu-west-1)
+logged_into=""
+
+function login() {
+  logged_into="${logged_into}|$1"
+}
+
+ecr_logins "${test_regions[@]}"
+assert "equal" "$logged_into" "|us-east-1|us-west-2|eu-west-1"
+
 # ensure_repo() setup
 copy_func create_repo old_create_repo
 test_region=us-east-1
@@ -300,9 +312,7 @@ function ensure_repo() {
 }
 
 function login() {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into login"
-  fi
+  FAILURE="Should expect prior login"
 }
 
 function image_exists {

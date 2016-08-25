@@ -6,60 +6,60 @@ var test = require('tape');
 var _ = require('underscore');
 
 test('validateInputs: no user', function(assert) {
-  var arguments = [ 'repo', '--maximum=1', '--blacklist=tag1,tag2' ];
+  var arguments = ['repo', '--maximum=1', '--blacklist=tag1,tag2'];
 
   cleanup.validateInputs(arguments, function(err, res) {
     assert.equal(err, 'GitHub user name and repository name are required');
     assert.equal(res, undefined);
     assert.end();
-  })
-})
+  });
+});
 
 test('validateInputs: no repo', function(assert) {
-  var arguments = [ 'user', '--maximum=1', '--blacklist=tag1,tag2' ];
+  var arguments = ['user', '--maximum=1', '--blacklist=tag1,tag2'];
 
   cleanup.validateInputs(arguments, function(err, res) {
     assert.equal(err, 'GitHub user name and repository name are required');
     assert.equal(res, undefined);
     assert.end();
-  })
-})
+  });
+});
 
 test('validateInputs: no maximum', function(assert) {
-  var arguments = [ 'user', 'repo', '--blacklist=tag1,tag2' ];
+  var arguments = ['user', 'repo', '--blacklist=tag1,tag2'];
 
   cleanup.validateInputs(arguments, function(err, res) {
     assert.equal(err, null);
     assert.equal(res.maximum, 750);
     assert.end();
-  })
-})
+  });
+});
 
 test('validateInputs: no blacklist', function(assert) {
-  var arguments = [ 'user', 'repo', '--maximum=1' ];
+  var arguments = ['user', 'repo', '--maximum=1'];
 
   cleanup.validateInputs(arguments, function(err, res) {
     assert.equal(err, null);
     assert.deepEqual(res.blacklist, []);
     assert.end();
-  })
-})
+  });
+});
 
 test('validateInputs', function(assert) {
-  var arguments = [ 'user', 'repo', '--maximum=1', '--blacklist=tag1,tag2' ];
+  var arguments = ['user', 'repo', '--maximum=1', '--blacklist=tag1,tag2'];
 
   cleanup.validateInputs(arguments, function(err, res) {
     assert.equal(err, null);
     assert.equal(res.user, 'user');
     assert.equal(res.repo, 'repo');
     assert.equal(res.maximum, 1);
-    assert.deepEqual(res.blacklist, [ 'tag1', 'tag2' ]);
+    assert.deepEqual(res.blacklist, ['tag1', 'tag2']);
     assert.end();
-  })
-})
+  });
+});
 
 test('confirmInputs: true', function(assert) {
-  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: [ 'tag1', 'tag2' ]};
+  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
   sinon.stub(inquirer, 'prompt', function(questions) {
     assert.deepEqual(questions, [{
       type: 'confirm',
@@ -69,17 +69,17 @@ test('confirmInputs: true', function(assert) {
     }]);
 
     return Promise.resolve({ confirmation: true });
-  })
+  });
 
   cleanup.confirmInputs(params, function(answer) {
     assert.equal(answer, true);
     inquirer.prompt.restore();
     assert.end();
-  })
-})
+  });
+});
 
 test('confirmInputs: false', function(assert) {
-  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: [ 'tag1', 'tag2' ]};
+  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
 
   assert.plan(2);
   sinon.stub(inquirer, 'prompt', function(questions) {
@@ -91,26 +91,26 @@ test('confirmInputs: false', function(assert) {
     }]);
 
     return Promise.resolve({ confirmation: false });
-  })
+  });
 
   cleanup.confirmInputs(params, function(answer) {
     assert.equal(answer, false);
     inquirer.prompt.restore();
-  })
-})
+  });
+});
 
 test('listImages', function(assert) {
   var params = { repo: 'repo' };
 
   assert.plan(1);
   var ecr = {
-    listImages: function(object, callback) {
-      assert.deepEqual(object, { repositoryName: 'repo' })
+    listImages: function(object) {
+      assert.deepEqual(object, { repositoryName: 'repo' });
     }
-  }
+  };
 
-  cleanup.listImages(ecr, params, function(err, res) {})
-})
+  cleanup.listImages(ecr, params, function() {});
+});
 
 test('validateECRSize', function(assert) {
   var result = [
@@ -123,7 +123,7 @@ test('validateECRSize', function(assert) {
   assert.equal(cleanup.validateECRSize(result, { maximum: 3 }), undefined);
   assert.throws(function() { cleanup.validateECRSize(result, { maximum: 4 }); }, /The repository undefined\/undefined has 3 images, which is less than the desired 4 image maximum. No clean-up required./);
   assert.end();
-})
+});
 
 test('isGitSha: true', function(assert) {
   var array = [{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48' }];
@@ -131,7 +131,7 @@ test('isGitSha: true', function(assert) {
 
   assert.equal(array[0].ableToDelete, true);
   assert.end();
-})
+});
 
 test('isGitSha: false', function(assert) {
   var array = [
@@ -146,9 +146,9 @@ test('isGitSha: false', function(assert) {
 
   _.each(array, function(e) {
     assert.equal(e.ableToDelete, false);
-  })
+  });
   assert.end();
-})
+});
 
 test('isBlacklisted: true', function(assert) {
   var params = { blacklist: ['tag'] };
@@ -157,7 +157,7 @@ test('isBlacklisted: true', function(assert) {
 
   assert.equal(array[0].ableToDelete, false);
   assert.end();
-})
+});
 
 test('isBlacklisted: false', function(assert) {
   var params = { blacklist: ['tag'] };
@@ -166,7 +166,7 @@ test('isBlacklisted: false', function(assert) {
 
   assert.equal(array[0].ableToDelete, true);
   assert.end();
-})
+});
 
 test('getTimestamps', function(assert) {
   var array = [{ imageTag: 'tag', ableToDelete: true }];
@@ -177,30 +177,30 @@ test('getTimestamps', function(assert) {
     assert.ok(res[0].statusCode);
     assert.ok(res[0].request.uri.pathname);
     assert.ok(res[0].body);
-  })
-})
+  });
+});
 
 test('assignTimeStamps: 200 status code', function(assert) {
   var array = [{ imageTag: 'tag', ableToDelete: true }];
-  var response = [{"statusCode": 200, "body": "{\"sha\":\"tag\",\"commit\":{\"author\":{\"date\":\"2016-07-20T18:27:53Z\"}}}", "request":{"uri":{"pathname": "/repos/user/repo/commits/tag" }}}];
+  var response = [{ statusCode: 200, body: '{"sha":"tag","commit":{"author":{"date":"2016-07-20T18:27:53Z"}}}', request: { uri: { pathname: '/repos/user/repo/commits/tag' } } }];
   cleanup.assignTimeStamps(array, response);
 
   assert.equal(array[0].imageTag, 'tag');
   assert.equal(array[0].ableToDelete, true);
   assert.equal(array[0].date, 1469039273);
   assert.end();
-})
+});
 
 test('assignTimeStamps: 401 status code', function(assert) {
   var array = [{ imageTag: 'tag', ableToDelete: true }];
-  var response = [{"statusCode": 401, "body": "{\"sha\":\"tag\",\"commit\":{\"author\":{\"date\":\"2016-07-20T18:27:53Z\"}}}", "request":{"uri":{"pathname": "/repos/user/repo/commits/tag" }}}];
+  var response = [{ statusCode: 401, body: '{"sha":"tag","commit":{"author":{"date":"2016-07-20T18:27:53Z"}}}', request: { uri: { pathname: '/repos/user/repo/commits/tag' } } }];
   cleanup.assignTimeStamps(array, response);
 
   assert.equal(array[0].imageTag, 'tag');
   assert.equal(array[0].ableToDelete, false);
   assert.ok(!array[0].date);
   assert.end();
-})
+});
 
 test('dateCheck: true', function(assert) {
   var array = [{ imageTag: 'tag', imageDigest: 'digest', date: 1469641800, ableToDelete: true }];
@@ -208,7 +208,7 @@ test('dateCheck: true', function(assert) {
 
   assert.equal(array[0].ableToDelete, true);
   assert.end();
-})
+});
 
 test('dateCheck: false', function(assert) {
   var array = [{ imageTag: 'tag', imageDigest: 'digest', ableToDelete: true }];
@@ -216,7 +216,7 @@ test('dateCheck: false', function(assert) {
 
   assert.equal(array[0].ableToDelete, false);
   assert.end();
-})
+});
 
 test('toDelete', function(assert) {
   var results = [
@@ -224,7 +224,7 @@ test('toDelete', function(assert) {
     { imageTag: 'tag2', imageDigest: 'digest2', ableToDelete: true,  date: 4 },
     { imageTag: 'tag3', imageDigest: 'digest3', ableToDelete: true,  date: 3 },
     { imageTag: 'tag4', imageDigest: 'digest4', ableToDelete: true,  date: 2 },
-    { imageTag: 'tag5', imageDigest: 'digest5', ableToDelete: false, date: 1 },
+    { imageTag: 'tag5', imageDigest: 'digest5', ableToDelete: false, date: 1 }
   ];
 
   var max1 = cleanup.toDelete(results, { maximum: 1 });
@@ -250,7 +250,7 @@ test('toDelete', function(assert) {
 
   assert.equal(max5.length, 0);
   assert.end();
-})
+});
 
 test('deleteImages', function(assert) {
   var array = [{ imageTag: 'tag', imageDigest: 'digest' }];
@@ -258,15 +258,15 @@ test('deleteImages', function(assert) {
 
   assert.plan(3);
   var ecr = {
-    batchDeleteImage: function (params) {
+    batchDeleteImage: function(params) {
       assert.deepEqual(params.imageIds, array);
       assert.equal(params.repositoryName, 'repo');
       assert.equal(params.registryId, 'registryId');
     }
-  }
+  };
 
   cleanup.deleteImages(ecr, params, array);
-})
+});
 
 test('mergeByProperty: mergable', function(assert) {
   var params = { deleteCount: 0 };
@@ -280,7 +280,7 @@ test('mergeByProperty: mergable', function(assert) {
   assert.equal(arr1[0].ableToDelete, true);
   assert.equal(arr1[0].date, 1469641800);
   assert.end();
-})
+});
 
 test('mergeByProperty: not mergable', function(assert) {
   var params = { deleteCount: 0 };
@@ -294,7 +294,7 @@ test('mergeByProperty: not mergable', function(assert) {
   assert.equal(arr1[0].ableToDelete, true);
   assert.ok(!arr1[0].date);
   assert.end();
-})
+});
 
 test('wontDelete', function(assert) {
   var object = { imageDigest: 'digest', imageTag: 'tag' };
@@ -304,11 +304,11 @@ test('wontDelete', function(assert) {
   sinon.stub(console, 'log', function(msg) {
     console.log.restore();
     assert.equal(msg, '[wont-delete] [digest] [tag] test');
-  })
+  });
 
-  cleanup.wontDelete(object, 'test', true);
+  cleanup.wontDelete(object, message, true);
   assert.equal(object.ableToDelete, false);
-})
+});
 
 test('willDelete', function(assert) {
   var array = [{ imageDigest: 'digest', imageTag: 'tag' }];
@@ -318,7 +318,7 @@ test('willDelete', function(assert) {
   sinon.stub(console, 'log', function(msg) {
     console.log.restore();
     assert.equal(msg, '[will-delete] [digest] [tag] Deleting image 1 of 1');
-  })
+  });
 
   cleanup.willDelete(array, index);
-})
+});

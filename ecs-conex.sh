@@ -41,6 +41,9 @@ function main() {
   echo "gather local credentials and setup --build-arg"
   credentials ./Dockerfile
 
+  echo "logging into ECR repositories in ${regions[*]}"
+  ecr_logins "${regions[@]}"
+
   echo "building new image"
   docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push

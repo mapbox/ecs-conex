@@ -113,10 +113,16 @@ function exact_match() {
   fi
 }
 
+function ecr_logins() {
+  local regions=$1
+  for region in "$@"; do
+    login ${region}
+  done
+}
+
 function docker_push() {
   for region in "${regions[@]}"; do
     ensure_repo ${region}
-    login ${region}
 
     if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"

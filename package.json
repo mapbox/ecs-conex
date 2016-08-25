@@ -1,10 +1,15 @@
 {
   "name": "ecs-conex",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "ECS Container Express",
   "main": "ecs-conex.sh",
   "scripts": {
-    "test": "test/utils.test.sh"
+    "pretest": "eslint cloudformation test",
+    "test": "test/utils.test.sh && tape test/template.test.js",
+    "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
+  },
+  "bin": {
+    "ecs-conex-watch": "scripts/watch.sh"
   },
   "repository": {
     "type": "git",
@@ -19,12 +24,18 @@
   "dependencies": {
     "aws-sdk": "^2.4.13",
     "cfn-config": "^2.1.0",
+    "cloudfriend": "^1.0.0",
     "d3-queue": "^3.0.2",
     "inquirer": "^1.1.2",
     "minimist": "^1.2.0",
     "moment": "^2.14.1",
     "pinkie-promise": "^2.0.1",
     "sinon": "^1.17.5",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "watchbot": "0.0.7"
+  },
+  "devDependencies": {
+    "eslint": "^3.2.0",
+    "tape": "^4.6.0"
   }
 }
