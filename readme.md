@@ -90,3 +90,26 @@ First off all, check the `Message` JSON to help identify the commit that caused 
 Next, use the `MessageId` (`a7492004-8ca8-4322-9299-2e82bb649163` in this example) to search container logs. Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s (assuming you're running ecs-conex on a EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)). If you run on an ECS cluster with more than one EC2, you may have to use the `Instance ARN` in an `ecs:DescribeContainerInstances` request to determine the EC2 that the container ran on.
 
 If there are more questions, the `Runtime resources` indicate the ECS cluster, the EC2 instance, and the ECS task that attempted the build. You can use these for closer inspection via further ECS API requests.
+
+## Removing old ECR registry images
+
+```sh
+node scripts/cleanup.js <my-username> <my-github-repo> [options]
+```
+
+The cleanup script accepts the following options:
+
+* `--maximum` The number of images to keep in the ECR registry. For example, if you want to keep 700 images in the ECR registry, you would wave the `--maximum=700` flag. The default value is 750.
+* `--blacklist` A comma-separated list of imageTags not subject to deletion. For example, if you want to ensure that imageTag `<tag-1>` and `<tag-2>` are not deleted, you would wave the `--blacklist=<tag-1>,<tag-2>` flag.
+
+You will need to have two environmental parameters set in your terminal:
+
+* `GithubAccessToken`
+* `RegistryId`, which you can retrieve this value from your Repository URL, which should have the format `<RegistryId>.dkr.ecr.region.amazonaws.com`
+
+If the ECR registry size is not greater than the desired maximum, the cleanup script will not run. There are certain types of imageTags that will never be subject to deletion:
+
+* ImageTags that do not resemble a Gitsha, or a 40 hex character string
+* ImageTags that are specified in the `--blacklist` flag parameter
+* ImageTags that cannot be retrieved from Github
+* ImageTags that don't have associated commit dates on Github

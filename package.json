@@ -5,10 +5,11 @@
   "main": "ecs-conex.sh",
   "scripts": {
     "pretest": "eslint cloudformation test",
-    "test": "test/utils.test.sh && tape test/template.test.js",
+    "test": "test/utils.test.sh && tape test/template.test.js && tape test/cleanup.test.js",
     "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
   "bin": {
+    "cleanup": "scripts/cleanup.js",
     "ecs-conex-watch": "scripts/watch.sh"
   },
   "repository": {
@@ -22,7 +23,17 @@
   },
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
+    "aws-sdk": "^2.4.13",
+    "cfn-config": "^2.1.0",
     "cloudfriend": "^1.0.0",
+    "d3-queue": "^3.0.2",
+    "inquirer": "^1.1.2",
+    "minimist": "^1.2.0",
+    "moment": "^2.14.1",
+    "pinkie-promise": "^2.0.1",
+    "request": "^2.74.0",
+    "sinon": "^1.17.5",
+    "underscore": "^1.8.3",
     "watchbot": "0.0.7"
   },
   "devDependencies": {
