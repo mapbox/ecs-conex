@@ -1,5 +1,6 @@
+#!/usr/bin/env node
+
 var AWS = require('aws-sdk');
-var fs = require('fs');
 var inquirer = require('inquirer');
 var minimist = require('minimist');
 var moment = require('moment');
@@ -8,21 +9,21 @@ var request = require('request');
 var _ = require('underscore');
 
 module.exports = {
-  'validateInputs': validateInputs,
-  'confirmInputs': confirmInputs,
-  'listImages': listImages,
-  'validateECRSize': validateECRSize,
-  'isGitSha': isGitSha,
-  'isBlacklisted': isBlacklisted,
-  'getTimeStamps': getTimeStamps,
-  'assignTimeStamps': assignTimeStamps,
-  'dateCheck': dateCheck,
-  'toDelete': toDelete,
-  'deleteImages': deleteImages,
-  'mergeByProperty': mergeByProperty,
-  'wontDelete': wontDelete,
-  'willDelete': willDelete
-}
+  validateInputs: validateInputs,
+  confirmInputs: confirmInputs,
+  listImages: listImages,
+  validateECRSize: validateECRSize,
+  isGitSha: isGitSha,
+  isBlacklisted: isBlacklisted,
+  getTimeStamps: getTimeStamps,
+  assignTimeStamps: assignTimeStamps,
+  dateCheck: dateCheck,
+  toDelete: toDelete,
+  deleteImages: deleteImages,
+  mergeByProperty: mergeByProperty,
+  wontDelete: wontDelete,
+  willDelete: willDelete
+};
 
 if (!module.parent) {
   var arguments = process.argv.slice(2);
@@ -31,25 +32,25 @@ if (!module.parent) {
     confirmInputs(params, function(confirmation) {
       if (confirmation === false) process.exit(1);
       var ecr = new AWS.ECR();
-      listImages(ecr, params, function (err, res) {
+      listImages(ecr, params, function(err, res) {
         if (err) throw new Error(err);
         var result = res.imageIds;
         validateECRSize(result, params);
         isGitSha(result);
         isBlacklisted(result, params);
-        getTimeStamps(result, params, function (err, res) {
+        getTimeStamps(result, params, function(err, res) {
           if (err) throw new Error(err);
           assignTimeStamps(result, res);
           dateCheck(result);
           var imagesToDelete = toDelete(result, params);
-          deleteImages(ecr, params, imagesToDelete, function(err, res) {
+          deleteImages(ecr, params, imagesToDelete, function(err) {
             if (err) throw new Error(err);
             else console.log('[info] Successfully removed images from ECR');
-          })
-        })
-      })
-    })
-  })
+          });
+        });
+      });
+    });
+  });
 }
 
 function validateInputs(arguments, callback) {
@@ -88,14 +89,14 @@ function confirmInputs(params, callback) {
     }
   ]).then(function(answer) {
     return callback(answer.confirmation);
-  })
+  });
 }
 
 function listImages(ecr, params, callback) {
-  ecr.listImages({ repositoryName: params.repo }, function (err, data) {
+  ecr.listImages({ repositoryName: params.repo }, function(err, data) {
     if (err) return callback(err);
     return callback(null, data);
-  })
+  });
 }
 
 function validateECRSize(array, params) {
@@ -131,7 +132,7 @@ function getTimeStamps(array, params, callback) {
       var options = {
         url: 'https://api.github.com/repos/' + params.user + '/' + params.repo + '/commits/' + array[i].imageTag + '?access_token=' + params.githubAccessToken,
         headers: { 'User-agent': 'request' }
-      }
+      };
       q.defer(request, options);
     }
   }
@@ -139,7 +140,7 @@ function getTimeStamps(array, params, callback) {
   q.awaitAll(function(error, response) {
     if (error) return callback(error);
     return callback(null, response);
-  })
+  });
 }
 
 function assignTimeStamps(array, response) {
@@ -186,16 +187,16 @@ function deleteImages(ecr, params, array, callback) {
     array[i] = _.pick(array[i], 'imageTag', 'imageDigest');
   }
 
-  var params = {
+  var options = {
     imageIds: array,
     repositoryName: params.repo,
     registryId: params.registryId
-  }
+  };
 
-  ecr.batchDeleteImage(params, function(err, data) {
+  ecr.batchDeleteImage(options, function(err, data) {
     if (err) return callback(err);
-    return callback(null, data)
-  })
+    return callback(null, data);
+  });
 }
 
 // Utility functions
@@ -206,7 +207,7 @@ function mergeByProperty(arr1, arr2, prop) {
       return arr1object[prop] === arr2object[prop];
     });
     arr1object ? _.extend(arr1object, arr2object) : console.log('[warning] Image tag ' + arr2object.imageTag + ' was queried for a commit date, but does not map to an ECR image.');
-  })
+  });
 }
 
 function wontDelete(object, message, tag) {
