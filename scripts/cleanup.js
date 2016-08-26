@@ -42,11 +42,10 @@ if (!module.parent) {
           assignTimeStamps(result, res);
           dateCheck(result);
           var imagesToDelete = toDelete(result, params);
-          // // Leave this commented out unless you want to delete images:
-          // deleteImages(ecr, params, imagesToDelete, function(err, res) {
-          //   if (err) throw new Error(err);
-          //   else console.log('[info] Successfully removed images from ECR');
-          // })
+          deleteImages(ecr, params, imagesToDelete, function(err, res) {
+            if (err) throw new Error(err);
+            else console.log('[info] Successfully removed images from ECR');
+          })
         })
       })
     })
@@ -78,7 +77,7 @@ function validateInputs(arguments, callback) {
 
 function confirmInputs(params, callback) {
   console.log('');
-  console.log(params);
+  console.log(_.omit(params, 'githubAccessToken', 'registryId'));
   console.log('');
   inquirer.prompt([
     {
