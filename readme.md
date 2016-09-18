@@ -22,7 +22,8 @@ Once ecs-conex is running in your AWS account, you can ask it to build a Docker 
 
 In this example, we assume:
 - that a ecs-conex stack has already been created in `us-east-1` called `ecs-conex-production`,
-- a new Github repository called `my-github-repo` is already created, and
+- a new Github repository called `my-github-repo` is already created,
+- you have generated a personal GitHub access token `abcdefghi` with `admin:repo_hook` and `repo` scopes,
 - awscli is installed and properly configured
 
 ```sh
@@ -34,7 +35,7 @@ $ git remote add origin git@github.com:my-username/my-github-repo
 $ echo "FROM ubuntu" > Dockerfile
 $ git commit -am "my first commit"
 $ git push --set-upstream origin master
-$ ../ecs-conex/scripts/watch.sh us-east-1:ecs-conex-production
+$ GithubAccessToken=abcdefghi ../ecs-conex/scripts/watch.sh us-east-1:ecs-conex-production
 ```
 
 You can check to see if your repository is being watched by looking at Settings > Webhooks & Services for your repository:
