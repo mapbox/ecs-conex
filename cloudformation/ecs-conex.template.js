@@ -19,11 +19,24 @@ var watcher = watchbot.template({
   user: true,
   notificationEmail: cf.ref('AlarmEmail'),
   cluster: cf.ref('Cluster'),
-  clusterRole: cf.ref('ClusterRole'),
-  watchbotVersion: cf.ref('WatchbotVersion'),
+  logAggregationFunction: cf.ref('LogAggregationFunction'),
   alarmThreshold: 20,
   alarmPeriods: 6,
-  messageTimeout: 1200
+  messageTimeout: 1200,
+  permissions: {
+    Effect: 'Allow',
+    Action: [
+      'ecr:BatchGetImage',
+      'ecr:CreateRepository',
+      'ecr:DescribeRepositories',
+      'ecr:GetAuthorizationToken',
+      'ecr:InitiateLayerUpload',
+      'ecr:CompleteLayerUpload',
+      'ecr:UploadLayerPart',
+      'ecr:PutImage'
+    ],
+    Resource: '*'
+  }
 });
 
 // Main ecs-conex template
@@ -32,11 +45,6 @@ var conex = {
     GitSha: {
       Description: 'The SHA of the task repository to use',
       Type: 'String'
-    },
-    WatchbotVersion: {
-      Description: 'The version of Watchbot to use',
-      Type: 'String',
-      Default: 'v0.0.7'
     },
     GithubAccessToken: {
       Description: 'A Github access token with permission to clone private repositories',
@@ -51,10 +59,6 @@ var conex = {
       Description: 'The ARN of the ECS cluster to run on',
       Type: 'String'
     },
-    ClusterRole: {
-      Description: 'An IAM role that can be assumed by EC2s in the ECS cluster',
-      Type: 'String'
-    },
     AlarmEmail: {
       Description: 'An email address to subscribe to alarms',
       Type: 'String',
@@ -64,47 +68,6 @@ var conex = {
       Description: 'The ARN of a Lambda function that will receive log events from CloudWatch',
       Type: 'String',
       Default: 'none'
-    }
-  },
-  Conditions: {
-    ForwardLogs: cf.notEquals(cf.ref('LogAggregationFunction'), 'none')
-  },
-  Resources: {
-    LogForwarding: {
-      Type: 'AWS::Logs::SubscriptionFilter',
-      Description: 'Sends log events from CloudWatch Logs to a Lambda function',
-      Condition: 'ForwardLogs',
-      Properties: {
-        DestinationArn: cf.ref('LogAggregationFunction'),
-        LogGroupName: watcher.ref.logGroup,
-        FilterPattern: ''
-      }
-    },
-    WorkerPolicy: {
-      Type: 'AWS::IAM::Policy',
-      Description: 'The IAM policy required by ecs-conex',
-      Properties: {
-        Roles: [cf.ref('ClusterRole')],
-        PolicyName: 'ecs-conex-worker-policy',
-        PolicyDocument: {
-          Statement: [
-            {
-              Effect: 'Allow',
-              Action: [
-                'ecr:BatchGetImage',
-                'ecr:CreateRepository',
-                'ecr:DescribeRepositories',
-                'ecr:GetAuthorizationToken',
-                'ecr:InitiateLayerUpload',
-                'ecr:CompleteLayerUpload',
-                'ecr:UploadLayerPart',
-                'ecr:PutImage'
-              ],
-              Resource: '*'
-            }
-          ]
-        }
-      }
     }
   },
   Outputs: {
