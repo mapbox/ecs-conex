@@ -26,6 +26,7 @@ var watcher = watchbot.template({
   permissions: {
     Effect: 'Allow',
     Action: [
+      'ecr:BatchCheckLayerAvailability',
       'ecr:BatchGetImage',
       'ecr:CreateRepository',
       'ecr:DescribeRepositories',
