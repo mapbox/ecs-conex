@@ -31,6 +31,7 @@ var watcher = watchbot.template({
       'ecr:CreateRepository',
       'ecr:DescribeRepositories',
       'ecr:GetAuthorizationToken',
+      'ecr:GetDownloadUrlForLayer',
       'ecr:InitiateLayerUpload',
       'ecr:CompleteLayerUpload',
       'ecr:UploadLayerPart',
