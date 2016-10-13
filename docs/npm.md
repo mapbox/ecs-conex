@@ -19,3 +19,8 @@ RUN npm install
 # Clean up
 RUN rm -f ./.npmrc
 ```
+
+During local Docker builds, be sure to pass in the NPMAccessToken as part of the build arg, ie: 
+`docker build --build-arg NPMAccessToken=ABCDEFGHIJKLMNOP -t your-repo ./`
+
+Checkout the [NPM docs](https://docs.npmjs.com/private-modules/docker-and-private-modules) for more on Docker and private modules.
