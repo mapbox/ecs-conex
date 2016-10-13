@@ -49,12 +49,12 @@ var conex = {
       Type: 'String'
     },
     GithubAccessToken: {
-      Description: 'A Github access token with permission to clone private repositories',
+      Description: '[secure] A Github access token with permission to clone private repositories',
       Type: 'String'
     },
     NPMAccessToken: {
       Type: 'String',
-      Description: 'npm access token used to install private packages',
+      Description: '[secure] npm access token used to install private packages',
       Default: ''
     },
     Cluster: {

@@ -25,4 +25,4 @@ VOLUME /var/run/docker.sock
 VOLUME /mnt/data
 
 # Run the worker
-CMD ["/bin/sh", "-c", "./ecs-conex.sh"]
+CMD eval $(./node_modules/.bin/decrypt-kms-env) && ./ecs-conex.sh
