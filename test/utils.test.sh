@@ -251,12 +251,19 @@ clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
+# credentials() no github token in dockerfile test
+tag_test "credentials() missing github token in dockerfile"
+export GithubAccessToken=test_GithubAccessToken
+clear_dockerfile
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
+
 # credentials() no role test
 tag_test "credentials() missing role"
 export nullRole=1
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # credentials() role test
 tag_test "credentials() role"
@@ -279,7 +286,7 @@ assert "equal" "${args}" "" "should be empty"
 tag_test "credentials() missing build arguments in creds"
 write_dockerfile "{}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
 AccountId=1
