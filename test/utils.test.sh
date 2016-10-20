@@ -251,13 +251,6 @@ clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
-# credentials() no github token in env test
-tag_test "credentials() missing github token in env"
-export GithubAccessToken=""
-write_dockerfile "${tmpcreds}"
-credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
-
 # credentials() no github token in dockerfile test
 tag_test "credentials() missing github token in dockerfile"
 export GithubAccessToken=test_GithubAccessToken

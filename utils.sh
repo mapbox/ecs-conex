@@ -82,8 +82,8 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
-  GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
-  if [[ -n $GithubAccessToken ]] && grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
+
+  if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
   fi
 
