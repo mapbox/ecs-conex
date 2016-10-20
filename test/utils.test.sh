@@ -227,6 +227,7 @@ function curl () {
 function write_dockerfile() {
   creds=$1
   echo "ARG NPMAccessToken" > ${tmpdocker}
+  echo "ARG GithubAccessToken" >> ${tmpdocker}
   echo "ARG AWS_ACCESS_KEY_ID" >> ${tmpdocker}
   echo "ARG AWS_SECRET_ACCESS_KEY" >> ${tmpdocker}
   echo "ARG AWS_SESSION_TOKEN" >> ${tmpdocker}
@@ -263,6 +264,7 @@ export nullRole=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
 assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
+assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
 assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
 assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
 assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
