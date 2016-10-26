@@ -83,6 +83,7 @@ function credentials() {
   fi
 
 
+  GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
   if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
   fi
