@@ -45,7 +45,8 @@ function main() {
   ecr_logins "${regions[@]}"
 
   echo "building new image"
-  docker build --no-cache ${args} --tag ${repo}:${after} ${tmpdir}
+  echo ${args} | grep -ioE "GithubAccessToken"
+  docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 
   echo "completed successfully"
