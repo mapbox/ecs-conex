@@ -107,7 +107,7 @@ function credentials() {
 
 function exact_match() {
   if git describe --tags --exact-match 2> /dev/null; then
-    tag="$(git describe --tags --exact-match)"
+    local tag="$(git describe --tags --exact-match)"
     if image_exists ${region} ${tag}; then
       echo "found existing image for ${tag} in ${region}, skipping push"
     else
