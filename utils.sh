@@ -30,10 +30,11 @@ function create_repo() {
 
 function image_exists() {
   local region=$1
+  local imgtag=${2:-${after}}
   aws ecr batch-get-image \
     --region ${region} \
     --repository-name ${repo} \
-    --image-ids imageTag=${after} \
+    --image-ids imageTag=${imgtag} \
     --output text | grep -q IMAGES
 }
 
@@ -107,9 +108,13 @@ function credentials() {
 function exact_match() {
   if git describe --tags --exact-match 2> /dev/null; then
     tag="$(git describe --tags --exact-match)"
-    echo "pushing ${tag} to ${region}"
-    docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
-    docker push "$(after_image ${region} ${tag})"
+    if image_exists ${region} ${tag}; then
+      echo "found existing image for ${tag} in ${region}, skipping push"
+    else
+      echo "pushing ${tag} to ${region}"
+      docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
+      docker push "$(after_image ${region} ${tag})"
+    fi
   fi
 }
 
@@ -123,6 +128,7 @@ function ecr_logins() {
 function docker_push() {
   for region in "${regions[@]}"; do
     ensure_repo ${region}
+    exact_match
 
     if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"
@@ -132,7 +138,6 @@ function docker_push() {
     echo "pushing ${after} to ${region}"
     docker tag -f ${repo}:${after} "$(after_image ${region})"
     docker push "$(after_image ${region})"
-    exact_match
   done
 }
 
