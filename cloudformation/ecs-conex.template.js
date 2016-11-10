@@ -6,7 +6,7 @@ var watcher = watchbot.template({
   prefix: 'Watchbot',
   service: 'ecs-conex',
   serviceVersion: cf.ref('GitSha'),
-  workers: 4,
+  workers: cf.ref('NumberOfWorkers'),
   reservation: { memory: 512 },
   env: {
     StackRegion: cf.region,
@@ -56,6 +56,11 @@ var conex = {
       Type: 'String',
       Description: '[secure] npm access token used to install private packages',
       Default: ''
+    },
+    NumberOfWorkers: {
+      Type: 'Number',
+      Description: 'The number of concurrent build jobs ecs-conex will perform',
+      Default: 4
     },
     Cluster: {
       Description: 'The ARN of the ECS cluster to run on',
