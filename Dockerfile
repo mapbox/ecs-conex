@@ -4,7 +4,7 @@ FROM ubuntu
 RUN apt-get update -qq && apt-get install -y curl git python-pip
 RUN pip install awscli
 RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
-RUN npm install -g watchbot
+RUN npm install -g watchbot decrypt-kms-env
 
 # Install decrypt-kms-env
 RUN curl -sL https://github.com/mapbox/decrypt-kms-env/archive/v1.0.6.tar.gz | tar --gunzip --extract --strip-components=1 --exclude=readme.md --directory=/usr/local
@@ -28,4 +28,4 @@ VOLUME /var/run/docker.sock
 VOLUME /mnt/data
 
 # Run the worker
-CMD . decrypt-kms-env && ./ecs-conex.sh
+CMD eval $(decrypt-kms-env) && ./ecs-conex.sh

@@ -9,6 +9,7 @@ var watcher = watchbot.template({
   workers: 4,
   reservation: { memory: 512 },
   env: {
+    AWS_DEFAULT_REGION: cf.region,
     StackRegion: cf.region,
     AccountId: cf.accountId,
     GithubAccessToken: cf.ref('GithubAccessToken'),
