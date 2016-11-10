@@ -19,8 +19,6 @@ function main() {
   StackRegion=${StackRegion}
   ApproximateReceiveCount=${ApproximateReceiveCount}
 
-  printenv
-
   echo "checking job receive count"
   check_receives
 
@@ -34,7 +32,6 @@ function main() {
   github_status "${status}" "ecs-conex is building an image"
   [ "${deleted}" == "true" ] && exit 0
 
-  echo "git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}"
   git clone -q https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
