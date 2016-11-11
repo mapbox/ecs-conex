@@ -1,3 +1,7 @@
+### v0.3.0
+
+- Ensures that both git tag and git sha tagged docker images get pushed to registry.
+
 ### v0.2.0
 
 - Builds are performed with `--no-cache`, and images that were produced are cleaned up after being uploaded to ECR

@@ -135,15 +135,27 @@ assert "equal" "${CALLED}" "1"
 tag_test "image_exists()"
 
 function aws() {
-  if [ ${1} == "us-east-1" ]; then
+  if [ ${4} == "us-east-1" ]; then
     echo "IMAGES"
   else
     echo "FAILURES"
   fi
 }
 
-repo=repo after=test image_exists us-east-1 && assert "equal" "$?" "0" "finds existing image"
+repo=repo after=test image_exists us-east-1 ; assert "equal" "$?" "0" "finds existing image"
 repo=repo after=test image_exists us-west-1 || assert "equal" "$?" "1" "finds no image"
+
+function aws() {
+  if [ ${8} == "imageTag=v1.0" ]; then
+    echo "IMAGES"
+  else
+    echo "FAILURES"
+  fi
+}
+
+repo=repo after=test image_exists us-east-1 v1.0 ; assert "equal" "$?" "0" "finds existing tagged image"
+repo=repo after=test image_exists us-east-1 v2.0 || assert "equal" "$?" "1" "finds no tagged image"
+repo=repo after=test image_exists us-east-1 || assert "equal" "$?" "1" "finds no tagged image"
 
 # github_status() test
 tag_test "github_status()"
@@ -268,36 +280,37 @@ credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
 
 # exact_match() test
+AccountId=1
 region=us-east-1
 repo=test
-FAILURE=""
 
 function git () {
   echo "test_tag"
 }
 
-function after_image {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into after_image"
-  elif [ "${2}" != "test_tag" ]; then
-    FAILURE="Tag not passed into after_image"
-  else
-    echo "some_after_image"
-  fi
-}
-
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "equal" "${4}" "some_after_image"
+    assert "equal" "${4}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   elif [ ${1} == "push" ]; then
-    assert "equal" "${2}" "some_after_image"
+    assert "equal" "${2}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   else
-    FAILURE="should call docker tag or docker push"
+    FAILURE="Tried to push a tag that already exists"
   fi
 }
 
-exact_match
-assert "equal" "${FAILURE}" ""
+FAILURE=""
+log=$(exact_match)
+assert "equal" "$FAILURE" ""
+assert "contains" "$log" "pushing test_tag to us-east-1"
+
+function git () {
+  echo "v1.0"
+}
+
+FAILURE=""
+log=$(exact_match)
+assert "equal" "$FAILURE" ""
+assert "contains" "$log" "found existing image for v1.0 in us-east-1, skipping push"
 
 # docker_push() test
 regions=(us-east-1)
