@@ -45,6 +45,7 @@ function main() {
   ecr_logins "${regions[@]}"
 
   echo "building new image"
+
   docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 

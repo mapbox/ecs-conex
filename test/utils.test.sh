@@ -227,6 +227,7 @@ function curl () {
 function write_dockerfile() {
   creds=$1
   echo "ARG NPMAccessToken" > ${tmpdocker}
+  echo "ARG GithubAccessToken" >> ${tmpdocker}
   echo "ARG AWS_ACCESS_KEY_ID" >> ${tmpdocker}
   echo "ARG AWS_SECRET_ACCESS_KEY" >> ${tmpdocker}
   echo "ARG AWS_SESSION_TOKEN" >> ${tmpdocker}
@@ -250,12 +251,19 @@ clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
+# credentials() no github token in dockerfile test
+tag_test "credentials() missing github token in dockerfile"
+export GithubAccessToken=test_GithubAccessToken
+clear_dockerfile
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
+
 # credentials() no role test
 tag_test "credentials() missing role"
 export nullRole=1
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # credentials() role test
 tag_test "credentials() role"
@@ -263,6 +271,7 @@ export nullRole=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
 assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
+assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
 assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
 assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
 assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
@@ -277,7 +286,7 @@ assert "equal" "${args}" "" "should be empty"
 tag_test "credentials() missing build arguments in creds"
 write_dockerfile "{}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
 AccountId=1

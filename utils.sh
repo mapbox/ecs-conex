@@ -82,6 +82,13 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
+
+  GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
+  if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
+  fi
+
+
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   if [[ -z $role ]]; then
     return
