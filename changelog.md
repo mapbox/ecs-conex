@@ -1,6 +1,8 @@
 ### v0.3.0
 
-- Ensures that both git tag and git sha tagged docker images get pushed to registry.
+- Ensures that both git tag and git sha tagged docker images get pushed to registry
+- GithubAccessToken stack parameter gets passed via `--build-arg` for accessing private repositories
+- Fixes and issue where secure environment variables were not being decrypted
 
 ### v0.2.0
 
