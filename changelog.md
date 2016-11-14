@@ -1,3 +1,7 @@
+### v0.3.1
+
+- ecs-watchbot@1.0.4 allows LogAggregationFunction to be truly an optional stack parameter
+
 ### v0.3.0
 
 - Ensures that both git tag and git sha tagged docker images get pushed to registry
