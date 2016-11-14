@@ -1,6 +1,7 @@
 ### v0.3.1
 
 - ecs-watchbot@1.0.4 allows LogAggregationFunction to be truly an optional stack parameter
+- fixes package.json version identifier
 
 ### v0.3.0
 
