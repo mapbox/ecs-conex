@@ -24,6 +24,6 @@ Task ARN: arn:aws:ecs:us-east-1:123456789012:task/798b49eb-49d7-4abb-a305-82a6e7
 
 First off all, check the `Message` JSON to help identify the commit that caused a failure, the repository that was being built, and the person who was responsible for the commit.
 
-Next, use the `MessageId` (`a7492004-8ca8-4322-9299-2e82bb649163` in this example) to search container logs. Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s (assuming you're running ecs-conex on a EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)). If you run on an ECS cluster with more than one EC2, you may have to use the `Instance ARN` in an `ecs:DescribeContainerInstances` request to determine the EC2 that the container ran on.
+Next, use the `MessageId` — `a7492004-8ca8-4322-9299-2e82bb649163` in this example — to search container logs. Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s, assuming you're running ecs-conex on EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html). If you run on an ECS cluster with more than one EC2, you may have to use the `Instance ARN` in an `ecs:DescribeContainerInstances` request to determine the EC2 that the container ran on.
 
 If there are more questions, the `Runtime resources` indicate the ECS cluster, the EC2 instance, and the ECS task that attempted the build. You can use these for closer inspection via further ECS API requests.

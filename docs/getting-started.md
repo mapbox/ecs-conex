@@ -1,24 +1,24 @@
 # Getting started
 
-## Setup ecs-conex in your AWS account
+## Set up ecs-conex in your AWS account
 
 This only needs to be performed once per account. More instruction and scripts coming soon.
 
-## Have ecs-conex watch a Github repository
+## Have ecs-conex watch a GitHub repository
 
-Once ecs-conex is running in your AWS account, you can ask it to build a Docker image each time you push changes to a Github repository.
+Once ecs-conex is running in your AWS account, you can ask it to build a Docker image each time you push changes to a GitHub repository.
 
-1. Setup the Github repository. You will need a `Dockerfile` at the root level of the repository.
-2. Your ecs-conex CloudFormation stack was provided with a Github access token. Make sure that the Github user corresponding to that token is listed as a collaborator and has permission to read from your Github repository.
+1. Setup the GitHub repository. You will need a `Dockerfile` at the root level of the repository.
+2. Your ecs-conex CloudFormation stack was provided with a GitHub access token. Make sure that the GitHub user corresponding to that token is listed as a collaborator and has permission to read from your GitHub repository.
 3. Clone the ecs-conex repository locally, giving you access to the `watch.sh` script in the `scripts` folder.
-4. Make sure you have awscli installed
+4. Make sure you have awscli installed.
 5. Clone your Github repository locally, and use the `watch.sh` script to register the Github repository with ecs-conex.
 
 In this example, we assume:
 - that a ecs-conex stack has already been created in `us-east-1` called `ecs-conex-production`,
-- a new Github repository called `my-github-repo` is already created,
-- you have generated a personal GitHub access token `abcdefghi` with `admin:repo_hook` and `repo` scopes,
-- awscli is installed and properly configured
+- a new GitHub repository called `my-github-repo` is already created,
+- you have generated a personal GitHub access token `abcdefghi` with `admin:repo_hook` and `repo` scopes, and
+- awscli is installed and properly configured.
 
 ```sh
 $ git clone https://github.com/mapbox/ecs-conex

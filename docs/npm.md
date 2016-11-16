@@ -5,15 +5,15 @@ In order to require private npm modules, you will need to export an npm access t
 1. Your ecs-conex CloudFormation stack was provided with an npm access token in the parameter `NPMAccessToken`. This exposes your token to the GitHub repository you are watching.
 2. In your GitHub repository's Dockerfile, specify that you'd like to pass the npm access token at build-time, write this token to `.npmrc` prior to dependency installation:
 
-```
-# Environment vars
+```sh
+# define build arguments
 ARG NPMAccessToken
 
-# Create .npmrc
+# create .npmrc file
 RUN echo "//registry.npmjs.org/:_authToken=$NPMAccessToken" > ./.npmrc
 ONBUILD COPY .npmrc ./
 
-# Install app dependencies
+# install app dependencies
 RUN npm install
 
 # Clean up
