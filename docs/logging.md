@@ -1,6 +1,6 @@
 # Logging
 
-When used in conjunction with [ecs-watchbot](https://github.com/mapbox/ecs-watchbot), logs from ecs-conex containers will be written to a [CloudWatch Log Group](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html). Watchbot creates this resource, and names it according to the `LogGroup` resource definition, which can be found in the [template functions](https://github.com/mapbox/ecs-watchbot/blob/master/lib/template.js). Within your log group, individual message logs will contain the `MessageId` — `39340547-4ec7-413f-bcd4-cdfbdf21a61c` in the following example — in the log stream.
+When used in conjunction with [ecs-watchbot](https://github.com/mapbox/ecs-watchbot), logs from ecs-conex containers will be written to a [CloudWatch Log Group](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html). Watchbot creates this resource with the name `<stackName>-<stackRegion>-<serviceVersion>`. Within your log group, individual message logs will contain the `MessageId` — `39340547-4ec7-413f-bcd4-cdfbdf21a61c` in the following example — in the log stream.
 
 The logs will be formatted using [fastlog](https://github.com/willwhite/fastlog), allowing you to separate them from other logs that may be written to the same file. An example log output:
 
