@@ -1,116 +1,25 @@
 # ecs-conex
 
-ECS Container Express: a continuous integration service for building Docker images and uploading them to ECR repositories in response to push events to Github repositories.
+## What is ecs-conex?
 
-## ECR Repository structure
+ECS Container Express is a continuous integration service for building [Docker](https://www.docker.com/) images and uploading them to [ECR](https://aws.amazon.com/ecr/) repositories in response to push events to Github repositories.
 
-Will create one ECR repository for each Github repository, and each time a push is made to the Github repository, a Docker image will be created for the most recent commit in the push. The image will be tagged with the SHA of that most recent commit. Also, if the most recent commit represents a git tag, the tag's name will also become an image in the ECR repository.
+### Dockerfile
 
-## Setup ecs-conex in your AWS account
+The [Dockerfile](https://docs.docker.com/engine/reference/builder/) contains the commands required to build an image, or snapshot of your repository, when you push to GitHub. This file is located in the root directory of your application code.
 
-This only needs to be performed once per account. More instruction and scripts coming soon.
+### ECR Repository
 
-## Have ecs-conex watch a Github repository
+ecs-conex will create one ECR repository for each Github repository, and each time a push is made to the Github repository, a Docker image will be created for the most recent commit in the push. The image will be tagged with the SHA of that most recent commit. Also, if the most recent commit represents a git tag, the tag's name will also become an image in the ECR repository.
 
-Once ecs-conex is running in your AWS account, you can ask it to build a Docker image each time you push changes to a Github repository.
+## Usage
 
-1. Setup the Github repository. You will need a `Dockerfile` at the root level of the repository.
-2. Your ecs-conex CloudFormation stack was provided with a Github access token. Make sure that the Github user corresponding to that token is listed as a collaborator and has permission to read from your Github repository.
-3. Clone the ecs-conex repository locally, giving you access to the `watch.sh` script in the `scripts` folder.
-4. Make sure you have awscli installed
-5. Clone your Github repository locally, and use the `watch.sh` script to register the Github repository with ecs-conex.
+You only need to run ecs-conex's `watch.sh` script once to subscribe your repository to the ecs-conex webhook. For more information about associating these resources, see the [Getting started](./docs/getting-started.md) documentation.
 
-In this example, we assume:
-- that a ecs-conex stack has already been created in `us-east-1` called `ecs-conex-production`,
-- a new Github repository called `my-github-repo` is already created,
-- you have generated a personal GitHub access token `abcdefghi` with `admin:repo_hook` and `repo` scopes,
-- awscli is installed and properly configured
+## Documentation
 
-```sh
-$ git clone https://github.com/mapbox/ecs-conex
-$ mkdir my-github-repo
-$ cd my-github-repo
-$ git init
-$ git remote add origin git@github.com:my-username/my-github-repo
-$ echo "FROM ubuntu" > Dockerfile
-$ git commit -am "my first commit"
-$ git push --set-upstream origin master
-$ GithubAccessToken=abcdefghi ../ecs-conex/scripts/watch.sh us-east-1:ecs-conex-production
-```
-
-You can check to see if your repository is being watched by looking at Settings > Webhooks & Services for your repository:
-
-```
-https://github.com/my-username/my-github-repo/settings/hooks
-```
-
-## Logging
-
-Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s (assuming you're running ecs-conex on a EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)). You are strongly encouraged to use some form of external aggregation service to gather log outputs from EC2s across your ECS cluster.
-
-The logs will be formatted using [fastlog](https://github.com/willwhite/fastlog), allowing you to separate them from other logs that may be written to the same file. An example log output:
-
-```
-[Tue, 05 Jul 2016 06:10:51 GMT] [ecs-conex] [39340547-4ec7-413f-bcd4-cdfbdf21a61c] processing commit abcd by chuck to refs/heads/my-branch of my-org/my-repo
-```
-
-This log breaks down as follows:
-
-```
-[timestamp] [ecs-conex] [messageId] message
-```
-
-... where `messageId` is a common identifier for all the ecs-conex logs related to processing a single push.
-
-## Debugging failures
-
-When a build fails, a notification is sent to an SNS topic and forwarded to the `WatchbotNotificationEmail` that was provided when the ecs-conex stack was created. A notification will look similar to this:
-
-```
-At Tue, 26 Jul 2016 23:29:50 GMT, processing message a7492004-8ca8-4322-9299-2e82bb649163 failed on ecs-conex-production
-
-Task outcome: delete & notify
-Task stopped reason: Essential container in task exited
-
-Message information:
-MessageId: a7492004-8ca8-4322-9299-2e82bb649163
-Subject: webhook
-Message: {"ref":"refs/heads/test-branch","after":"81e48385715d60cae6f6d9ae818d8148590a9902","before":"c2abf76a55709b2f5eb27eeb1c0d33d4408ea963","repository":{"name":"ecs-conex","owner":{"name":"mapbox"}},"pusher":{"name":"rclark"}}
-SentTimestamp: 1469575768248
-ApproximateFirstReceiveTimestamp: 1469575768250
-ApproximateReceiveCount: 1
-
-Runtime resources:
-Cluster ARN: arn:aws:ecs:us-east-1:123456789012:cluster/ecs-cluster-production
-Instance ARN: arn:aws:ecs:us-east-1:123456789012:container-instance/2e14b317-0909-4ecc-ab88-d94fe64d2167
-Task ARN: arn:aws:ecs:us-east-1:123456789012:task/798b49eb-49d7-4abb-a305-82a6e723caf6
-```
-
-First off all, check the `Message` JSON to help identify the commit that caused a failure, the repository that was being built, and the person who was responsible for the commit.
-
-Next, use the `MessageId` (`a7492004-8ca8-4322-9299-2e82bb649163` in this example) to search container logs. Logs from ecs-conex containers will be written to `/var/log/messages` on the host EC2s (assuming you're running ecs-conex on a EC2s started from [ECS-optimized AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)). If you run on an ECS cluster with more than one EC2, you may have to use the `Instance ARN` in an `ecs:DescribeContainerInstances` request to determine the EC2 that the container ran on.
-
-If there are more questions, the `Runtime resources` indicate the ECS cluster, the EC2 instance, and the ECS task that attempted the build. You can use these for closer inspection via further ECS API requests.
-
-## Removing old ECR registry images
-
-```sh
-node scripts/cleanup.js <my-username> <my-github-repo> [options]
-```
-
-The cleanup script accepts the following options:
-
-* `--maximum` The number of images to keep in the ECR registry. For example, if you want to keep 700 images in the ECR registry, you would wave the `--maximum=700` flag. The default value is 750.
-* `--blacklist` A comma-separated list of imageTags not subject to deletion. For example, if you want to ensure that imageTag `<tag-1>` and `<tag-2>` are not deleted, you would wave the `--blacklist=<tag-1>,<tag-2>` flag.
-
-You will need to have two environmental parameters set in your terminal:
-
-* `GithubAccessToken`
-* `RegistryId`, which you can retrieve this value from your Repository URL, which should have the format `<RegistryId>.dkr.ecr.region.amazonaws.com`
-
-If the ECR registry size is not greater than the desired maximum, the cleanup script will not run. There are certain types of imageTags that will never be subject to deletion:
-
-* ImageTags that do not resemble a Gitsha, or a 40 hex character string
-* ImageTags that are specified in the `--blacklist` flag parameter
-* ImageTags that cannot be retrieved from Github
-* ImageTags that don't have associated commit dates on Github
+- [Getting started](./docs/getting-started.md)
+- [Working with NPM private modules](./docs/npm.md)
+- [Logging](./docs/logging.md)
+- [Debugging failures](./docs/debugging-failures.md)
+- [Removing old ECR registry images](./docs/removing-images.md)
