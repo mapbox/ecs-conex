@@ -93,9 +93,16 @@ function confirmInputs(params, callback) {
 }
 
 function listImages(ecr, params, callback) {
-  ecr.listImages({ repositoryName: params.repo }, function(err, data) {
-    if (err) return callback(err);
-    return callback(null, data);
+  var data = { imageIds:[] };
+  ecr.listImages({ repositoryName: params.repo }).eachItem(function(err, item) {
+    if (err) {
+      callback && callback(err);
+      callback = false;
+    } else if (!item) {
+      callback(null, data);
+    } else {
+      data.imageIds.push(item);
+    }
   });
 }
 
