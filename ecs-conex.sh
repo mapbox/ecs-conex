@@ -49,6 +49,9 @@ function main() {
   docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 
+  echo "sending cloudwatch event"
+  aws events put-events --entries '[{"Source":"ecs-conex","Detail":"{\"message\":\"hello world\",\"tag\":\"${repo}:${after}\"}","DetailType":"message,tag"}]'
+
   echo "completed successfully"
 }
 

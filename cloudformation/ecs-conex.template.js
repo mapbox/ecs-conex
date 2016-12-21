@@ -24,22 +24,31 @@ var watcher = watchbot.template({
   alarmThreshold: 20,
   alarmPeriods: 6,
   messageTimeout: 1200,
-  permissions: {
-    Effect: 'Allow',
-    Action: [
-      'ecr:BatchCheckLayerAvailability',
-      'ecr:BatchGetImage',
-      'ecr:CreateRepository',
-      'ecr:DescribeRepositories',
-      'ecr:GetAuthorizationToken',
-      'ecr:GetDownloadUrlForLayer',
-      'ecr:InitiateLayerUpload',
-      'ecr:CompleteLayerUpload',
-      'ecr:UploadLayerPart',
-      'ecr:PutImage'
-    ],
-    Resource: '*'
-  }
+  permissions: [
+    {
+      Effect: 'Allow',
+      Action: [
+        'ecr:BatchCheckLayerAvailability',
+        'ecr:BatchGetImage',
+        'ecr:CreateRepository',
+        'ecr:DescribeRepositories',
+        'ecr:GetAuthorizationToken',
+        'ecr:GetDownloadUrlForLayer',
+        'ecr:InitiateLayerUpload',
+        'ecr:CompleteLayerUpload',
+        'ecr:UploadLayerPart',
+        'ecr:PutImage'
+      ],
+      Resource: '*'
+    },
+    {
+      Effect: 'Allow',
+      Action: [
+        'events:PutEvents'
+      ],
+      Resources: '*'
+    }
+  ]
 });
 
 // Main ecs-conex template
