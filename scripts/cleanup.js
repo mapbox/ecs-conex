@@ -31,7 +31,7 @@ if (!module.parent) {
     if (err) throw new Error(err);
     confirmInputs(params, function(confirmation) {
       if (confirmation === false) process.exit(1);
-      var ecr = new AWS.ECR();
+      var ecr = new AWS.ECR({ region: params.region });
       listImages(ecr, params, function(err, res) {
         if (err) throw new Error(err);
         var result = res.imageIds;
@@ -65,9 +65,11 @@ function validateInputs(arguments, callback) {
   } catch(err) {
     return callback('Blacklisted imageTags must be a comma-separated list');
   }
+  if (!process.env.GithubAccessToken) return callback(new Error('GithubAccessToken env var must be set'));
 
   params.user = argv._[0];
   params.repo = argv._[1];
+  params.region = argv.region || process.env.AWS_DEFAULT_REGION || 'us-east-1';
   params.maximum = argv.maximum || 750;
   params.blacklist = (blacklistArr) ? blacklistArr : [];
   params.githubAccessToken = process.env.GithubAccessToken;
