@@ -106,6 +106,15 @@ test('listImages', function(assert) {
   var ecr = {
     listImages: function(object) {
       assert.deepEqual(object, { repositoryName: 'repo' });
+      var counter = 0;
+      var eachItem = function(handler) {
+        if (++counter >= 5) {
+          handler(null, null);
+        } else {
+          handler(null, {});
+        }
+      };
+      return { eachItem: eachItem };
     }
   };
 
@@ -253,19 +262,31 @@ test('toDelete', function(assert) {
 });
 
 test('deleteImages', function(assert) {
-  var array = [{ imageTag: 'tag', imageDigest: 'digest' }];
+  var array = [];
+  for (var i = 0; i < 250; i++) {
+    array.push({ imageTag: 'tag' + i, imageDigest: 'digest' });
+  }
   var params = { repo: 'repo', registryId: 'registryId' };
 
-  assert.plan(3);
+  var counter = 0;
   var ecr = {
-    batchDeleteImage: function(params) {
-      assert.deepEqual(params.imageIds, array);
+    batchDeleteImage: function(params, callback) {
+      if (counter++ < 2) {
+        assert.deepEqual(params.imageIds.length, 100);
+      } else {
+        assert.deepEqual(params.imageIds.length, 50);
+      }
       assert.equal(params.repositoryName, 'repo');
       assert.equal(params.registryId, 'registryId');
+      callback(null, params.imageIds);
     }
   };
 
-  cleanup.deleteImages(ecr, params, array);
+  cleanup.deleteImages(ecr, params, array, function(err, list) {
+    assert.ifError(err);
+    assert.equal(list.length, 250);
+    assert.end();
+  });
 });
 
 test('mergeByProperty: mergable', function(assert) {

@@ -194,15 +194,19 @@ function deleteImages(ecr, params, array, callback) {
     array[i] = _.pick(array[i], 'imageTag', 'imageDigest');
   }
 
-  var options = {
-    imageIds: array,
-    repositoryName: params.repo,
-    registryId: params.registryId
-  };
+  var q = queue(1);
 
-  ecr.batchDeleteImage(options, function(err, data) {
+  while (array.length) {
+    q.defer(ecr.batchDeleteImage.bind(ecr), {
+      imageIds: array.splice(0, 100),
+      repositoryName: params.repo,
+      registryId: params.registryId
+    });
+  }
+
+  q.awaitAll(function(err, data) {
     if (err) return callback(err);
-    return callback(null, data);
+    return callback(err, _(data).flatten());
   });
 }
 
