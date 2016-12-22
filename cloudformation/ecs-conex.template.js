@@ -46,7 +46,12 @@ var watcher = watchbot.template({
       Action: [
         'events:PutEvents'
       ],
-      Resources: '*'
+      Resources: 'arn:aws:events:*',
+      Condition: {
+        'StringEquals': {
+          'events:source': 'ecs-conex'
+        }
+      }
     }
   ]
 });
