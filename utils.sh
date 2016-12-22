@@ -157,6 +157,22 @@ function docker_push() {
   parallel docker push {} ::: $queue
 }
 
+function bucket_push() {
+  [ "$ImageBucketPrefix" == "" ] && echo "nothing to do" && return
+
+  for region in "${bucket_regions[@]}"; do
+    aws s3 cp ${tmpdir}/${repo}-${after}.tar.gz s3://${ImageBucketPrefix}-${region}/images/${repo}/${after}.tar.gz
+  done
+}
+
+function docker_save() {
+  [ "$ImageBucketPrefix" == "" ] && echo "nothing to do"  && return
+
+  image_file=${tmpdir}/${repo}-${after}.tar.gz
+  echo "saving image to ${image_file}"
+  docker save ${repo}:${after} | gzip > ${image_file}
+}
+
 function cleanup() {
   exit_code=$?
 

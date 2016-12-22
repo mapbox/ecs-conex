@@ -4,6 +4,7 @@ set -eu
 set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
+bucket_regions=($ImageBucketRegions)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 source utils.sh
 
@@ -45,9 +46,16 @@ function main() {
   ecr_logins "${regions[@]}"
 
   echo "building new image"
-
   docker build --no-cache ${args} --tag ${repo}:${after} ${tmpdir}
+
+  echo "writing images to ECR"
   docker_push
+
+  echo "conditionally saving image tarball"
+  docker_save
+
+  echo "conditionally writing image tarballs to S3"
+  bucket_push
 
   echo "completed successfully"
 }

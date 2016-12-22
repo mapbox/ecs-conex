@@ -14,7 +14,9 @@ var watcher = watchbot.template({
     StackRegion: cf.region,
     AccountId: cf.accountId,
     GithubAccessToken: cf.ref('GithubAccessToken'),
-    NPMAccessToken: cf.ref('NPMAccessToken')
+    NPMAccessToken: cf.ref('NPMAccessToken'),
+    ImageBucketPrefix: cf.ref('ImageBucketPrefix'),
+    ImageBucketRegions: cf.ref('ImageBucketRegions')
   },
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
@@ -25,22 +27,33 @@ var watcher = watchbot.template({
   alarmThreshold: 20,
   alarmPeriods: 6,
   messageTimeout: 1200,
-  permissions: {
-    Effect: 'Allow',
-    Action: [
-      'ecr:BatchCheckLayerAvailability',
-      'ecr:BatchGetImage',
-      'ecr:CreateRepository',
-      'ecr:DescribeRepositories',
-      'ecr:GetAuthorizationToken',
-      'ecr:GetDownloadUrlForLayer',
-      'ecr:InitiateLayerUpload',
-      'ecr:CompleteLayerUpload',
-      'ecr:UploadLayerPart',
-      'ecr:PutImage'
-    ],
-    Resource: '*'
-  }
+  permissions: [
+    {
+      Effect: 'Allow',
+      Action: [
+        'ecr:BatchCheckLayerAvailability',
+        'ecr:BatchGetImage',
+        'ecr:CreateRepository',
+        'ecr:DescribeRepositories',
+        'ecr:GetAuthorizationToken',
+        'ecr:GetDownloadUrlForLayer',
+        'ecr:InitiateLayerUpload',
+        'ecr:CompleteLayerUpload',
+        'ecr:UploadLayerPart',
+        'ecr:PutImage'
+      ],
+      Resource: '*'
+    },
+    {
+      Effect: 'Allow',
+      Action: [
+        's3:PutObject'
+      ],
+      Resource: [
+        cf.sub('arn:aws:s3:::${ImageBucketPrefix}-*/images/*')
+      ]
+    }
+  ]
 });
 
 // Main ecs-conex template
@@ -57,6 +70,16 @@ var conex = {
     NPMAccessToken: {
       Type: 'String',
       Description: '[secure] npm access token used to install private packages',
+      Default: ''
+    },
+    ImageBucketPrefix: {
+      Type: 'String',
+      Description: 'The prefix for buckets to write .tar.gz images into',
+      Default: ''
+    },
+    ImageBucketRegions: {
+      Type: 'String',
+      Description: 'Space-delimited list of region suffixes for image buckets',
       Default: ''
     },
     NumberOfWorkers: {
