@@ -161,7 +161,7 @@ function bucket_push() {
   [ "$ImageBucketPrefix" == "" ] && echo "nothing to do" && return
 
   for region in "${bucket_regions[@]}"; do
-    aws s3 cp ${tmpdir}/${repo}-${after}.tar.gz s3://${ImageBucketPrefix}-${region}/images/${repo}/${after}.tar.gz
+    aws s3 cp ${tmpdir}/${repo}-${after}.tar.gz s3://${ImageBucketPrefix}-${region}/images/${repo}/${after}.tar.gz --only-show-errors
   done
 }
 
