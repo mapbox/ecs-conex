@@ -32,7 +32,7 @@ function main() {
   github_status "${status}" "ecs-conex is building an image"
   [ "${deleted}" == "true" ] && exit 0
 
-  git clone https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
+  git clone -q https://${GithubAccessToken}@github.com/${owner}/${repo} ${tmpdir}
   cd ${tmpdir} && git checkout -q $after || exit 3
 
   echo "looking for dockerfile"
@@ -41,7 +41,11 @@ function main() {
   echo "gather local credentials and setup --build-arg"
   credentials ./Dockerfile
 
+  echo "logging into ECR repositories in ${regions[*]}"
+  ecr_logins "${regions[@]}"
+
   echo "building new image"
+
   docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 

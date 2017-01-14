@@ -30,10 +30,11 @@ function create_repo() {
 
 function image_exists() {
   local region=$1
+  local imgtag=${2:-${after}}
   aws ecr batch-get-image \
     --region ${region} \
     --repository-name ${repo} \
-    --image-ids imageTag=${after} \
+    --image-ids imageTag=${imgtag} \
     --output text | grep -q IMAGES
 }
 
@@ -81,9 +82,12 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
-  if [ ${MessageId} == "test" ]; then
-    return
+
+  GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
+  if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
   fi
+
 
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   if [[ -z $role ]]; then
@@ -110,11 +114,22 @@ function credentials() {
 
 function exact_match() {
   if git describe --tags --exact-match 2> /dev/null; then
-    tag="$(git describe --tags --exact-match)"
-    echo "pushing ${tag} to ${region}"
-    docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
-    echo "$(after_image ${region} ${tag})"
+    local tag="$(git describe --tags --exact-match)"
+    if image_exists ${region} ${tag}; then
+      echo "found existing image for ${tag} in ${region}, skipping push" >&2
+    else
+      echo "pushing ${tag} to ${region}" >&2
+      docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
+      echo "$(after_image ${region} ${tag})"
+    fi
   fi
+}
+
+function ecr_logins() {
+  local regions=$1
+  for region in "$@"; do
+    login ${region}
+  done
 }
 
 function docker_push() {
@@ -122,7 +137,9 @@ function docker_push() {
 
   for region in "${regions[@]}"; do
     ensure_repo ${region}
-    login ${region}
+
+    # tag + add current image to queue by exact tag match (omitted if no exact match)
+    queue="${queue} $(exact_match)"
 
     if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"
@@ -132,11 +149,8 @@ function docker_push() {
     echo "pushing ${after} to ${region}"
 
     # tag + add current image to queue by gitsha
-    docker tag -f ${repo}:${after} "$(after_image ${region})"
+    docker tag ${repo}:${after} "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
-
-    # tag + add current image to queue by exact tag match (omitted if no exact match)
-    queue="${queue} $(exact_match)"
   done
 
   parallel docker push {} ::: $queue
@@ -155,7 +169,8 @@ function cleanup() {
 
   rm -rf ${tmpdir}
 
-  if docker inspect ${repo}:${after} > /dev/null; then
-    docker rmi ${repo}:${after}
+  local imageId=$(docker images -q ${repo}:${after})
+  if [ -n "${imageId}" ]; then
+    docker rmi -f ${imageId}
   fi
 }

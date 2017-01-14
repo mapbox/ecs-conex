@@ -49,6 +49,18 @@ log=$(login ${test_region})
 expected="All good"
 assert "equal" "${log}" "${expected}"
 
+# ecr_logins() test
+tag_test "ecr_logins()"
+test_regions=(us-east-1 us-west-2 eu-west-1)
+logged_into=""
+
+function login() {
+  logged_into="${logged_into}|$1"
+}
+
+ecr_logins "${test_regions[@]}"
+assert "equal" "$logged_into" "|us-east-1|us-west-2|eu-west-1"
+
 # ensure_repo() setup
 copy_func create_repo old_create_repo
 test_region=us-east-1
@@ -123,15 +135,27 @@ assert "equal" "${CALLED}" "1"
 tag_test "image_exists()"
 
 function aws() {
-  if [ ${1} == "us-east-1" ]; then
+  if [ ${4} == "us-east-1" ]; then
     echo "IMAGES"
   else
     echo "FAILURES"
   fi
 }
 
-repo=repo after=test image_exists us-east-1 && assert "equal" "$?" "0" "finds existing image"
+repo=repo after=test image_exists us-east-1 ; assert "equal" "$?" "0" "finds existing image"
 repo=repo after=test image_exists us-west-1 || assert "equal" "$?" "1" "finds no image"
+
+function aws() {
+  if [ ${8} == "imageTag=v1.0" ]; then
+    echo "IMAGES"
+  else
+    echo "FAILURES"
+  fi
+}
+
+repo=repo after=test image_exists us-east-1 v1.0 ; assert "equal" "$?" "0" "finds existing tagged image"
+repo=repo after=test image_exists us-east-1 v2.0 || assert "equal" "$?" "1" "finds no tagged image"
+repo=repo after=test image_exists us-east-1 || assert "equal" "$?" "1" "finds no tagged image"
 
 # github_status() test
 tag_test "github_status()"
@@ -186,7 +210,6 @@ assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/
 # credentials() setup
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
 tmpcreds=$(cat ./test/fixtures/creds.test.json)
-MessageId=not_test
 
 function curl () {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')
@@ -204,6 +227,7 @@ function curl () {
 function write_dockerfile() {
   creds=$1
   echo "ARG NPMAccessToken" > ${tmpdocker}
+  echo "ARG GithubAccessToken" >> ${tmpdocker}
   echo "ARG AWS_ACCESS_KEY_ID" >> ${tmpdocker}
   echo "ARG AWS_SECRET_ACCESS_KEY" >> ${tmpdocker}
   echo "ARG AWS_SESSION_TOKEN" >> ${tmpdocker}
@@ -227,12 +251,19 @@ clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
+# credentials() no github token in dockerfile test
+tag_test "credentials() missing github token in dockerfile"
+export GithubAccessToken=test_GithubAccessToken
+clear_dockerfile
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
+
 # credentials() no role test
 tag_test "credentials() missing role"
 export nullRole=1
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # credentials() role test
 tag_test "credentials() role"
@@ -240,6 +271,7 @@ export nullRole=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
 assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
+assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
 assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
 assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
 assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
@@ -254,39 +286,40 @@ assert "equal" "${args}" "" "should be empty"
 tag_test "credentials() missing build arguments in creds"
 write_dockerfile "{}"
 credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken"
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
+AccountId=1
 region=us-east-1
 repo=test
-FAILURE=""
 
 function git () {
   echo "test_tag"
 }
 
-function after_image {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into after_image"
-  elif [ "${2}" != "test_tag" ]; then
-    FAILURE="Tag not passed into after_image"
-  else
-    echo "some_after_image"
-  fi
-}
-
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "equal" "${4}" "some_after_image"
+    assert "equal" "${4}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   elif [ ${1} == "push" ]; then
-    assert "equal" "${2}" "some_after_image"
+    assert "equal" "${2}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   else
-    FAILURE="should call docker tag or docker push"
+    FAILURE="Tried to push a tag that already exists"
   fi
 }
 
-exact_match
-assert "equal" "${FAILURE}" ""
+FAILURE=""
+log=$(exact_match)
+assert "equal" "$FAILURE" ""
+assert "contains" "$log" "pushing test_tag to us-east-1"
+
+function git () {
+  echo "v1.0"
+}
+
+FAILURE=""
+log=$(exact_match)
+assert "equal" "$FAILURE" ""
+assert "contains" "$log" "found existing image for v1.0 in us-east-1, skipping push"
 
 # docker_push() test
 regions=(us-east-1)
@@ -301,9 +334,7 @@ function ensure_repo() {
 }
 
 function login() {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into login"
-  fi
+  FAILURE="Should expect prior login"
 }
 
 function image_exists {
@@ -369,10 +400,13 @@ message=""
 FAILURE=""
 
 function docker() {
-  if [ ${1} == "inspect" ] || [ ${1} == "rmi" ]; then
-    assert "contains" "${2}" "test:test"
+  if [ ${1} == "images" ]; then
+    assert "equal" "$*" "images -q test:test" "calls images with repo:tag" >&2
+    echo "12345678"
+  elif [ ${1} == "rmi" ]; then
+    assert "equal" "$*" "rmi -f 12345678" "calls rmi with image ID" >&2
   else
-    FAILURE="should call docker inspect or docker rmi"
+    FAILURE="should call docker images or docker rmi"
   fi
 }
 
@@ -384,11 +418,22 @@ function github_status() {
 false || cleanup
 assert "equal" "${github_status}" "failure"
 assert "equal" "${github_message}" "ecs-conex failed to build an image"
+assert "equal" "${FAILURE}" "" "should not have any failures"
+
+function docker() {
+  if [ ${1} == "images" ]; then
+    assert "equal" "$*" "images -q test:test" "calls images with repo:tag" >&2
+    echo ""
+  else [ ${1} == "rmi" ];
+    FAILURE="should call docker images only"
+  fi
+}
 
 true
 cleanup
 assert "equal" "${github_status}" "success"
 assert "equal" "${github_message}" "ecs-conex successfully completed"
+assert "equal" "${FAILURE}" "" "should not have any failures"
 
 if [ -d ${tmpdir} ]; then
   FAILURE="directory was not deleted"

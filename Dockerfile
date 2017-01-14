@@ -4,7 +4,9 @@ FROM ubuntu
 RUN apt-get update -qq && apt-get install -y curl git python-pip parallel
 RUN pip install awscli
 RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
-RUN npm install -g watchbot
+
+# Setup watchbot for logging and env var decryption
+RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 
 # Setup application directory
 RUN mkdir -p /usr/local/src/ecs-conex
@@ -25,4 +27,4 @@ VOLUME /var/run/docker.sock
 VOLUME /mnt/data
 
 # Run the worker
-CMD ["/bin/sh", "-c", "./ecs-conex.sh"]
+CMD eval $(decrypt-kms-env) && ./ecs-conex.sh
