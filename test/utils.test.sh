@@ -299,7 +299,7 @@ function git () {
 
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "equal" "${4}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
+    assert "equal" "${3}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   elif [ ${1} == "push" ]; then
     assert "equal" "${2}" "1.dkr.ecr.us-east-1.amazonaws.com/test:test_tag"
   else
@@ -308,18 +308,18 @@ function docker() {
 }
 
 FAILURE=""
-log=$(exact_match)
+log="$(exact_match)"
 assert "equal" "$FAILURE" ""
-assert "contains" "$log" "pushing test_tag to us-east-1"
+assert "contains" "$log" "test_tag"
 
 function git () {
   echo "v1.0"
 }
 
 FAILURE=""
-log=$(exact_match)
+log="$(exact_match)"
 assert "equal" "$FAILURE" ""
-assert "contains" "$log" "found existing image for v1.0 in us-east-1, skipping push"
+assert "contains" "$log" ""
 
 # docker_push() test
 regions=(us-east-1)
@@ -351,13 +351,15 @@ function after_image {
 
 function docker() {
   if [ ${1} == "tag" ]; then
-    assert "equal" "${4}" "some_after_image"
+    assert "equal" "${3}" "some_after_image"
   elif [ ${1} == "push" ]; then
     assert "equal" "${2}" "some_after_image"
   else
     FAILURE="should call docker tag or docker push"
   fi
 }
+# export functions explicitly for parallel called from within docker_push
+export -f assert passed failed docker
 
 function git() {
   exit 1

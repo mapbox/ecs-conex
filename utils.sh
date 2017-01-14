@@ -116,11 +116,11 @@ function exact_match() {
   if git describe --tags --exact-match 2> /dev/null; then
     local tag="$(git describe --tags --exact-match)"
     if image_exists ${region} ${tag}; then
-      echo "found existing image for ${tag} in ${region}, skipping push"
+      echo "found existing image for ${tag} in ${region}, skipping push" >&2
     else
-      echo "pushing ${tag} to ${region}"
-      docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
-      docker push "$(after_image ${region} ${tag})"
+      echo "pushing ${tag} to ${region}" >&2
+      docker tag ${repo}:${after} "$(after_image ${region} ${tag})"
+      echo "$(after_image ${region} ${tag})"
     fi
   fi
 }
@@ -133,9 +133,13 @@ function ecr_logins() {
 }
 
 function docker_push() {
+  local queue=""
+
   for region in "${regions[@]}"; do
     ensure_repo ${region}
-    exact_match
+
+    # tag + add current image to queue by exact tag match (omitted if no exact match)
+    queue="${queue} $(exact_match)"
 
     if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"
@@ -143,9 +147,13 @@ function docker_push() {
     fi
 
     echo "pushing ${after} to ${region}"
-    docker tag -f ${repo}:${after} "$(after_image ${region})"
-    docker push "$(after_image ${region})"
+
+    # tag + add current image to queue by gitsha
+    docker tag ${repo}:${after} "$(after_image ${region})"
+    queue="${queue} $(after_image ${region})"
   done
+
+  parallel docker push {} ::: $queue
 }
 
 function cleanup() {

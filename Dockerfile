@@ -1,7 +1,7 @@
 FROM ubuntu
 
 # Installations
-RUN apt-get update -qq && apt-get install -y curl git python-pip
+RUN apt-get update -qq && apt-get install -y curl git python-pip parallel
 RUN pip install awscli
 RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
 
@@ -13,8 +13,8 @@ RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
 # Install docker binary matching EC2 version
-RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.11.1.tgz > docker-1.11.1.tgz
-RUN tar -xzf docker-1.11.1.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz > docker-1.12.6.tgz
+RUN tar -xzf docker-1.12.6.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
 
 # Copy files into the container
 COPY ./*.sh ./
