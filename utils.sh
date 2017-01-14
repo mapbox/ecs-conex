@@ -119,7 +119,7 @@ function exact_match() {
       echo "found existing image for ${tag} in ${region}, skipping push" >&2
     else
       echo "pushing ${tag} to ${region}" >&2
-      docker tag -f ${repo}:${after} "$(after_image ${region} ${tag})"
+      docker tag ${repo}:${after} "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
