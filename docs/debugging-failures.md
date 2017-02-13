@@ -1,5 +1,6 @@
 # Debugging failures
 
+
 When a build fails, a notification is sent to an SNS topic and forwarded to the `WatchbotNotificationEmail` that was provided when the ecs-conex stack was created. A notification will look similar to this:
 
 ```
