@@ -31,7 +31,7 @@ if (!module.parent) {
     if (err) throw new Error(err);
     confirmInputs(params, function(confirmation) {
       if (confirmation === false) process.exit(1);
-      var ecr = new AWS.ECR();
+      var ecr = new AWS.ECR({ region: params.region });
       listImages(ecr, params, function(err, res) {
         if (err) throw new Error(err);
         var result = res.imageIds;
@@ -65,9 +65,11 @@ function validateInputs(arguments, callback) {
   } catch(err) {
     return callback('Blacklisted imageTags must be a comma-separated list');
   }
+  if (!process.env.GithubAccessToken) return callback(new Error('GithubAccessToken env var must be set'));
 
   params.user = argv._[0];
   params.repo = argv._[1];
+  params.region = argv.region || process.env.AWS_DEFAULT_REGION || 'us-east-1';
   params.maximum = argv.maximum || 750;
   params.blacklist = (blacklistArr) ? blacklistArr : [];
   params.githubAccessToken = process.env.GithubAccessToken;
@@ -93,9 +95,16 @@ function confirmInputs(params, callback) {
 }
 
 function listImages(ecr, params, callback) {
-  ecr.listImages({ repositoryName: params.repo }, function(err, data) {
-    if (err) return callback(err);
-    return callback(null, data);
+  var data = { imageIds:[] };
+  ecr.listImages({ repositoryName: params.repo }).eachItem(function(err, item) {
+    if (err) {
+      callback && callback(err);
+      callback = false;
+    } else if (!item) {
+      callback(null, data);
+    } else {
+      data.imageIds.push(item);
+    }
   });
 }
 
@@ -187,15 +196,19 @@ function deleteImages(ecr, params, array, callback) {
     array[i] = _.pick(array[i], 'imageTag', 'imageDigest');
   }
 
-  var options = {
-    imageIds: array,
-    repositoryName: params.repo,
-    registryId: params.registryId
-  };
+  var q = queue(1);
 
-  ecr.batchDeleteImage(options, function(err, data) {
+  while (array.length) {
+    q.defer(ecr.batchDeleteImage.bind(ecr), {
+      imageIds: array.splice(0, 100),
+      repositoryName: params.repo,
+      registryId: params.registryId
+    });
+  }
+
+  q.awaitAll(function(err, data) {
     if (err) return callback(err);
-    return callback(null, data);
+    return callback(err, _(data).flatten());
   });
 }
 
