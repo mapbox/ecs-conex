@@ -1,5 +1,5 @@
 var test = require('tape');
-var cf = require('cloudfriend');
+var cf = require('@mapbox/cloudfriend');
 var path = require('path');
 
 test('template is valid', function(assert) {
