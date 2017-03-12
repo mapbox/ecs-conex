@@ -1,5 +1,5 @@
-var watchbot = require('watchbot');
-var cf = require('cloudfriend');
+var watchbot = require('@mapbox/watchbot');
+var cf = require('@mapbox/cloudfriend');
 
 // Build watchbot resources
 var watcher = watchbot.template({
@@ -20,7 +20,7 @@ var watcher = watchbot.template({
   user: true,
   notificationEmail: cf.ref('AlarmEmail'),
   cluster: cf.ref('Cluster'),
-  logAggregationFunction: cf.ref('LogAggregationFunction'),
+  alarmOnEachFailure: true,
   alarmThreshold: 20,
   alarmPeriods: 6,
   messageTimeout: 1200,
@@ -71,11 +71,6 @@ var conex = {
       Description: 'An email address to subscribe to alarms',
       Type: 'String',
       Default: 'devnull@mapbox.com'
-    },
-    LogAggregationFunction: {
-      Description: 'The ARN of a Lambda function that will receive log events from CloudWatch',
-      Type: 'String',
-      Default: 'none'
     }
   },
   Outputs: {
