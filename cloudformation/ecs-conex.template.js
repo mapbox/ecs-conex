@@ -78,6 +78,22 @@ var conex = {
       Default: 'none'
     }
   },
+  Resources: {
+    MaxPendingTime: {
+      Type: 'AWS::CloudWatch::Alarm',
+      Properties: {
+        AlarmDescription: 'https://github.com/mapbox/ecs-conex/blob/master/docs/alarms.md#maxpendingtime',
+        Period: 60,
+        EvaluationPeriods: 5,
+        Statistic: 'Maximum',
+        Threshold: 120,
+        ComparisonOperator: 'GreaterThanThreshold',
+        Namespace: 'Mapbox/ecs-watchbot',
+        MetricName: cf.join(['WatchbotWorkerPending', cf.stackName]),
+        AlarmActions: [ cf.ref('AlarmSNSTopic') ]
+      }
+    }
+  },
   Outputs: {
     WorkTopic: {
       Description: 'The ARN of ecs-conex\'s SNS topic. Send messages to this topic to have builds processed',
