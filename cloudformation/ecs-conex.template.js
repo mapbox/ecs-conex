@@ -90,7 +90,7 @@ var conex = {
         ComparisonOperator: 'GreaterThanThreshold',
         Namespace: 'Mapbox/ecs-watchbot',
         MetricName: cf.join(['WatchbotWorkerPending', cf.stackName]),
-        AlarmActions: [ cf.ref('AlarmSNSTopic') ]
+        AlarmActions: [cf.ref('AlarmSNSTopic')]
       }
     }
   },
