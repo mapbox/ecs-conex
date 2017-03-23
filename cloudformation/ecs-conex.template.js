@@ -18,7 +18,7 @@ var watcher = watchbot.template({
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
   user: true,
-  notificationEmail: cf.ref('AlarmEmail'),
+  notificationTopic: cf.ref('AlarmSNSTopic'),
   cluster: cf.ref('Cluster'),
   alarmOnEachFailure: true,
   alarmThreshold: 20,
@@ -79,6 +79,18 @@ var conex = {
     }
   },
   Resources: {
+    AlarmSNSTopic: {
+      Type: 'AWS::SNS::Topic',
+      Description: 'Subscribe to this topic to receive emails when tasks fail or retry',
+      Properties: {
+        Subscription: [
+          {
+            Endpoint: cf.ref('AlarmEmail'),
+            Protocol: 'email'
+          }
+        ]
+      }
+    },
     MaxPendingTime: {
       Type: 'AWS::CloudWatch::Alarm',
       Properties: {

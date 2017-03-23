@@ -6,8 +6,8 @@ Time between tasks getting created and actually starting (i.e. staying in PENDIN
 
 #### Problem
 
-Long pending times could contribute to backup of minutes to hours. When the cluster is under heavy load and there is throttling occuring between the ecs-agent and the Agent Control Service (ACS), there is often be a buildup of tasks hanging in the `PENDING` state for a long time. One way to check if the cluster is in this state is to check the cluster's `PendingTasksPerInstance` metric, looking for high averages or a high maximum. The other thing to check is the `WatchbotWorkerPending` metric for all other watchbot stacks. If either of these is high, you are in the throttling scenario.
+Long pending times could contribute to backup of minutes to hours for building docker images. When the cluster is under heavy load it's possible for the Agent Control Service (ACS) to throttle state change requests from the ecs-agent. This usually causes a buildup of tasks hanging in the `PENDING` state for a long time. One way to check if the cluster is in this state is to check the number of tasks in the `PENDING` state on the cluster. If there are more `PENDING` than 10 tasks per host instance on the cluster, it's very likely the ACS service is throttling your state change requests.
 
 #### Solution
 
-Determining which stack is overscaled requires looking at the `WatchbotConcurrency` on the cluster, and seeing if it's high for any watchbot stacks in that region. Once the high-scale watchbot stack is found, contact the stack's owner and see if they can gracefully scale down so that conex isn't negatively impacted.
+If the ACS service is getting throttled (see above), check through the running tasks and see if there is one service or particular family of tasks that is starting and stopping very rapidly on the cluster. If it's possible, scale down that process to return conex pending time to normal.
