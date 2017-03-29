@@ -33,7 +33,7 @@ joined=$(node -e "console.log(${sorted}.map(function(e) { return e.imageTags[0] 
 # Iterate through the sorted list of images. If the imageTag, or GitSha, does not
 # exist on GitHub, skip it. Do this until you have enough images to delete to bring
 # the registry size down to one less than the desired maximum.
-max=11
+max=900
 toDelete=()
 
 numberToDelete=$(expr ${length} - ${max} + 1)
