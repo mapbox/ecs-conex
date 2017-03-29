@@ -37,3 +37,7 @@ You can check to see if your repository is being watched by looking at Settings 
 ```
 https://github.com/my-username/my-github-repo/settings/hooks
 ```
+
+## Registry maintenance
+
+ecs-conex will automatically delete the oldest images in your registry to maintain a maximum image count of 900. It will only delete images with an imageTag that resemble a GitSha. Any image with a 40 hexadecimal-character imageTag will be subject to deletion.
