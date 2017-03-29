@@ -15,7 +15,8 @@ Max=900
 # these oldest messages.
 response=$(aws ecr describe-images --repository-name ${Repo})
 details=$(node -e "console.log(${response}.imageDetails)")
-sorted=$(node -e "console.log(${details}.sort(function(a, b) { return (a.imagePushedAt - b.imagePushedAt) }))")
+validateGitSha=$(node -e "console.log(${details}.filter(function(e) { return /^[a-z0-9]{40}$/.test(e.imageTags[0]) }))")
+sorted=$(node -e "console.log(${validateGitSha}.sort(function(a, b) { return (a.imagePushedAt - b.imagePushedAt) }))")
 length=$(node -e "console.log(${sorted}.length)")
 splice=$(node -e "console.log(${sorted}.splice(0, ${length} - ${Max} + 1))")
 images=$(node -e "console.log(${splice}.map(function(i) { return 'imageDigest=' + i.imageDigest; }).join(' '))")
