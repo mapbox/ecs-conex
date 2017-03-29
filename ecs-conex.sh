@@ -25,6 +25,9 @@ function main() {
   echo "parsing received message"
   parse_message
 
+  echo "making space in the ecr registry, if necessary"
+  ./scripts/clean-registry.sh ${owner} ${repo}
+
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 
   status="pending"
