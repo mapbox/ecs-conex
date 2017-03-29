@@ -9,9 +9,6 @@ BeforeSha=${4:-0000000000000000000000000000000000000000}
 Topic=$5
 GithubAccessToken=${GithubAccessToken}
 
-# Create space in the ECR registry, if necessary.
-./scripts/clean-registry.sh ${Owner} ${Repo}
-
 aws sns publish \
   --topic-arn ${Topic} \
   --subject "webhook" \
