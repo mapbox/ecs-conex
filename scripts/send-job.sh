@@ -26,7 +26,7 @@ joined=$(node -e "console.log(${sorted}.map(function(e) { return e.imageTags[0] 
 # the registry size down to one less than the desired maximum.
 toDelete=()
 couldNotDelete=()
-max=12
+max=900
 length=$(node -e "console.log(${sorted}.length)")
 numberToDelete=$(expr ${length} - ${max} + 1)
 
