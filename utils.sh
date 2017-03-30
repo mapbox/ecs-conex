@@ -74,11 +74,11 @@ function parse_message() {
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
 }
 
-function cleanup_ecr() {
+function identify_images() {
   # Get a JSON of images from repository's ECR registry. Isolate the imageDetails
   # property. Filter for imageTags that resemble GitShas. Sort images by creation
   # datetime from earliest to latest. Splice enough images so remaining image count
-  # is one less than desired maximum. Delete the spliced images from the registry.
+  # is one less than desired maximum.
 
   max=${DesiredMaxOverride:-900}
   response=$(aws ecr describe-images --repository-name ${repo})
@@ -88,6 +88,9 @@ function cleanup_ecr() {
   length=$(node -e "console.log(${sorted}.length)")
   splice=$(node -e "console.log(${sorted}.splice(0, ${length} - ${max} + 1))")
   images=$(node -e "console.log(${splice}.map(function(e) { return 'imageDigest=' + e.imageDigest; }).join(' '))")
+}
+
+function delete_images() {
   [ ! -z "$images" ] && aws ecr batch-delete-image --repository-name ${repo} --image-ids ${images}
 }
 

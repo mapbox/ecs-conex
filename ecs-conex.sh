@@ -26,7 +26,8 @@ function main() {
   parse_message
 
   echo "making space in the ecr registry, if necessary"
-  cleanup_ecr
+  identify_images
+  delete_images
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 

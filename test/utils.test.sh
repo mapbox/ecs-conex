@@ -207,43 +207,46 @@ GithubAccessToken=test
 parse_message
 assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/test?access_token=test"
 
-# cleanup_ecr() test
-tag_test "cleanup_ecr"
+# identify_images() test
+tag_test "identify_images"
 DesiredMaxOverride=2
 repo=repo
 
-count=/var/tmp/$RANDOM
-echo "0" > $count
-
 function aws() {
-  # iterate counter
-  counter=$(cat $count)
-  ((counter++))
-
   if [ "${1}" != "ecr" ]; then
     echo "First argument must be ecr"
-  elif [ "$counter" = "1" ] && [ "${2}" != "describe-images" ]; then
-    echo "Second argument on first call must be describe-images"
-  elif [ "$counter" = "2" ] && [ "${2}" != "batch-delete-image" ]; then
-    echo "Second argument on second call must be batch-delete-image"
+  elif [ "${2}" != "describe-images" ]; then
+    echo "Second argument must be describe-images"
   elif [ "${4}" != "${repo}" ]; then
     echo "Fourth argument must be repo"
-  elif [ "$counter" = "2" ] && [ "${6}" != "imageDigest=sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" ]; then
-    echo "Sixth argument on second call must be the earliest imageDigest"
-  elif [ "$counter" = "1" ]; then
+  else
     printf '{"imageDetails":[{"imageSizeInBytes":"111111111","imageDigest":"sha256:0000000000000000000000000000000000000000000000000000000000000000","imageTags":["ffffffffffffffffffffffffffffffffffffffff"],"registryId":"222222222222","repositoryName":"repo","imagePushedAt":"1478636919.0"},{"imageSizeInBytes":"222222222","imageDigest":"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","imageTags":["0000000000000000000000000000000000000000"],"registryId":"111111111111","repositoryName":"repo","imagePushedAt":"1468636919.0"}]}'
-  elif [ "$counter" = "2" ]; then
-    echo All good
   fi
-
-  echo "$counter" > $count
 }
 
-log=$(cleanup_ecr)
-expected="All good"
-assert "equal" "${log}" "${expected}"
+identify_images
+assert "equal" "${images}" "imageDigest=sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 unset DesiredMaxOverride
-rm -rf count
+
+# delete_images() test
+tag_test "delete_images"
+
+function aws() {
+  if [ "${1}" != "ecr" ]; then
+    echo "First argument must be ecr"
+  elif [ "${2}" != "batch-delete-image" ]; then
+    echo "Second argument must be batch-delete-image"
+  elif [ "${4}" != "${repo}" ]; then
+    echo "Fourth argument must be repo"
+  elif [ "${6}" != "imageDigest=sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" ]; then
+    echo "Sixth argument must be list of images to delete"
+  else
+    echo All good
+  fi
+}
+
+log=$(delete_images)
+assert "equal" "${log}" "All good"
 
 # credentials() setup
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
