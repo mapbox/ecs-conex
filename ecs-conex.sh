@@ -25,20 +25,8 @@ function main() {
   echo "parsing received message"
   parse_message
 
-  # Get a JSON of images from repository's ECR registry. Isolate the imageDetails
-  # property. Filter for imageTags that resemble GitShas. Sort images by creation
-  # datetime from earliest to latest. Splice enough images so remaining image count
-  # is one less than desired maximum. Delete the spliced images from the registry.
   echo "making space in the ecr registry, if necessary"
-  max=900
-  response=$(aws ecr describe-images --repository-name ${repo})
-  details=$(node -e "console.log(${response}.imageDetails)")
-  validated=$(node -e "console.log(${details}.filter(function(e) { return /^[a-z0-9]{40}$/.test(e.imageTags[0]) }))")
-  sorted=$(node -e "console.log(${validated}.sort(function(a, b) { return (a.imagePushedAt - b.imagePushedAt) }))")
-  length=$(node -e "console.log(${sorted}.length)")
-  splice=$(node -e "console.log(${sorted}.splice(0, ${length} - ${max} + 1))")
-  images=$(node -e "console.log(${splice}.map(function(e) { return 'imageDigest=' + e.imageDigest; }).join(' '))")
-  [ ! -z "$images" ] && aws ecr batch-delete-image --repository-name ${Repo} --image-ids ${images}
+  cleanup_ecr
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 
