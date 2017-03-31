@@ -326,7 +326,7 @@ tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
 
-function ./scripts/cleanup() {
+function cleanup_filepath() {
   if [ ${1} != "${test_region}" ]; then
     echo "First argument must be region"
   elif [ ${2} != "${test_repo}" ]; then
