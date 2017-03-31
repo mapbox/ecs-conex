@@ -207,47 +207,6 @@ GithubAccessToken=test
 parse_message
 assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/test?access_token=test"
 
-# identify_images() test
-tag_test "identify_images"
-DesiredMaxOverride=2
-repo=repo
-
-function aws() {
-  if [ "${1}" != "ecr" ]; then
-    echo "First argument must be ecr"
-  elif [ "${2}" != "describe-images" ]; then
-    echo "Second argument must be describe-images"
-  elif [ "${4}" != "${repo}" ]; then
-    echo "Fourth argument must be repo"
-  else
-    printf '{"imageDetails":[{"imageSizeInBytes":"111111111","imageDigest":"sha256:0000000000000000000000000000000000000000000000000000000000000000","imageTags":["ffffffffffffffffffffffffffffffffffffffff"],"registryId":"222222222222","repositoryName":"repo","imagePushedAt":"1478636919.0"},{"imageSizeInBytes":"222222222","imageDigest":"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","imageTags":["0000000000000000000000000000000000000000"],"registryId":"111111111111","repositoryName":"repo","imagePushedAt":"1468636919.0"}]}'
-  fi
-}
-
-identify_images
-assert "equal" "${images}" "imageDigest=sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-unset DesiredMaxOverride
-
-# delete_images() test
-tag_test "delete_images"
-
-function aws() {
-  if [ "${1}" != "ecr" ]; then
-    echo "First argument must be ecr"
-  elif [ "${2}" != "batch-delete-image" ]; then
-    echo "Second argument must be batch-delete-image"
-  elif [ "${4}" != "${repo}" ]; then
-    echo "Fourth argument must be repo"
-  elif [ "${6}" != "imageDigest=sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" ]; then
-    echo "Sixth argument must be list of images to delete"
-  else
-    echo All good
-  fi
-}
-
-log=$(delete_images)
-assert "equal" "${log}" "All good"
-
 # credentials() setup
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
 tmpcreds=$(cat ./test/fixtures/creds.test.json)
@@ -362,6 +321,24 @@ log="$(exact_match)"
 assert "equal" "$FAILURE" ""
 assert "contains" "$log" ""
 
+# ecr_cleanup()
+tag_test "ecr_cleanup"
+test_region="us-east-1"
+test_repo="test-repo"
+
+function ./scripts/cleanup() {
+  if [ ${1} != "${test_region}" ]; then
+    echo "First argument must be region"
+  elif [ ${2} != "${test_repo}" ]; then
+    echo "Second argument must be repo"
+  else
+    echo All good
+  fi
+}
+
+log=$(ecr_cleanup ${test_region} ${test_repo})
+assert "equal" "${log}" "All good"
+
 # docker_push() test
 regions=(us-east-1)
 repo=test
@@ -380,6 +357,14 @@ function login() {
 
 function image_exists {
   return 1
+}
+
+function ecr_cleanup {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into ecr_cleanup"
+  elif [ "${2}" != "test" ]; then
+    FAILURE="Repository not passed into ecr_cleanup"
+  fi
 }
 
 function after_image {
