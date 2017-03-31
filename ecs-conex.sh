@@ -25,10 +25,6 @@ function main() {
   echo "parsing received message"
   parse_message
 
-  echo "making space in the ecr registry, if necessary"
-  identify_images
-  delete_images
-
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
 
   status="pending"
