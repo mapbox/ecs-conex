@@ -136,7 +136,8 @@ function ecr_logins() {
 function ecr_cleanup() {
   local region=$1
   local repo=$2
-  ./scripts/cleanup.js ${region} ${repo}
+  cleanup_filepath=./scripts/cleanup.js
+  cleanup_filepath ${region} ${repo}
 }
 
 function docker_push() {
