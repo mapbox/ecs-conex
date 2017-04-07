@@ -326,6 +326,13 @@ tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
 
+mocksdir=/tmp/mocks
+mkdir -p ${mocksdir}
+symlink=${mocksdir}/cleanup_ecr
+echo "something important" > ${symlink}
+original_path=${PATH}
+export PATH=${mocksdir}:${PATH}
+
 function cleanup_ecr() {
   if [ ${1} != "${test_region}" ]; then
     echo "First argument must be region"
@@ -338,6 +345,7 @@ function cleanup_ecr() {
 
 log=$(ecr_cleanup ${test_region} ${test_repo})
 assert "equal" "${log}" "All good"
+rm -rf ${mocksdir} && export PATH=original_path
 
 # docker_push() test
 tag_test "docker_push"

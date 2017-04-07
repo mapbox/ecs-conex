@@ -134,6 +134,11 @@ function ecr_logins() {
 function ecr_cleanup() {
   local region=$1
   local repo=$2
+
+  if [ -z "$symlink" ]; then
+    file=/usr/local/bin/cleanup_ecr
+    [ -h $file ] || ln -s `pwd`/scripts/cleanup.js $file
+  fi
   cleanup_ecr ${region} ${repo}
 }
 
@@ -152,8 +157,6 @@ function docker_push() {
     fi
 
     echo "making space in the registry"
-    file=/usr/local/bin/cleanup_ecr
-    [ -h $file ] || ln -s `pwd`/scripts/cleanup.js $file
     ecr_cleanup ${region} ${repo}
 
     echo "pushing ${after} to ${region}"
