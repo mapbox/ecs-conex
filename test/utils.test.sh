@@ -326,7 +326,7 @@ tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
 
-function cleanup_filepath() {
+function cleanup_ecr() {
   if [ ${1} != "${test_region}" ]; then
     echo "First argument must be region"
   elif [ ${2} != "${test_repo}" ]; then
@@ -340,6 +340,7 @@ log=$(ecr_cleanup ${test_region} ${test_repo})
 assert "equal" "${log}" "All good"
 
 # docker_push() test
+tag_test "docker_push"
 regions=(us-east-1)
 repo=test
 after=test
