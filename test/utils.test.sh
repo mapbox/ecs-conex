@@ -289,6 +289,7 @@ credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
+tag_test "exact_match"
 AccountId=1
 region=us-east-1
 repo=test
@@ -345,7 +346,7 @@ function cleanup_ecr() {
 
 log=$(ecr_cleanup ${test_region} ${test_repo})
 assert "equal" "${log}" "All good"
-rm -rf ${mocksdir} && export PATH=original_path
+rm -rf ${mocksdir} && export PATH=${original_path}
 
 # docker_push() test
 tag_test "docker_push"
@@ -393,6 +394,7 @@ function docker() {
     FAILURE="should call docker tag or docker push"
   fi
 }
+
 # export functions explicitly for parallel called from within docker_push
 export -f assert passed failed docker
 
