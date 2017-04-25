@@ -24,7 +24,7 @@
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
     "@mapbox/cloudfriend": "^1.8.1",
-    "@mapbox/watchbot": "^2.3.0",
+    "@mapbox/watchbot": "^2.4.0",
     "aws-sdk": "^2.4.13",
     "d3-queue": "^3.0.2",
     "inquirer": "^1.1.2",
