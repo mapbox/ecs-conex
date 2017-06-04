@@ -52,7 +52,7 @@ function check_dockerfile() {
   filepath=$1
   if [ ! -f ${filepath} ]; then
     echo "no Dockerfile found"
-    exit 0
+    return 1
   fi
 }
 

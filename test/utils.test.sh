@@ -184,13 +184,10 @@ assert "equal" "${CALLED}" "1"
 # check_dockerfile() test
 tag_test "check_dockerfile()"
 filepath="/fake/file/path"
-log=$(check_dockerfile ${filepath})
-assert "equal" "${log}" "no Dockerfile found"
-assert "equal" "$?" "0"
+check_dockerfile ${filepath} || assert "equal" "$?" "1"
 
 filepath="ecs-conex.sh"
-log=$(check_dockerfile ${filepath})
-assert "equal" "${log}" ""
+check_dockerfile ${filepath} && assert "equal" "$?" "0"
 
 # check_receives() test
 tag_test "check_receives()"
