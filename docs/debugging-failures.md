@@ -1,5 +1,12 @@
 # Debugging failures
 
+## On production
+
+- Check the [#ecs-conex](https://mapbox.slack.com/archives/ecs-conex) slack room for pagerduty alarms on failing builds
+- Find your message gitsha and query sumologic like `_sourceCategory=ecs-conex-production* 36fcdd05-b57d-4908-93ae-ec50d1748930`
+
+## In general
+
 When a build fails, a notification is sent to an SNS topic and forwarded to the `WatchbotNotificationEmail` that was provided when the ecs-conex stack was created. A notification will look similar to this:
 
 ```
