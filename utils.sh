@@ -121,6 +121,8 @@ function credentials() {
   if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
   fi
+
+  RepositoryPermissionPolicy=$(printenv | grep RepositoryPermissionPolicy | sed 's/.*=//')
 }
 
 function exact_match() {
