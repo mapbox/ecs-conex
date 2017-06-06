@@ -13,7 +13,8 @@ var watcher = watchbot.template({
     StackRegion: cf.region,
     AccountId: cf.accountId,
     GithubAccessToken: cf.ref('GithubAccessToken'),
-    NPMAccessToken: cf.ref('NPMAccessToken')
+    NPMAccessToken: cf.ref('NPMAccessToken'),
+    RepositoryPermissionPolicy: cf.ref('RepositoryPermissionPolicy')
   },
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
@@ -56,6 +57,11 @@ var conex = {
     NPMAccessToken: {
       Type: 'String',
       Description: '[secure] npm access token used to install private packages',
+      Default: ''
+    },
+    RepositoryPermissionPolicy: {
+      Type: 'String',
+      Description: 'An IAM policy granting access for other AWS accounts to access this repository',
       Default: ''
     },
     NumberOfWorkers: {
