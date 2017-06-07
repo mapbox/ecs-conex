@@ -16,6 +16,9 @@ ecs-conex will create one ECR repository for each Github repository, and each ti
 
 You only need to run ecs-conex's `watch.sh` script once to subscribe your repository to the ecs-conex webhook. For more information about associating these resources, see the [Getting started](./docs/getting-started.md) documentation.
 
+## Testing
+You must have a `GithubAccessToken` environment varaible set to run the tests. It does not need to be a valid token, it just has to be set. You could do so inline like `GithubAccessToken="test" npm test`
+
 ## Documentation
 
 - [Getting started](./docs/getting-started.md)
