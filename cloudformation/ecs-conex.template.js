@@ -37,7 +37,8 @@ var watcher = watchbot.template({
       'ecr:InitiateLayerUpload',
       'ecr:CompleteLayerUpload',
       'ecr:UploadLayerPart',
-      'ecr:PutImage'
+      'ecr:PutImage',
+      'ecr:SetRepositoryPolicy'
     ],
     Resource: '*'
   }
