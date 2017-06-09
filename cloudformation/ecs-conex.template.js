@@ -62,7 +62,7 @@ var conex = {
     },
     RepositoryPermissionPolicy: {
       Type: 'String',
-      Description: 'An IAM policy granting access for other AWS accounts to access this repository',
+      Description: 'An IAM policy granting permissions to interact with this repository',
       Default: ''
     },
     NumberOfWorkers: {

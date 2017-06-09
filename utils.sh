@@ -30,8 +30,8 @@ function create_repo() {
 
 function set_policy() {
   local region=$1
-  RepositoryPermissionPolicy=$(printenv | grep RepositoryPermissionPolicy | sed 's/.*=//')
-  if [ -n "$RepositoryPermissionPolicy" ]
+  RepositoryPermissionPolicy=$(printenv RepositoryPermissionPolicy)
+  if [ -n "${RepositoryPermissionPolicy}" ]
   then
     aws ecr set-repository-policy \
       --region ${region} \
