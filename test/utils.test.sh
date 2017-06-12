@@ -160,7 +160,7 @@ assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${OUTPUT_POLICY}" "${RepositoryPermissionPolicy}"
 
 # test without policy
-unset RepositoryPermissionPolicy
+export RepositoryPermissionPolicy=""
 log=$(set_policy ${test_region})
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert equal "${log}" "" "output empty"
