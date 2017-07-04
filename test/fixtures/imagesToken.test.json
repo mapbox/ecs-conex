@@ -5,7 +5,8 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "imageTags": [
-        "0000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000",
+        "git-tag"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
@@ -15,7 +16,8 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "imageTags": [
-        "ffffffffffffffffffffffffffffffffffffffff"
+        "ffffffffffffffffffffffffffffffffffffffff",
+        "git-tag"
       ],
       "imageSizeInBytes": 261996549,
       "imagePushedAt": "2016-11-08T08:28:00.000Z"
