@@ -139,7 +139,7 @@ function ecr_cleanup() {
     file=/usr/local/bin/cleanup_ecr
     [ -h $file ] || ln -s `pwd`/scripts/cleanup.js $file
   fi
-  cleanup_ecr ${region} ${repo}
+  cleanup_ecr ${region} ${repo} ${GithubAccessToken}
 }
 
 function docker_push() {
