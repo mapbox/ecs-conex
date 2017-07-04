@@ -119,7 +119,7 @@ function exact_match() {
     else
       echo "pushing ${tag} to ${region}" >&2
       docker tag ${repo}:${after} "$(after_image ${region} ${tag})"
-      docker tag ${repo}:'git-tag' "$(after_image ${region} ${tag})"
+      docker tag ${repo}:'tag' "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
@@ -164,7 +164,7 @@ function docker_push() {
 
     # tag + add current image to queue by gitsha
     docker tag ${repo}:${after} "$(after_image ${region})"
-    docker tag ${repo}:'git-commit' "$(after_image ${region})"
+    docker tag ${repo}:'commit' "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
   done
 

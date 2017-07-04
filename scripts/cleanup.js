@@ -47,7 +47,7 @@ function getImages(region, repo, callback) {
 module.exports.imagesToDelete = imagesToDelete;
 function imagesToDelete(images) {
   const max = 900;
-  const validated = images.filter((e) => { return e.imageTags && /git/.test(e.imageTags.join(' ')); });
+  const validated = images.filter((e) => { return e.imageTags && /commit|tag/.test(e.imageTags.join(' ')); });
   const sorted = validated.sort((a, b) => { return new Date(a.imagePushedAt) - new Date(b.imagePushedAt); });
   const spliced = sorted.splice(0, images.length - max + 1);
   const digests = spliced.map((e) => { return { imageDigest: e.imageDigest }; });
