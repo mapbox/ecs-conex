@@ -11,7 +11,8 @@ function after_image() {
 
 function login() {
   local region=$1
-  eval "$(aws ecr get-login --region ${region})"
+  eval "$(aws ecr get-login --region ${region} --no-include-email)" || \
+    eval "$(aws ecr get-login --region ${region})"
 }
 
 function ensure_repo() {
