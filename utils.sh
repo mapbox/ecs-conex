@@ -112,8 +112,8 @@ function credentials() {
     args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
   fi
 
-  DockerVersion=${DOCKER_VERSION}
-  if grep "ARG DOCKER_VERSION" ${filepath} > /dev/null 2>&1; then
+  DockerVersion=${DOCKER_VERSION:-}
+  if [[ -n $DockerVersion ]] && grep "ARG DOCKER_VERSION" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg DOCKER_VERSION=${DockerVersion}"
   fi
 }

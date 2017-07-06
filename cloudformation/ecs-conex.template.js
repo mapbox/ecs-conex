@@ -65,7 +65,7 @@ var conex = {
       Default: 4
     },
     DockerVersion: {
-      Type: 'Number',
+      Type: 'String',
       Description: 'The version of Docker that will run on ecs-conex\'s host EC2s',
       Default: '17.03.1-ce'
     },
