@@ -3,6 +3,7 @@
 set -eux
 
 # Log docker client into ECR
+eval "$(aws ecr get-login --region us-east-1 --no-include-email)" || \
 eval "$(aws ecr get-login --region us-east-1)"
 
 # Make sure the ECR repository exists
