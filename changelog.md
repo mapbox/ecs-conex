@@ -1,3 +1,6 @@
+### v0.3.2
+- Fail helpfully when the GithubAccessToken used with conex watch does not have adequate permissions.
+
 ### v0.3.1
 
 - ecs-watchbot@1.0.4 allows LogAggregationFunction to be truly an optional stack parameter
