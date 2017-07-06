@@ -1,4 +1,6 @@
-### v0.3.2
+### v0.4.0
+
+- ecs-conex's container can now run on a host using Docker 1.12.6 or 17.03.1-ce
 - Fail helpfully when the GithubAccessToken used with conex watch does not have adequate permissions.
 
 ### v0.3.1
