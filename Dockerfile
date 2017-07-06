@@ -12,9 +12,9 @@ RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
-# Install docker binary matching EC2 version
+# Download several versions of docker
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz > docker-1.12.6.tgz
-RUN tar -xzf docker-1.12.6.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-17.03.1-ce.tgz > docker-17.03.1-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
@@ -27,4 +27,9 @@ VOLUME /var/run/docker.sock
 VOLUME /mnt/data
 
 # Run the worker
-CMD eval $(decrypt-kms-env) && ./ecs-conex.sh
+CMD eval $(decrypt-kms-env) \
+  && docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion) \
+  && tar -xzf docker-${docker_version}.tgz \
+  && cp docker/docker /usr/local/bin/docker \
+  && chmod 755 /usr/local/bin/docker \
+  && ./ecs-conex.sh
