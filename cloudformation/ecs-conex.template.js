@@ -13,7 +13,8 @@ var watcher = watchbot.template({
     StackRegion: cf.region,
     AccountId: cf.accountId,
     GithubAccessToken: cf.ref('GithubAccessToken'),
-    NPMAccessToken: cf.ref('NPMAccessToken')
+    NPMAccessToken: cf.ref('NPMAccessToken'),
+    DOCKER_VERSION: cf.ref('DockerVersion')
   },
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
@@ -62,6 +63,11 @@ var conex = {
       Type: 'Number',
       Description: 'The number of concurrent build jobs ecs-conex will perform',
       Default: 4
+    },
+    DockerVersion: {
+      Type: 'String',
+      Description: 'The version of Docker that will run on ecs-conex\'s host EC2s',
+      Default: '17.03.1-ce'
     },
     Cluster: {
       Description: 'The ARN of the ECS cluster to run on',

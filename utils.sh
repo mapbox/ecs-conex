@@ -11,7 +11,8 @@ function after_image() {
 
 function login() {
   local region=$1
-  eval "$(aws ecr get-login --region ${region})"
+  eval "$(aws ecr get-login --region ${region} --no-include-email)" || \
+    eval "$(aws ecr get-login --region ${region})"
 }
 
 function ensure_repo() {
@@ -109,6 +110,11 @@ function credentials() {
 
   if [[ -n $sessionToken ]] && [[ $sessionToken != "undefined" ]] && grep "ARG AWS_SESSION_TOKEN" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg AWS_SESSION_TOKEN=${sessionToken}"
+  fi
+
+  DockerVersion=${DOCKER_VERSION:-}
+  if [[ -n $DockerVersion ]] && grep "ARG DOCKER_VERSION" ${filepath} > /dev/null 2>&1; then
+    args+=" --build-arg DOCKER_VERSION=${DockerVersion}"
   fi
 }
 

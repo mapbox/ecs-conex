@@ -2,8 +2,11 @@
 
 set -eux
 
+docker_version=${1:-17.03.1-ce}
+
 # Log docker client into ECR
-eval "$(aws ecr get-login --region us-east-1)"
+eval "$(aws ecr get-login --region us-east-1 --no-include-email)" || \
+  eval "$(aws ecr get-login --region us-east-1)"
 
 # Make sure the ECR repository exists
 aws ecr describe-repositories --region us-east-1 --repository-names ecs-conex > /dev/null 2>&1 || \
@@ -14,7 +17,7 @@ desc=$(aws ecr describe-repositories --region us-east-1 --repository-names ecs-c
 uri=$(node -e "console.log(${desc}.repositories[0].repositoryUri);")
 
 # Build the docker image
-docker build -t ecs-conex ./
+docker build -t ecs-conex --build-arg DOCKER_VERSION=${docker_version} ./
 
 # Tag the image into the ECR repository
 docker tag ecs-conex "${uri}:$(git rev-parse head)"
