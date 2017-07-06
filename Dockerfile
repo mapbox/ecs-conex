@@ -15,7 +15,7 @@ WORKDIR /usr/local/src/ecs-conex
 # Install docker binary matching version specified by --build-arg
 ARG DOCKER_VERSION
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz > docker-${DOCKER_VERSION}.tgz
-RUN tar -xzf docker-1.12.6.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
+RUN tar -xzf docker-${DOCKER_VERSION}.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
 
 # Copy files into the container
 COPY ./*.sh ./
