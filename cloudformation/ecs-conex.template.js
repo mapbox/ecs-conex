@@ -18,7 +18,7 @@ var watcher = watchbot.template({
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
   user: true,
-  notificationEmail: cf.ref('AlarmEmail'),
+  notificationTopic: cf.ref('AlarmSNSTopic'),
   cluster: cf.ref('Cluster'),
   alarmOnEachFailure: true,
   alarmThreshold: 20,
@@ -76,6 +76,34 @@ var conex = {
       Description: 'The ARN of a Lambda function that will receive log events from CloudWatch',
       Type: 'String',
       Default: 'none'
+    }
+  },
+  Resources: {
+    AlarmSNSTopic: {
+      Type: 'AWS::SNS::Topic',
+      Description: 'Subscribe to this topic to receive emails when tasks fail or retry',
+      Properties: {
+        Subscription: [
+          {
+            Endpoint: cf.ref('AlarmEmail'),
+            Protocol: 'email'
+          }
+        ]
+      }
+    },
+    MaxPendingTime: {
+      Type: 'AWS::CloudWatch::Alarm',
+      Properties: {
+        AlarmDescription: 'https://github.com/mapbox/ecs-conex/blob/master/docs/alarms.md#maxpendingtime',
+        Period: 60,
+        EvaluationPeriods: 5,
+        Statistic: 'Maximum',
+        Threshold: 120,
+        ComparisonOperator: 'GreaterThanThreshold',
+        Namespace: 'Mapbox/ecs-watchbot',
+        MetricName: cf.join(['WatchbotWorkerPending', cf.stackName]),
+        AlarmActions: [cf.ref('AlarmSNSTopic')]
+      }
     }
   },
   Outputs: {
