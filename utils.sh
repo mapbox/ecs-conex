@@ -118,8 +118,7 @@ function exact_match() {
       echo "found existing image for ${tag} in ${region}, skipping push" >&2
     else
       echo "pushing ${tag} to ${region}" >&2
-      docker tag ${repo}:${after} "$(after_image ${region} ${tag})"
-      docker tag ${repo}:'tag' "$(after_image ${region} ${tag})"
+      docker tag ${repo}:"tag-${after}" "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
@@ -163,8 +162,7 @@ function docker_push() {
     echo "pushing ${after} to ${region}"
 
     # tag + add current image to queue by gitsha
-    docker tag ${repo}:${after} "$(after_image ${region})"
-    docker tag ${repo}:'commit' "$(after_image ${region})"
+    docker tag ${repo}:"commit-${after}" "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
   done
 
