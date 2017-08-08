@@ -147,12 +147,7 @@ function ecr_cleanup() {
   echo "ecr_cleanup"
   local region=$1
   local repo=$2
-
-  if [ -z "$symlink" ]; then
-    file=/usr/local/bin/cleanup_ecr
-    [ -h $file ] || ln -s `pwd`/scripts/cleanup.js $file
-  fi
-  cleanup_ecr ${region} ${repo} ${GithubAccessToken}
+  node /usr/local/src/ecs-conex/scripts/cleanup.js ${region} ${repo} ${GithubAccessToken}
 }
 
 function docker_push() {
