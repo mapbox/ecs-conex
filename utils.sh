@@ -81,6 +81,46 @@ function parse_message() {
   user=$(node -e "console.log(${Message}.pusher.name);")
   deleted=$(node -e "console.log(${Message}.deleted);")
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
+  default_branch=$(node -e "console.log(${Message}.repository.default_branch);")
+  commit_tag="$(get_commit_type \"${ref}\" \"${default_branch}\" \"${Message}\")"
+}
+
+function get_commit_type() {
+  ref=$1
+  default_branch=$2
+  Message=$3
+  
+  #Ascertain if the commit is a regular commit or a certain kind of merge commit
+  #   Regular merge commit
+  #     * Payload has a list of commits, all of which are not distinct except for the actual merge commit, which is distinct
+  #   Squashed merge commit
+  #     * Payload has one commit, which is distinct.
+  #     * Regular commits to default branch
+  #   Rebased merge commit
+  #     * Payload has one commit, which is not distinct.
+  #     * Regular rebases to default branch
+  if [[ ${ref} == "refs/heads/${default_branch}" ]];
+  then
+    if [[ `echo ${Message} | jq '.commits' | jq '.[] | .distinct' | grep -c false` -gt 0 && `echo ${Message} | jq '.commits' | jq '.[] | .distinct' | grep -c true` -eq 1 ]];
+    then
+      #regular merge
+      echo "merge-commit"
+    elif [[ `echo ${Message} | jq '.head_commit.distinct' | grep -c false` -eq 1 && `echo ${Message} | jq '.commits' | length` -eq 0 ]];
+    then
+      #rebased merge
+      echo "merge-commit"
+    elif [[ `echo ${Message} | jq '.commits' | jq '.[] | .distinct' | grep -c false` -eq 0 && `echo ${Message} | jq '.commits' | jq '.[] | .distinct' | grep -c true` -eq 1 ]];
+    then
+      #squashed merge
+      echo "merge-commit"
+    else
+      #squashed merge
+      echo "commit"
+    fi
+  else
+    #any kind of commit on non-production deploy involved branches
+    echo "commit"
+  fi
 }
 
 function credentials() {
