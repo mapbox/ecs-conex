@@ -18,7 +18,7 @@ RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz > docker-17.03.2-ce.tgz
 
 # Copy files into the container
-COPY ./*.sh ./
+ADD . .
 
 # Use docker on the host instead of running docker-in-docker
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
