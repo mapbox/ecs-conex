@@ -30,14 +30,16 @@ var watcher = watchbot.template({
     Action: [
       'ecr:BatchCheckLayerAvailability',
       'ecr:BatchGetImage',
+      'ecr:PutImage',
+      'ecr:DescribeImages',
+      'ecr:BatchDeleteImage',
       'ecr:CreateRepository',
       'ecr:DescribeRepositories',
       'ecr:GetAuthorizationToken',
       'ecr:GetDownloadUrlForLayer',
       'ecr:InitiateLayerUpload',
       'ecr:CompleteLayerUpload',
-      'ecr:UploadLayerPart',
-      'ecr:PutImage'
+      'ecr:UploadLayerPart'
     ],
     Resource: '*'
   }
