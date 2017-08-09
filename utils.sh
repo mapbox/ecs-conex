@@ -74,6 +74,9 @@ function parse_message() {
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
   default_branch=$(node -e "console.log(${Message}.repository.default_branch);")
 
+  echo "*****refs/heads/${default_branch}*****"
+  echo "*****${ref}*****"
+
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
     sha_tag="production-"
