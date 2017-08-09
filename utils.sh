@@ -4,9 +4,8 @@ set -eu
 set -o pipefail
 
 function after_image() {
-  echo "after_image"
   local region=$1
-  local sha=${2:-${after}}
+  local sha=${2:-${sha_tag}${after}}
   echo ${AccountId}.dkr.ecr.${region}.amazonaws.com/${repo}:${sha}
 }
 
@@ -65,7 +64,6 @@ function check_dockerfile() {
 }
 
 function check_receives() {
-  echo "check_receives"
   if [ $ApproximateReceiveCount -gt 3 ]; then
     echo "Job received $ApproximateReceiveCount times, aborting build"
     return 3
@@ -86,9 +84,9 @@ function parse_message() {
 
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
-    commit_tag="production-${after}"
+    sha_tag="production-"
   else
-    commit_tag="${after}"
+    sha_tag=""
   fi
 
 }
@@ -139,7 +137,7 @@ function exact_match() {
       echo "found existing image for ${tag} in ${region}, skipping push" >&2
     else
       echo "pushing ${tag} to ${region}" >&2
-      docker tag ${repo}:"tag-${after}" "$(after_image ${region} ${tag})"
+      docker tag ${repo}:"${sha_tag}${after}" "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
@@ -171,17 +169,17 @@ function docker_push() {
     queue="${queue} $(exact_match)"
 
     if image_exists ${region}; then
-      echo "found existing image for ${after} in ${region}, skipping push"
+      echo "found existing image for \"${sha_tag}${after}\" in ${region}, skipping push"
       continue
     fi
 
     echo "making space in the registry"
     ecr_cleanup ${region} ${repo}
 
-    echo "pushing ${after} to ${region}"
+    echo "pushing \"${sha_tag}${after}\" to ${region}"
 
     # tag + add current image to queue by gitsha
-    docker tag ${repo}:"${commit_tag}" "$(after_image ${region})"
+    docker tag ${repo}:"${sha_tag}${after}" "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
   done
 
@@ -202,7 +200,7 @@ function cleanup() {
 
   rm -rf ${tmpdir}
 
-  local imageId=$(docker images -q ${repo}:${after})
+  local imageId=$(docker images -q ${repo}:"${sha_tag}${after}")
   if [ -n "${imageId}" ]; then
     docker rmi -f ${imageId}
   fi
