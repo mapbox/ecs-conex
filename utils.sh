@@ -10,14 +10,12 @@ function after_image() {
 }
 
 function login() {
-  echo "login"
   local region=$1
   eval "$(aws ecr get-login --region ${region} --no-include-email)" || \
   eval "$(aws ecr get-login --region ${region})"
 }
 
 function ensure_repo() {
-  echo "ensure_repo"
   local region=$1
   aws ecr describe-repositories \
     --region ${region} \
@@ -25,7 +23,6 @@ function ensure_repo() {
 }
 
 function create_repo() {
-  echo "create_repo"
   local region=$1
   aws ecr create-repository \
     --region ${region} \
@@ -33,7 +30,6 @@ function create_repo() {
 }
 
 function image_exists() {
-  echo "image_exists"
   local region=$1
   local imgtag=${2:-${after}}
   aws ecr batch-get-image \
@@ -44,7 +40,6 @@ function image_exists() {
 }
 
 function github_status() {
-  echo "github_status"
   local status=$1
   local description=$2
   curl -s \
@@ -55,7 +50,6 @@ function github_status() {
 }
 
 function check_dockerfile() {
-  echo "check_dockerfile"
   filepath=$1
   if [ ! -f ${filepath} ]; then
     echo "no Dockerfile found"
@@ -71,8 +65,6 @@ function check_receives() {
 }
 
 function parse_message() {
-
-  echo "parse_message"
   ref=$(node -e "console.log(${Message}.ref);")
   after=$(node -e "console.log(${Message}.after);")
   repo=$(node -e "console.log(${Message}.repository.name);")
@@ -92,7 +84,6 @@ function parse_message() {
 }
 
 function credentials() {
-  echo "credentials"
   filepath=${1}
   args=""
 
@@ -130,7 +121,6 @@ function credentials() {
 }
 
 function exact_match() {
-  echo "exact_match"
   if git describe --tags --exact-match 2> /dev/null; then
     local tag="$(git describe --tags --exact-match)"
     if image_exists ${region} ${tag}; then
@@ -144,7 +134,6 @@ function exact_match() {
 }
 
 function ecr_logins() {
-  echo "ecr_logins"
   local regions=$1
   for region in "$@"; do
     login ${region}
@@ -152,14 +141,12 @@ function ecr_logins() {
 }
 
 function ecr_cleanup() {
-  echo "ecr_cleanup"
   local region=$1
   local repo=$2
   node /usr/local/src/ecs-conex/cleanup.js ${region} ${repo} ${GithubAccessToken}
 }
 
 function docker_push() {
-  echo "docker_push"
   local queue=""
 
   for region in "${regions[@]}"; do
@@ -187,7 +174,6 @@ function docker_push() {
 }
 
 function cleanup() {
-  echo "cleanup"
   exit_code=$?
 
   parse_message
