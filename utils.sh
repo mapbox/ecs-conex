@@ -78,7 +78,7 @@ function parse_message() {
   then
     sha_tag="production-"
   else
-    sha_tag=""
+    sha_tag="non-"
   fi
 
 }
