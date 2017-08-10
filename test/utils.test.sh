@@ -339,8 +339,9 @@ function ecr_cleanup {
 tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
+cleanup_location="./scripts"
 
-log=$(ecr_cleanup ${test_region} ${test_repo} './scripts')
+log=$(ecr_cleanup ${test_region} ${test_repo})
 assert "equal" "${log}" "All good"
 
 # docker_push() test
