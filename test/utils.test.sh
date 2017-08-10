@@ -328,16 +328,6 @@ tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
 
-function cleanup_ecr() {
-  if [ ${1} != "${test_region}" ]; then
-    echo "First argument must be region"
-  elif [ ${2} != "${test_repo}" ]; then
-    echo "Second argument must be repo"
-  else
-    echo "All good"
-  fi
-}
-
 log=$(ecr_cleanup ${test_region} ${test_repo} './scripts')
 assert "equal" "${log}" "All good"
 
@@ -365,8 +355,12 @@ function image_exists {
 function ecr_cleanup {
   if [ "${1}" != "us-east-1" ]; then
     FAILURE="Region not passed into ecr_cleanup"
+    echo ${FAILURE}
   elif [ "${2}" != "test" ]; then
     FAILURE="Repository not passed into ecr_cleanup"
+    echo ${FAILURE}
+  else
+    echo "All good"
   fi
 }
 
