@@ -72,9 +72,10 @@ function parse_message() {
   user=$(node -e "console.log(${Message}.pusher.name);")
   deleted=$(node -e "console.log(${Message}.deleted);")
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
-  default_branch=$(node -e "console.log(${Message}.repository.default_branch);")
+  default_branch=$(node -e "console.log(${Message}.default_branch);")
   echo "DEFAULT BRANCH: $default_branch"
   echo "refs/heads/${default_branch}"
+
 
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
