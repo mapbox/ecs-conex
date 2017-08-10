@@ -31,7 +31,7 @@ function create_repo() {
 
 function image_exists() {
   local region=$1
-  local imgtag=${2:-${after}}
+  local imgtag=${2:-${sha_tag}${after}}
   aws ecr batch-get-image \
     --region ${region} \
     --repository-name ${repo} \
