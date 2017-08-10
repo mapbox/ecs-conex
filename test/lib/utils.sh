@@ -52,6 +52,8 @@ function assert () {
       message="should contain"
     fi
 
+    echo "|$result|"|tr '\n' ' '
+    echo "|$expected|"|tr '\n' ' '
     if [[ "${result}" != *"${expected}"* ]]; then
       failed "${message}" "string that contains: \"${expected}\"" "${result}"
     else

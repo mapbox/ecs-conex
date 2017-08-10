@@ -323,34 +323,31 @@ log="$(exact_match)"
 assert "equal" "$FAILURE" ""
 assert "contains" "$log" ""
 
-function ecr_cleanup {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into ecr_cleanup"
-    echo ${FAILURE}
-  elif [ "${2}" != "test-repo" ]; then
-    echo "${2} test-repo"
-    FAILURE="Repository not passed into ecr_cleanup"
-    echo ${FAILURE}
-  else
-    echo "All good"
-  fi
-}
-
 # ecr_cleanup()
 tag_test "ecr_cleanup"
 test_region="us-east-1"
 test_repo="test-repo"
 cleanup_location="./scripts"
 
+function ecr_cleanup() {
+  if [ ${1} != "${test_region}" ]; then
+    echo "First argument must be region"
+  elif [ ${2} != "${test_repo}" ]; then
+    echo "Second argument must be repo"
+  else
+    echo "All good"
+  fi
+}
+
 log=$(ecr_cleanup ${test_region} ${test_repo})
 assert "equal" "${log}" "All good"
 
 # docker_push() test
 tag_test "docker_push"
-regions=(us-east-1)
-repo="test-repo"
 sha_tag=""
-after=test
+regions=(us-east-1)
+repo="test"
+after="test"
 FAILURE=""
 
 function ensure_repo() {
@@ -365,6 +362,14 @@ function login() {
 
 function image_exists {
   return 1
+}
+
+function ecr_cleanup {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into ecr_cleanup"
+  elif [ "${2}" != "test" ]; then
+    FAILURE="Repository not passed into ecr_cleanup"
+  fi
 }
 
 function after_image {
@@ -392,13 +397,9 @@ function git() {
   exit 1
 }
 
-function exact_match() {
-  assert "equal" "${FAILURE}" ""
-}
-
 log=$(docker_push)
 assert "equal" "$?" "0"
-assert "contains" "${log}" "pushing test to us-east-1"
+assert "contains" "${log}" "pushing \"test\" to us-east-1"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # docker_push() test to region with existing images
@@ -413,8 +414,8 @@ function image_exists() {
 regions=(us-east-1 us-west-2)
 log=$(docker_push)
 assert "equal" "$?" "0"
-assert "contains" "${log}" "pushing test to us-east-1"
-assert "contains" "${log}" "found existing image for test in us-west-2, skipping push"
+assert "contains" "${log}" "pushing \"test\" to us-east-1"
+assert "contains" "${log}" "found existing image for \"test\" in us-west-2, skipping push"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()

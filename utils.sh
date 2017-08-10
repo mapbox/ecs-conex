@@ -74,9 +74,6 @@ function parse_message() {
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
   default_branch=$(node -e "console.log(${Message}.repository.default_branch);")
 
-  echo "*****refs/heads/${default_branch}*****"
-  echo "*****${ref}*****"
-
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
     sha_tag="production-"
@@ -158,7 +155,6 @@ function docker_push() {
 
     # tag + add current image to queue by exact tag match (omitted if no exact match)
     queue="${queue} $(exact_match)"
-
     if image_exists ${region}; then
       echo "found existing image for \"${sha_tag}${after}\" in ${region}, skipping push"
       continue
