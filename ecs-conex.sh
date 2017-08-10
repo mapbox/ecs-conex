@@ -47,6 +47,7 @@ function main() {
   echo "building new image"
 
   docker build --no-cache ${args} --tag ${repo}:${after} ${tmpdir}
+
   docker_push
 
   echo "completed successfully"
