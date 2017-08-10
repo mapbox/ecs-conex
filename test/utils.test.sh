@@ -323,6 +323,18 @@ log="$(exact_match)"
 assert "equal" "$FAILURE" ""
 assert "contains" "$log" ""
 
+function ecr_cleanup {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into ecr_cleanup"
+    echo ${FAILURE}
+  elif [ "${2}" != "test-repo" ]; then
+    FAILURE="Repository not passed into ecr_cleanup"
+    echo ${FAILURE}
+  else
+    echo "All good"
+  fi
+}
+
 # ecr_cleanup()
 tag_test "ecr_cleanup"
 test_region="us-east-1"
@@ -350,18 +362,6 @@ function login() {
 
 function image_exists {
   return 1
-}
-
-function ecr_cleanup {
-  if [ "${1}" != "us-east-1" ]; then
-    FAILURE="Region not passed into ecr_cleanup"
-    echo ${FAILURE}
-  elif [ "${2}" != "test" ]; then
-    FAILURE="Repository not passed into ecr_cleanup"
-    echo ${FAILURE}
-  else
-    echo "All good"
-  fi
 }
 
 function after_image {
