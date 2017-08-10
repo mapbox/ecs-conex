@@ -328,6 +328,7 @@ function ecr_cleanup {
     FAILURE="Region not passed into ecr_cleanup"
     echo ${FAILURE}
   elif [ "${2}" != "test-repo" ]; then
+    echo "${2} test-repo"
     FAILURE="Repository not passed into ecr_cleanup"
     echo ${FAILURE}
   else
