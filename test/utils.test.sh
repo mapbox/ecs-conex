@@ -348,7 +348,8 @@ assert "equal" "${log}" "All good"
 # docker_push() test
 tag_test "docker_push"
 regions=(us-east-1)
-repo=test
+repo="test-repo"
+sha_tag=""
 after=test
 FAILURE=""
 
