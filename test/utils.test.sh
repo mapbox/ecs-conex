@@ -345,7 +345,7 @@ function cleanup_ecr() {
   fi
 }
 
-log=$(ecr_cleanup ${test_region} ${test_repo})
+log=$(ecr_cleanup ${test_region} ${test_repo} './scripts')
 assert "equal" "${log}" "All good"
 rm -rf ${mocksdir} && export PATH=${original_path}
 
