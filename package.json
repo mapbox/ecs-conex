@@ -5,7 +5,7 @@
   "main": "ecs-conex.sh",
   "scripts": {
     "pretest": "eslint cloudformation test",
-    "test": "test/utils.test.sh && test/watch.test.sh && tape test/template.test.js && tape test/cleanup.test.js",
+    "test": "test/retag-existing.test.sh test/utils.test.sh && test/watch.test.sh && tape test/template.test.js && tape test/cleanup.test.js",
     "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
   "bin": {

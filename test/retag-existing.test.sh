@@ -25,3 +25,9 @@ function aws() {
 }
 
 source $(dirname $0)/../retag-existing.sh
+
+if [[ ${FAILED} != 0 ]]; then
+  exit 1
+else
+  exit 0
+fi
