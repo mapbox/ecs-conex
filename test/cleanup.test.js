@@ -95,11 +95,9 @@ test('imagesToDelete', (t) => {
   // Create an array with 899 elements: 849 which are to be cleaned and 50
   // which are to be saved. None, should be returned as images that need to be
   // deleted.
-  let images = Array(849).fill(imagesNoToken.imageDetails[1]);
-  let result = file.imagesToDelete(images, 849, /^cleanup-[a-z0-9]{40}$/);
+  let images = Array(849).fill(imagesNoToken.imageDetails[1]).concat(Array(50).fill(imagesNoToken.imageDetails[2]));
+  let result = file.imagesToDelete(images, 849, /cleanup-[a-z0-9]{40}$/);
   t.deepEqual(result, []);
-
-  images = Array(50).fill(imagesNoToken.imageDetails[2]);
   result = file.imagesToDelete(images, 50, /^save-[a-z0-9]{40}$/);
   t.deepEqual(result, []);
   t.end();
