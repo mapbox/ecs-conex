@@ -29,6 +29,16 @@
       ],
       "imageSizeInBytes": 261996765,
       "imagePushedAt": "2016-11-08T09:28:00.000Z"
+    },
+    {
+      "registryId": "111111111111",
+      "repositoryName": "test-repo",
+      "imageDigest": "sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "imageTags": [
+        "save-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "imageSizeInBytes": 261985543,
+      "imagePushedAt": "2016-11-08T09:01:00.000Z"
     }
   ]
 }
