@@ -11,7 +11,11 @@ const repo = process.argv[3];
 if (!module.parent) {
   getImages(region, repo, (err, res) => {
     if (err) handleCb(err);
-    const imageIds = imagesToDelete(res);
+    // Delete anything older than the 50 commits on the default branch
+    // and anything older than 849 commits on any other branch
+    const regularCommits = imagesToDelete(res, 849, /^cleanup-[a-z0-9]{40}$/);
+    const deployCommits = imagesToDelete(res, 50, /^save-[a-z0-9]{40}$/);
+    const imageIds = regularCommits.concat(deployCommits);
     if (!imageIds.length) handleCb(null, 'No images to delete');
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
@@ -45,11 +49,10 @@ function getImages(region, repo, callback) {
 }
 
 module.exports.imagesToDelete = imagesToDelete;
-function imagesToDelete(images) {
-  const max = 900;
-  const validated = images.filter((e) => { return e.imageTags && /commit|tag/.test(e.imageTags.join(' ')); });
+function imagesToDelete(images, max, pattern) {
+  const validated = images.filter((e) => { return e.imageTags && pattern.test(e.imageTags.join(' ')); });
   const sorted = validated.sort((a, b) => { return new Date(a.imagePushedAt) - new Date(b.imagePushedAt); });
-  const spliced = sorted.splice(0, images.length - max + 1);
+  const spliced = sorted.splice(0, images.length - max);
   const digests = spliced.map((e) => { return { imageDigest: e.imageDigest }; });
   return digests;
 }
