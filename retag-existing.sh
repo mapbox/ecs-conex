@@ -23,8 +23,8 @@ for region in "${regions[@]}"; do
         git tag >> "${repo}-tags"
         # Get each of these tags and check if an image exists for the same tag
         # Add a new tag "SAVE" to each of these images
-        aws ecr describe-images --repository-name ecs-watchbot --output json | jq ' .imageDetails[].imageTags | select( length > 0) | join("\n")' > "${repo}-image-tags"
-        for tag in `cat ${repo}-image-tags ${repo}-merge`; do
+        aws ecr describe-images --repository-name ${repo} --output json | jq ' .imageDetails[].imageTags | select( length > 0) | join("\n")' > "${repo}-image-tags"
+        for tag in `cat ${repo}-image-tags`; do
             aws ecr batch-get-image --repository-name ${repo} --image-ids imageTag=${merge_commit} --query images[].imageManifest --output text > ${merge_commit}.manifest
             if [[ -n `grep ${tag} "${repo}-merge-commits ${repo}-tags"` ]];
             then
