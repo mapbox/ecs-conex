@@ -1,0 +1,11 @@
+{
+    "repositories": [
+        {
+            "registryId": "234858372212", 
+            "repositoryName": "ecs-conex-test", 
+            "repositoryArn": "arn:aws:ecr:eu-west-1:234858372212:repository/ecs-conex-test", 
+            "createdAt": 1469057610.0, 
+            "repositoryUri": "234858372212.dkr.ecr.eu-west-1.amazonaws.com/ecs-conex-test"
+        }
+    ]
+}
