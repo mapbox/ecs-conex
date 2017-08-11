@@ -79,9 +79,9 @@ function parse_message() {
 
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
-    sha_tag="production-"
+    sha_tag="save-"
   else
-    sha_tag="non-"
+    sha_tag="cleanup-"
   fi
 
 }
@@ -130,7 +130,10 @@ function exact_match() {
       echo "found existing image for ${tag} in ${region}, skipping push" >&2
     else
       echo "pushing ${tag} to ${region}" >&2
-      docker tag ${repo}:"${sha_tag}${after}" "$(after_image ${region} ${tag})"
+      # Leave the tags untouched with a sha_tag, and use "save" instead, since
+      # they are important always, assuming someone tags when they are on a
+      # non default branch
+      docker tag ${repo}:"save-${after}" "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
