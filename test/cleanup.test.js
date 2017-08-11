@@ -67,21 +67,41 @@ test('getImages, success (nextToken)', (t) => {
     t.equal(stub.callCount, 2, 'ecr.describeImages should be called twice');
     t.deepEqual(stub.getCall(0).args[0], { repositoryName: repo }, 'ecr.describeImages is passed repositoryName param');
     t.deepEqual(stub.getCall(1).args[0], { repositoryName: repo, nextToken: token }, 'ecr.describeImages is passed repositoryName and nextToken params');
-    t.deepEqual(res, imageDetails, 'yields concatenated imageDetails from both ecr.describeImages calls');
+    const sortedRes = res.sort(function(a, b) {
+      return a.imageSizeInBytes - b.imageSizeInBytes;
+    });
+    const sortedImageDetails = imageDetails.sort(function(a, b) {
+      return a.imageSizeInBytes - b.imageSizeInBytes;
+    });
+    t.deepEqual(sortedRes, sortedImageDetails, 'yields concatenated imageDetails from both ecr.describeImages calls');
     AWS.ECR.restore();
     t.end();
   });
 });
 
 test('imagesToDelete', (t) => {
-  // Create an array with 900 elements: 899 from the latest date, and 1 from the
+  // Create an array with 849 elements: 848 from the latest date, and 1 from the
   // oldest date. The last element with the oldest date should move to the front
   // of the array if sorted properly.
-  const images = Array(899).fill(imagesNoToken.imageDetails[0]);
+  const images = Array(848).fill(imagesNoToken.imageDetails[0]);
   images.push(imagesNoToken.imageDetails[1]);
 
-  const result = file.imagesToDelete(images);
-  t.deepEqual(result, imageIds);
+  const result = file.imagesToDelete(images, 849, /^cleanup-[a-z0-9]{40}$/);
+  t.deepEqual(result, []);
+  t.end();
+});
+
+test('imagesToDelete', (t) => {
+  // Create an array with 899 elements: 849 which are to be cleaned and 50
+  // which are to be deleted. None, should be returned.
+
+  let images = Array(849).fill(imagesNoToken.imageDetails[1]);
+  let result = file.imagesToDelete(images, 849, /^cleanup-[a-z0-9]{40}$/);
+  t.deepEqual(result, []);
+
+  images = Array(50).fill(imagesNoToken.imageDetails[2]);
+  result = file.imagesToDelete(images, 50, /^save-[a-z0-9]{40}$/);
+  t.deepEqual(result, []);
   t.end();
 });
 

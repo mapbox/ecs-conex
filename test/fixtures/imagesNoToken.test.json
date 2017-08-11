@@ -5,8 +5,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "imageTags": [
-        "0000000000000000000000000000000000000000",
-        "tag"
+        "cleanup-0000000000000000000000000000000000000000"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
@@ -16,11 +15,20 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "imageTags": [
-        "ffffffffffffffffffffffffffffffffffffffff",
-        "tag"
+        "cleanup-ffffffffffffffffffffffffffffffffffffffff"
       ],
       "imageSizeInBytes": 261996549,
       "imagePushedAt": "2016-11-08T08:28:00.000Z"
+    },
+    {
+      "registryId": "111111111111",
+      "repositoryName": "test-repo",
+      "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "imageTags": [
+        "save-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "imageSizeInBytes": 261996765,
+      "imagePushedAt": "2016-11-08T09:28:00.000Z"
     }
   ]
 }
