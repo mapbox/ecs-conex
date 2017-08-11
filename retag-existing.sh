@@ -1,8 +1,7 @@
-# set -x
 SAVE_TAG="save"
 CLEANUP_TAG="cleanup"
-regions=(us-east-1)
-# eu-west-1 us-west-2
+regions=(us-east-1 eu-west-1 us-west-2)
+
 for region in "${regions[@]}"; do
     desc_repo_file="${region}-desc-repositories.json"
     repo_names_file="${region}-repositories.txt"
@@ -19,16 +18,15 @@ for region in "${regions[@]}"; do
         # Get all the merge commits
         git log --merges --format=format:%H > ../${repo}-merge-commits.txt
         git rev-list --all --remotes > ../${repo}-all-commits.txt
-        # Get all the commits that pertain to a tag OR 
-        # pertain to a dereferenced tag
-        # git show-ref --tags -d | cut -f 1 -d ' ' > ${repo}-tags.txt
+        # Get all git tags
         git tag > ../${repo}-tags.txt
-        # Get each of these tags and check if an image exists for the same tag
-        # Add a new tag "SAVE" to each of these images
         cd ../
+        # Get all existing image tags
         aws ecr describe-images --repository-name ${repo} --output json | jq -r ' .imageDetails[].imageTags | select( length > 0) | join("\n")' > ${repo}-image-tags.txt
+        # Retag an image with "cleanup" or "save" based on whether it's a
+        # merge commit/not a sha-commit and if it's a sha-commit respectively
         for tag in `cat ${repo}-image-tags.txt`; do
-            echo "tag $tag"
+            # Use the retagging logic as specified on http://docs.aws.amazon.com/AmazonECR/latest/userguide/retag-aws-cli.html
             aws ecr batch-get-image --repository-name ${repo} --image-ids imageTag=${tag} --query images[].imageManifest --output text > ${tag}.manifest
             if [[ -n `grep ${tag} ${repo}-merge-commits.txt ${repo}-tags.txt` ]];
             then
@@ -36,11 +34,12 @@ for region in "${regions[@]}"; do
             elif [[ -n `grep ${tag} ${repo}-all-commits.txt` ]];
             then
                 aws ecr put-image --repository-name ${repo} --image-tag ${CLEANUP_TAG} --image-manifest ${tag}.manifest
-            elif [[ -z `grep ${tag} ${repo}-all-commits.txt` ]];
-            then
+            else
+                #err on the side of caution
                 aws ecr put-image --repository-name ${repo} --image-tag ${SAVE_TAG} --image-manifest ${tag}.manifest
             fi
         done
+        #cleanup
         rm ${repo}-merge-commits.txt
         rm ${repo}-all-commits.txt
         rm ${repo}-image-tags.txt
