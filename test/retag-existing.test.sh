@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -eu
 source $(dirname $0)/lib/utils.sh
 FAILED=0
