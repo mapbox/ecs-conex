@@ -27,9 +27,6 @@ function aws() {
     elif [[ ${tag} == "the-tiger" ]]; then
       tag_test "the-tiger marked to be saved"
       assert "equal" "$6" "custom"
-    elif [[ ${tag} == "v1.1.0" ]]; then
-      tag_test "the-tiger marked to be saved"
-      assert "equal" "$6" "tag"
     fi
   fi
 }

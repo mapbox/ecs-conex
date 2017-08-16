@@ -5,7 +5,8 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "imageTags": [
-        "commit-0000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000",
+        "commit"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
@@ -13,9 +14,21 @@
     {
       "registryId": "111111111111",
       "repositoryName": "test-repo",
+      "imageDigest": "sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+      "imageTags": [
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+        "commit"
+      ],
+      "imageSizeInBytes": 4228,
+      "imagePushedAt": "2016-11-08T02:17:58.000Z"
+    },
+    {
+      "registryId": "111111111111",
+      "repositoryName": "test-repo",
       "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "imageTags": [
-        "merge-commit-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "merge-commit"
       ],
       "imageSizeInBytes": 261996765,
       "imagePushedAt": "2016-11-08T09:28:00.000Z"
@@ -25,10 +38,11 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "imageTags": [
-        "commit-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "merge-commit",
         "tag-v1.2.0"
       ],
-      "imageSizeInBytes": 261996755,
+      "imageSizeInBytes": 2619955,
       "imagePushedAt": "2016-11-08T06:23:00.000Z"
     },
     {
@@ -52,17 +66,6 @@
       ],
       "imageSizeInBytes": 261996,
       "imagePushedAt": "2016-11-08T02:28:00.000Z"
-    },
-        {
-      "registryId": "111111111111",
-      "repositoryName": "test-repo",
-      "imageDigest": "sha256:jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj",
-      "imageTags": [
-        "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj",
-        "commit"
-      ],
-      "imageSizeInBytes": 422883148,
-      "imagePushedAt": "2016-12-18T01:05:00.000Z"
     }
   ]
 }

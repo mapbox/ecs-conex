@@ -16,11 +16,11 @@ if (!module.parent) {
     const classifier = [{
       count: 50,
       priority: 1,
-      pattern: /^merge\-commit\-[a-z0-9]{40}$|^merge\-commit$|^tag\-v[0-9\.]$|^tag$|^custom$/
+      pattern: /^merge\-commit$|^tag$|^custom$/
     }, {
       count: 849,
       priority: 2,
-      pattern: /^commit-[a-z0-9]{40}$|^commit$/
+      pattern: /^commit$/
     }];
     const imageIds = imagesToDelete(res, classifier);
     if (!imageIds.length) handleCb(null, 'No images to delete');
@@ -66,6 +66,7 @@ function imagesToDelete(images, classifier) {
   //ignore the first X images that match the pattern, since they are new and need to be stored in the ECR, return the older ones.
   let validated = images.filter((e) => {
     for (let c = 0; c < classifier.length; c++) {
+      // console.log(e, e.imageTags, e.imageTags.join(' '));
       if (classifier[c].pattern.test(e.imageTags.join(' '))) {
         // console.log(e.imageTags.join(' '), classifier[c].pattern, classifier[c].pattern.test(e.imageTags.join(' ')), classifier[c].count);
         if (classifier[c].count < 1) {

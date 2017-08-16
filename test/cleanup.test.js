@@ -86,11 +86,11 @@ test('imagesToDelete commits + merge commits', (t) => {
   const classifier = [{
     count: 50,
     priority: 1,
-    pattern: /^merge\-commit\-[a-z0-9]{40}$|merge\-commit|tag\-v[0-9\.]|tag|custom/
+    pattern: /merge\-commit|tag|custom/
   }, {
     count: 849,
     priority: 2,
-    pattern: /^commit-[a-z0-9]{40}$|commit/
+    pattern: /commit/
   }];
   let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(50).fill(imagesNoToken.imageDetails[2]));
   let result = file.imagesToDelete(images, classifier);
@@ -105,13 +105,13 @@ test('imagesToDelete commits + merge commits + tags', (t) => {
   const classifier = [{
     count: 50,
     priority: 1,
-    pattern: /^merge\-commit\-[a-z0-9]{40}$|merge\-commit|tag\-v[0-9\.]|tag|custom/
+    pattern: /merge\-commit|tag|custom/
   }, {
     count: 849,
     priority: 2,
-    pattern: /^commit-[a-z0-9]{40}$|commit/
+    pattern: /commit/
   }];
-  let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(25).fill(imagesNoToken.imageDetails[1])).concat(Array(25).fill(imagesNoToken.imageDetails[2]));
+  let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(25).fill(imagesNoToken.imageDetails[2])).concat(Array(25).fill(imagesNoToken.imageDetails[3]));
   let result = file.imagesToDelete(images, classifier);
   t.deepEqual(result, []);
   t.end();
@@ -125,11 +125,11 @@ test('imagesToDelete commits + tags', (t) => {
   const classifier = [{
     count: 50,
     priority: 1,
-    pattern: /^merge\-commit\-[a-z0-9]{40}$|merge\-commit|tag\-v[0-9\.]|tag|custom/
+    pattern: /merge\-commit|tag|custom/
   }, {
     count: 849,
     priority: 2,
-    pattern: /^commit-[a-z0-9]{40}$|commit/
+    pattern: /commit/
   }];
   let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(50).fill(imagesNoToken.imageDetails[2]));
   let result = file.imagesToDelete(images, classifier);
@@ -138,22 +138,24 @@ test('imagesToDelete commits + tags', (t) => {
 });
 
 test('imagesToDelete > 849 commits', (t) => {
-  // Create < 849 images that are regular commits and none should be deleted.
+  // Create 850 images that are regular commits and the oldest should be
+  // deleted.
   const classifier = [{
     count: 50,
     priority: 1,
-    pattern: /^merge\-commit\-[a-z0-9]{40}$|merge\-commit|tag\-v[0-9\.]|tag|custom/
+    pattern: /merge\-commit|tag|custom/
   }, {
     count: 849,
     priority: 2,
-    pattern: /^commit-[a-z0-9]{40}$|commit/
+    pattern: /commit/
   }];
-  const images = Array(849).fill(imagesNoToken.imageDetails[5]);
-  images.push(imagesNoToken.imageDetails[0]);
+  const images = Array(849).fill(imagesNoToken.imageDetails[0]);
+  images.push(imagesNoToken.imageDetails[1]);
 
   const result = file.imagesToDelete(images, classifier);
   t.deepEqual(result, [{
-    imageDigest: 'sha256:0000000000000000000000000000000000000000000000000000000000000000'}]);
+    imageDigest: 'sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh'
+  }]);
   t.end();
 });
 
@@ -162,17 +164,17 @@ test('imagesToDelete > 50 merge-commits', (t) => {
   const classifier = [{
     count: 50,
     priority: 1,
-    pattern: /^merge\-commit\-[a-z0-9]{40}$|merge\-commit|tag\-v[0-9\.]|tag|custom/
+    pattern: /merge\-commit|tag|custom/
   }, {
     count: 849,
     priority: 2,
-    pattern: /^commit-[a-z0-9]{40}$|commit/
+    pattern: /commit/
   }];
   const images = Array(50).fill(imagesNoToken.imageDetails[2]);
   images.push(imagesNoToken.imageDetails[4]);
 
   const result = file.imagesToDelete(images, classifier);
-  t.deepEqual(result, [{ imageDigest: 'sha256:mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm' }]);
+  t.deepEqual(result, [{ imageDigest: 'sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' }]);
   t.end();
 });
 
