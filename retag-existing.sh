@@ -1,5 +1,7 @@
-SAVE_TAG="save"
-CLEANUP_TAG="cleanup"
+MERGE_COMMIT_TAG="merge-commit"
+COMMIT_TAG="commit"
+TAG_TAG="tag"
+CUSTOM_TAG="custom"
 regions=(us-east-1 eu-west-1 us-west-2)
 
 for region in "${regions[@]}"; do
@@ -28,15 +30,18 @@ for region in "${regions[@]}"; do
         for tag in `cat ${repo}-image-tags.txt`; do
             # Use the retagging logic as specified on http://docs.aws.amazon.com/AmazonECR/latest/userguide/retag-aws-cli.html
             aws ecr batch-get-image --repository-name ${repo} --image-ids imageTag=${tag} --query images[].imageManifest --output text > ${tag}.manifest
-            if [[ -n `grep ${tag} ${repo}-merge-commits.txt ${repo}-tags.txt` ]];
+            if [[ -n `grep ${tag} ${repo}-merge-commits.txt` ]];
             then
-                aws ecr put-image --repository-name ${repo} --image-tag ${SAVE_TAG} --image-manifest ${tag}.manifest
+                aws ecr put-image --repository-name ${repo} --image-tag ${MERGE_COMMIT_TAG} --image-manifest ${tag}.manifest
+            elif [[ -n `grep ${tag} ${repo}-tags.txt` ]];
+            then
+                 aws ecr put-image --repository-name ${repo} --image-tag ${TAG_TAG} --image-manifest ${tag}.manifest
             elif [[ -n `grep ${tag} ${repo}-all-commits.txt` ]];
             then
-                aws ecr put-image --repository-name ${repo} --image-tag ${CLEANUP_TAG} --image-manifest ${tag}.manifest
+                aws ecr put-image --repository-name ${repo} --image-tag ${COMMIT_TAG} --image-manifest ${tag}.manifest
             else
                 #err on the side of caution
-                aws ecr put-image --repository-name ${repo} --image-tag ${SAVE_TAG} --image-manifest ${tag}.manifest
+                aws ecr put-image --repository-name ${repo} --image-tag ${CUSTOM_TAG} --image-manifest ${tag}.manifest
             fi
         done
         #cleanup

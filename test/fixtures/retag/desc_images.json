@@ -1,15 +1,15 @@
 {
     "imageDetails": [{
-	    "imageSizeInBytes": 47152719, 
-	    "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 
-	    "imageTags": [
-	        "a5e3696f0d6450fae530c99a1b8598c71c11d41c"
-	    ], 
-	    "registryId": "333333333333", 
-	    "repositoryName": "ecs-conex-test", 
-	    "imagePushedAt": 1502286027.0
-	},
-	{
+        "imageSizeInBytes": 47152719, 
+        "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 
+        "imageTags": [
+            "a5e3696f0d6450fae530c99a1b8598c71c11d41c"
+        ], 
+        "registryId": "333333333333", 
+        "repositoryName": "ecs-conex-test", 
+        "imagePushedAt": 1502286027.0
+    },
+    {
         "imageSizeInBytes": 47152719, 
         "imageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 
         "imageTags": [

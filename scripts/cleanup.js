@@ -13,9 +13,16 @@ if (!module.parent) {
     if (err) handleCb(err);
     // Delete anything older than the 50 commits on the default branch
     // and anything older than 849 commits on any other branch
-    const deployCommits = imagesToDelete(res, 50, /^save-[a-z0-9]{40}$|save/);
-    const regularCommits = imagesToDelete(res, 849, /^cleanup-[a-z0-9]{40}$|cleanup/);
-    const imageIds = regularCommits.concat(deployCommits);
+    const classifier = [{
+      count: 50,
+      priority: 1,
+      pattern: /^merge\-commit\-[a-z0-9]{40}$|^merge\-commit$|^tag\-v[0-9\.]$|^tag$|^custom$/
+    }, {
+      count: 849,
+      priority: 2,
+      pattern: /^commit-[a-z0-9]{40}$|^commit$/
+    }];
+    const imageIds = imagesToDelete(res, classifier);
     if (!imageIds.length) handleCb(null, 'No images to delete');
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
@@ -49,11 +56,29 @@ function getImages(region, repo, callback) {
 }
 
 module.exports.imagesToDelete = imagesToDelete;
-function imagesToDelete(images, max, pattern) {
-  const validated = images.filter((e) => { return e.imageTags && pattern.test(e.imageTags.join(' ')); });
-  const sorted = validated.sort((a, b) => { return new Date(a.imagePushedAt) - new Date(b.imagePushedAt); });
-  const spliced = sorted.splice(0, sorted.length - max);
-  const digests = spliced.map((e) => { return { imageDigest: e.imageDigest }; });
+function imagesToDelete(images, classifier) {
+  classifier = classifier.sort((a, b) => {
+    return a.priority - b.priority;
+  });
+  //[newest, newer, new,...., old, older, oldest]
+  images = images.sort((a, b) => { return new Date(b.imagePushedAt) - new Date(a.imagePushedAt);
+  });
+  //ignore the first X images that match the pattern, since they are new and need to be stored in the ECR, return the older ones.
+  let validated = images.filter((e) => {
+    for (let c = 0; c < classifier.length; c++) {
+      if (classifier[c].pattern.test(e.imageTags.join(' '))) {
+        // console.log(e.imageTags.join(' '), classifier[c].pattern, classifier[c].pattern.test(e.imageTags.join(' ')), classifier[c].count);
+        if (classifier[c].count < 1) {
+          return true;
+        } else {
+          classifier[c].count--;
+          return;
+        }
+      }
+    }
+    return false;
+  });
+  const digests = validated.map((e) => { return { imageDigest: e.imageDigest }; });
   return digests;
 }
 
