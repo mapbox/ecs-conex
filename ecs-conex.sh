@@ -23,6 +23,7 @@ function main() {
   check_receives
 
   echo "parsing received message"
+  #${sha_tag} is populated at this point
   parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"

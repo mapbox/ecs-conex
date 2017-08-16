@@ -79,9 +79,9 @@ function parse_message() {
 
   if [[ "refs/heads/${default_branch}" == "${ref}" ]];
   then
-    sha_tag="merge-commit-"
+    sha_tag="merge-commit"
   else
-    sha_tag="commit-"
+    sha_tag="commit"
   fi
 
 }
@@ -133,7 +133,8 @@ function exact_match() {
       # Leave the tags untouched with a sha_tag, and use "tag" instead, since
       # they are important always, assuming someone tags when they are on a
       # non default branch
-      docker tag ${repo}:"tag-${after}" "$(after_image ${region} ${tag})"
+      docker tag ${repo}:"${after}" "$(after_image ${region} ${tag})"
+      docker tag ${repo}:"tag" "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
@@ -172,7 +173,8 @@ function docker_push() {
     echo "pushing \"${sha_tag}${after}\" to ${region}"
 
     # tag + add current image to queue by gitsha
-    docker tag ${repo}:"${sha_tag}${after}" "$(after_image ${region})"
+    docker tag ${repo}:"${after}" "$(after_image ${region})"
+    docker tag ${repo}:"${sha_tag}" "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
   done
 
