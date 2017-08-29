@@ -12,7 +12,7 @@ The cleanup script accepts the following options:
 You will need to have two environment parameters set in your terminal:
 
 * `GithubAccessToken`, and
-* `RegistryId`, which you can retrieve this value from your Repository URL, which should have the format `<RegistryId>.dkr.ecr.region.amazonaws.com`.
+* `RegistryId`, which you can retrieve this value from your Repository URL, which should have the format `<RegistryId>.dkr.ecr.<region>.amazonaws.com`. Substitute, `region` with the AWS region that contains your ECR repository.
 
 If the ECR registry size is not greater than the desired maximum, the cleanup script will not run. There are certain types of imageTags that will never be subject to deletion:
 
