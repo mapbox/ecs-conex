@@ -13,12 +13,14 @@ ARG NPMAccessToken
 RUN echo "//registry.npmjs.org/:_authToken=$NPMAccessToken" > ./.npmrc
 ONBUILD COPY .npmrc ./
 
-# install app dependencies
+# install app dependencies. DO NOT change directories before doing so
 RUN npm install
 
 # Clean up
 RUN rm -f ./.npmrc
 ```
+
+Note that your Dockerfile **must place the `.npmrc` file in the directory where you will `npm install`**.
 
 During local Docker builds, be sure to pass in the NPMAccessToken as part of the build arg:
 `docker build --build-arg NPMAccessToken=ABCDEFGHIJKLMNOP -t your-repo ./`
