@@ -15,6 +15,7 @@ WORKDIR /usr/local/src/ecs-conex
 # Download several versions of docker
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz > docker-1.12.6.tgz
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-17.03.1-ce.tgz > docker-17.03.1-ce.tgz
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-17.03.2-ce.tgz > docker-17.03.2-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
