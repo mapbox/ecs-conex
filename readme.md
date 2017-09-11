@@ -6,7 +6,7 @@ ECS Container Express is a continuous integration service for building [Docker](
 
 ### Dockerfile
 
-The [Dockerfile](https://docs.docker.com/engine/reference/builder/) contains the commands required to build an image, or snapshot of your repository, when you push to GitHub. This file is located in the root directory of your application code.
+The [Dockerfile](https://docs.docker.com/engine/reference/builder/) contains the commands required to build an image, or snapshot of your repository, when you push to GitHub. This file is located in the root directory of your application code. If you are using private npm modules, your Dockerfile might require some additional commands as listed over [here](https://github.com/mapbox/ecs-conex/blob/master/docs/npm.md)
 
 ### ECR Repository
 
