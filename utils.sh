@@ -157,6 +157,72 @@ function docker_push() {
   parallel docker push {} ::: $queue
 }
 
+function copy_slug() {
+  region=$1
+  bucket=$2
+  file=$3
+  key=$4
+  acl=${5:-private}
+
+  if ! aws s3api head-object --bucket ${bucket} --key ${key} > /dev/null 2>&1; then
+      awsretry s3 cp --acl $acl --region ${region} ${file} s3://${bucket}/${key}
+  fi
+}
+
+function awsretry() {
+  local tries=3
+  while ! aws "$@"; do
+    if [ $tries -eq 0 ]; then
+        return 1
+    else
+      echo "aws $@ failed, retrying ..."
+      tries=$(($tries - 1))
+      sleep 5
+    fi
+  done
+  return 0
+}
+
+function save_dockerimage() {
+  tag=$1
+  image=$2
+  cd "$3"
+  echo "Saving image for ${tag} to targz"
+  docker save "${repo}:${tag}" | gzip > "${image}"
+}
+
+function sling_to_china() {
+  repo=$1
+  tag=$2
+  image=$3
+  cd "$4"
+
+  echo "Building manifest file to sling ${tag}"
+  slingWriteBucket=${slingWriteBucket:-"sling-to-cn-north-1"}
+  slingWriteRegion=${slingWriteRegion:-"us-east-1"}
+  slingWritePrefix=${slingWritePrefix:-"slugs"}
+  slingFile="${image}.json"
+  slingKey="${slingWritePrefix}/${repo}/${slingFile}"
+  slingAcl="private"
+  echo "Copying manifest to s3://${slingWriteBucket}/${slingKey}"
+
+  cat <<EOF > ./${slingFile}
+{
+"type": "slug",
+"path": "${slingWritePrefix}/${repo}/${image}"
+}
+EOF
+
+  export -f copy_slug
+  export -f awsretry
+
+  copy_slug "${slingWriteRegion}" "${slingWriteBucket}" "${slingFile}" "${slingKey}" "${slingAcl}"
+  if [ -z "$(aws s3 ls --region ${slingWriteRegion} s3://${slingWriteBucket}/${slingKey})" ]; then
+      echo "Upload to $slingWriteBucket failed, retrying"
+      awsretry s3 cp --acl "${slingAcl}" --region "${slingWriteRegion}" "${slingFile}" "s3://${slingWriteBucket}/${slingKey}"
+  fi
+}
+
 function cleanup() {
   exit_code=$?
 

@@ -24,22 +24,46 @@ var watcher = watchbot.template({
   alarmThreshold: 20,
   alarmPeriods: 6,
   messageTimeout: 1200,
-  permissions: {
-    Effect: 'Allow',
-    Action: [
-      'ecr:BatchCheckLayerAvailability',
-      'ecr:BatchGetImage',
-      'ecr:CreateRepository',
-      'ecr:DescribeRepositories',
-      'ecr:GetAuthorizationToken',
-      'ecr:GetDownloadUrlForLayer',
-      'ecr:InitiateLayerUpload',
-      'ecr:CompleteLayerUpload',
-      'ecr:UploadLayerPart',
-      'ecr:PutImage'
-    ],
-    Resource: '*'
-  }
+  permissions: [
+    {
+      Effect: 'Allow',
+      Action: [
+        'ecr:BatchCheckLayerAvailability',
+        'ecr:BatchGetImage',
+        'ecr:CreateRepository',
+        'ecr:DescribeRepositories',
+        'ecr:GetAuthorizationToken',
+        'ecr:GetDownloadUrlForLayer',
+        'ecr:InitiateLayerUpload',
+        'ecr:CompleteLayerUpload',
+        'ecr:UploadLayerPart',
+        'ecr:PutImage'
+      ],
+      Resource: '*'
+    },
+    {
+      Effect: 'Allow',
+      Action: [
+        's3:PutObject',
+        's3:PutObjecAcl'
+      ],
+      Resource: [
+        'arn:aws:s3:::sling-to-cn-north-1/slugs/*',
+        'arn:aws:s3:::mapbox-ap-southeast-1/slugs/*'
+      ]
+    },
+    {
+      Effect: 'Allow',
+      Action: [
+        's3:ListBucket',
+        's3:GetBucketLocation'
+      ],
+      Resource: [
+        'arn:aws:s3:::sling-to-cn-north-1',
+        'arn:aws:s3:::mapbox-ap-southeast-1'
+      ]
+    }
+  ]
 });
 
 // Main ecs-conex template

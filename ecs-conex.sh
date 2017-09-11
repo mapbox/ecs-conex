@@ -49,6 +49,26 @@ function main() {
   docker build --no-cache --quiet ${args} --tag ${repo}:${after} ${tmpdir}
   docker_push
 
+  if [ -f ".slugger.json" ]; then
+      china=$(jq -r '.["slug-cn-north-1"]' .slugger.json)
+      if [ $china == null ]; then
+          china="false"
+      fi
+  else
+    china="false"
+  fi
+
+  if [ "$china" == "true" ]; then
+      tag="${repo}:${after}"
+      image="docker-${after}.tar.gz"
+      echo "saving Docker image ${tag}"
+      save_dockerimage "${tag}" "${image}" "${tmpdir}"
+      echo "copying ${tag} image to mapbox-ap-southeast-1"
+      copy_slug "ap-southeast-1" "mapbox-ap-southeast-1" "${tmpdir}/${image}" "slugs/${repo}/${image}"
+      echo "slinging tarball to china"
+      sling_to_china "${repo}" "${tag}" "${image}" "${tmpdir}"
+  fi
+
   echo "completed successfully"
 }
 
