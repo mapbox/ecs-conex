@@ -3,7 +3,6 @@ COMMIT_TAG="commit"
 TAG_TAG="tag"
 CUSTOM_TAG="custom"
 regions=(us-east-1 eu-west-1 us-west-2)
-# regions=(us-west-2)
 
 for region in "${regions[@]}"; do
     desc_repo_file="${region}-desc-repositories.json"
@@ -14,7 +13,6 @@ for region in "${regions[@]}"; do
     aws ecr describe-repositories --max-items 200 --output json --region ${region} > ${desc_repo_file}
     less ${desc_repo_file} | jq -r ' .repositories[] | .repositoryName' | sort | uniq > "${repo_names_file}"
     for repo in `cat "${repo_names_file}"`; do
-        # repo="water-bill"
         # Clone the repo
         git clone "git@github.com:mapbox/${repo}.git" "${repo}"
         # Get all git tags
