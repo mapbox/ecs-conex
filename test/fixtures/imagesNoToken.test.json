@@ -6,7 +6,7 @@
       "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "imageTags": [
         "0000000000000000000000000000000000000000",
-        "commit"
+        "commit-0000000000000000000000000000000000000000"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
@@ -17,7 +17,7 @@
       "imageDigest": "sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
       "imageTags": [
         "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
-        "commit"
+        "commit-hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
       ],
       "imageSizeInBytes": 4228,
       "imagePushedAt": "2016-11-08T02:17:58.000Z"
@@ -28,7 +28,7 @@
       "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "imageTags": [
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "merge-commit"
+        "merge-commit-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "imageSizeInBytes": 261996765,
       "imagePushedAt": "2016-11-08T09:28:00.000Z"
@@ -39,7 +39,7 @@
       "imageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "imageTags": [
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "merge-commit",
+        "merge-commit-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "tag-v1.2.0"
       ],
       "imageSizeInBytes": 2619955,
@@ -50,8 +50,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "imageTags": [
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "merge-commit"
+        "merge-commit-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
       ],
       "imageSizeInBytes": 261985543,
       "imagePushedAt": "2016-11-08T09:01:00.000Z"
@@ -61,8 +60,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
       "imageTags": [
-        "hajmolammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
-        "custom"
+        "custom-hajmolammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"
       ],
       "imageSizeInBytes": 261996,
       "imagePushedAt": "2016-11-08T02:28:00.000Z"

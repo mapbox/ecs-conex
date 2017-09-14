@@ -133,8 +133,7 @@ function exact_match() {
       # Leave the tags untouched with a sha_tag, and use "tag" instead, since
       # they are important always, assuming someone tags when they are on a
       # non default branch
-      docker tag ${repo}:"${after}" "$(after_image ${region} ${tag})"
-      docker tag ${repo}:"tag" "$(after_image ${region} ${tag})"
+      docker tag ${repo}:"tag-${after}" "$(after_image ${region} ${tag})"
       echo "$(after_image ${region} ${tag})"
     fi
   fi
@@ -173,8 +172,7 @@ function docker_push() {
     echo "pushing \"${sha_tag}${after}\" to ${region}"
 
     # tag + add current image to queue by gitsha
-    docker tag ${repo}:"${after}" "$(after_image ${region})"
-    docker tag ${repo}:"${sha_tag}" "$(after_image ${region})"
+    docker tag ${repo}:"${sha_tag}-${after}" "$(after_image ${region})"
     queue="${queue} $(after_image ${region})"
   done
 
@@ -194,7 +192,7 @@ function cleanup() {
 
   rm -rf ${tmpdir}
 
-  local imageId=$(docker images -q ${repo}:"${sha_tag}${after}")
+  local imageId=$(docker images -q ${repo}:"${sha_tag}-${after}")
   if [ -n "${imageId}" ]; then
     docker rmi -f ${imageId}
   fi
