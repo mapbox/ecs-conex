@@ -5,8 +5,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "imageTags": [
-        "0000000000000000000000000000000000000000",
-        "commit-0000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
@@ -16,8 +15,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
       "imageTags": [
-        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
-        "commit-hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
       ],
       "imageSizeInBytes": 4228,
       "imagePushedAt": "2016-11-08T02:17:58.000Z"
@@ -27,8 +25,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "imageTags": [
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "merge-commit-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "imageSizeInBytes": 261996765,
       "imagePushedAt": "2016-11-08T09:28:00.000Z"
@@ -38,9 +35,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "imageTags": [
-        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "merge-commit-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "tag-v1.2.0"
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ],
       "imageSizeInBytes": 2619955,
       "imagePushedAt": "2016-11-08T06:23:00.000Z"
@@ -50,7 +45,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "imageTags": [
-        "merge-commit-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
       ],
       "imageSizeInBytes": 261985543,
       "imagePushedAt": "2016-11-08T09:01:00.000Z"
@@ -60,7 +55,7 @@
       "repositoryName": "test-repo",
       "imageDigest": "sha256:mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
       "imageTags": [
-        "custom-hajmolammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"
+        "hajmolammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"
       ],
       "imageSizeInBytes": 261996,
       "imagePushedAt": "2016-11-08T02:28:00.000Z"

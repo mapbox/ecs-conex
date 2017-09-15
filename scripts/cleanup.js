@@ -7,28 +7,25 @@
 const AWS = require('aws-sdk');
 const region = process.argv[2];
 const repo = process.argv[3];
+const tmpdir = process.argv[4];
 
 if (!module.parent) {
+
   getImages(region, repo, (err, res) => {
+
     if (err) handleCb(err);
-    // Delete anything older than the 50 commits on the default branch
-    // and anything older than 849 commits on any other branch
-    const classifier = [{
-      count: 50,
-      priority: 1,
-      pattern: /merge\-commit\-[a-z0-9]{40}|tag\-[a-z0-9]{40}|custom\-[a-z0-9]{40}/
-    }, {
-      count: 849,
-      priority: 2,
-      pattern: /commit\-[a-z0-9]{40}/
-    }];
-    const imageIds = imagesToDelete(res, classifier);
-    if (!imageIds.length) handleCb(null, 'No images to delete');
+
+    if (res.length < 850)
+      handleCb(null, 'No images to delete');
+
+    const imageIds = imagesToDelete(res);
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
       if (res) handleCb(null, res);
     });
+
   });
+
 }
 
 module.exports.handleCb = handleCb;
@@ -53,37 +50,65 @@ function getImages(region, repo, callback) {
       data.nextToken ? describeImages(repo, data.nextToken, callback) : callback(null, details);
     });
   }
+
 }
 
 module.exports.imagesToDelete = imagesToDelete;
-function imagesToDelete(images, classifier) {
-  classifier = classifier.sort((a, b) => {
-    return a.priority - b.priority;
+function imagesToDelete(images) {
+
+  images = images.sort((a, b) => { return (new Date(b.imagePushedAt) - new Date(a.imagePushedAt));
   });
-  images = images.sort((a, b) => { return new Date(b.imagePushedAt) - new Date(a.imagePushedAt);
-  });
-  let validated = images.filter((e) => {
-    for (let c = 0; c < classifier.length; c++) {
-      if (classifier[c].pattern.test(e.imageTags.join(' '))) {
-        if (classifier[c].count < 1) {
-          return true;
-        } else {
-          classifier[c].count--;
-          return;
-        }
-      }
+
+  let cruftDigests = [];
+  let deployDigests = [];
+
+  for(let img of images) {
+    let type = commitType(img.imageTags[0]);
+    if (type === 'commit') {
+      cruftDigests.push({ imageDigest: img.imageDigest });
+    } else if (type != 'custom'){
+      deployDigests.push({ imageDigest: img.imageDigest });
     }
-    return false;
-  });
-  const digests = validated.map((e) => { return { imageDigest: e.imageDigest }; });
+  }
+
+  let digests = [];
+  digests = digests.concat(cruftDigests.slice(0, 150));
+
+  if (deployDigests.length > 50)
+    digests = digests.concat(deployDigests.slice(50, deployDigests.length));
+
   return digests;
 }
 
 module.exports.deleteImages = deleteImages;
 function deleteImages(region, repo, imageIds, callback) {
+
   let ecr = new AWS.ECR({ region: region });
   ecr.batchDeleteImage({
     imageIds: imageIds,
     repositoryName: repo
   }, callback);
+
+}
+
+module.exports.commitType = commitType;
+function commitType(sha) {
+  const spawn = require('child_process').spawnSync;
+  //First check if it's a merge commit
+  let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}', spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout]);
+  if (mergeCommit.stdout > 0 && !mergeCommit.stderr)
+    return 'merge-commit';
+
+  //Then, check if it's a tag
+  let tag = spawn('grep' [sha, spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout]);
+  if (tag.stdout > 0 && !tag.stderr)
+    return 'tag';
+
+  //Then check if it's a regular commit
+  let commit = spawn('git', [`--git-dir=${tmpdir}/.git`, 'rev-parse', '--verify', sha]);
+  if ((commit.stdout === sha) && !commit.stderr) 
+    return 'commit';
+  else
+    return 'custom';
+
 }

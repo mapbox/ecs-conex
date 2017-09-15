@@ -150,7 +150,7 @@ function ecr_cleanup() {
   local region=$1
   local repo=$2
   local workdir=${cleanup_location:-/usr/local/src/ecs-conex}
-  node ${workdir}/cleanup.js ${region} ${repo} ${GithubAccessToken}
+  node ${workdir}/cleanup.js ${region} ${repo} ${tmpdir}
 }
 
 function docker_push() {
