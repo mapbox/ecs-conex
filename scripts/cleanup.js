@@ -56,7 +56,7 @@ function getImages(region, repo, callback) {
 module.exports.imagesToDelete = imagesToDelete;
 function imagesToDelete(images) {
 
-  images = images.sort((a, b) => { return (new Date(b.imagePushedAt) - new Date(a.imagePushedAt));
+  images = images.sort((a, b) => { return (new Date(a.imagePushedAt) - new Date(b.imagePushedAt));
   });
 
   let cruftDigests = [];
@@ -72,10 +72,10 @@ function imagesToDelete(images) {
   }
 
   let digests = [];
-  digests = digests.concat(cruftDigests.slice(0, 150));
+  digests = digests.concat(cruftDigests.slice(0, (digests.length - 849)));
 
   if (deployDigests.length > 50)
-    digests = digests.concat(deployDigests.slice(50, deployDigests.length));
+    digests = digests.concat(deployDigests.slice(0, (deployDigests.length - 50)));
 
   return digests;
 }
@@ -94,17 +94,18 @@ function deleteImages(region, repo, imageIds, callback) {
 module.exports.commitType = commitType;
 function commitType(sha) {
   const spawn = require('child_process').spawnSync;
+
   //First check if it's a merge commit
   let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}', spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout]);
-  if (mergeCommit.stdout > 0 && !mergeCommit.stderr)
+  if (mergeCommit.stdout >= 2 && !mergeCommit.stderr)
     return 'merge-commit';
 
-  //Then, check if it's a tag
-  let tag = spawn('grep' [sha, spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout]);
-  if (tag.stdout > 0 && !tag.stderr)
+  //No? Check if it's a tag
+  let tag = spawn('grep', [sha, spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout]);
+  if ((tag.stdout === sha) && !tag.stderr)
     return 'tag';
 
-  //Then check if it's a regular commit
+  //No? Check if it's a regular commit
   let commit = spawn('git', [`--git-dir=${tmpdir}/.git`, 'rev-parse', '--verify', sha]);
   if ((commit.stdout === sha) && !commit.stderr) 
     return 'commit';
