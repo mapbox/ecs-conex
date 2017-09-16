@@ -19,10 +19,9 @@ const imageIds = [{ imageDigest: imagesNoToken.imageDetails[1].imageDigest }];
 test('mockSpawn', (t) => {
   let gitMergeCommitStdout;
   let spawns = (command, args) => {
-    // console.log(command, args);
     switch(command) {
     case 'git':
-      if(args[3] === 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' || args[3] === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') {
+      if(args[3] === 'cccccccccccccccccccccccccccccccccccccccc' || args[3] === 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         t.equals(args[0], `--git-dir=${process.argv[4]}/.git`);
         t.equals(args[1], 'cat-file');
         t.equals(args[2], '-p');
@@ -34,18 +33,27 @@ test('mockSpawn', (t) => {
         \n\
         Merge pull request #15 from mapbox/categorizer';
         return { stdout: gitMergeCommitStdout };
-      } else if(args[3] === '0000000000000000000000000000000000000000' || args[3] === 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh') {
+      } else if(args[3] === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' || args[3] === 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb') {
         t.equals(args[0], `--git-dir=${process.argv[4]}/.git`);
-        t.ok((args[1] === 'cat-file' || args[1] === 'rev-parse'));
-        t.ok((args[2] === '-p' || args[1] === '--verify'));
+        t.ok((args[1] === 'cat-file' || args[1] === 'rev-parse'), 'cat-file or rev-parse');
+        t.ok((args[2] === '-p' || args[2] === '--verify'), '-p or verify');
         return { stdout: args[3], stderr: null };
+      } else if(args[3] === 'dddddddddddddddddddddddddddddddddddddddd') {
+        return { stdout: args[3], stderr: null };
+      }else if (args[1] === 'tag') {
+        return { stdout: null, stderr: null };
       }
       break;
     case 'grep':
-      if (args[2] === gitMergeCommitStdout || args[2] === '0000000000000000000000000000000000000000' || args[2] === 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh') {
-        t.equals(args[0], '-Ec');
-        t.equals(args[1], '^parent [a-z0-9]{40}');
+      if (args[2] === gitMergeCommitStdout) {
         return { stdout: '2', stderr: null };
+      } else if (args[1] === 'tag' && args[0] === 'dddddddddddddddddddddddddddddddddddddddd') {
+        return { stdout: 'tag', stderr: null };
+      } else if ((args[0] === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' || args[0] === 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb') && args[1]) {
+        t.equals(args[1], args[0]);
+        return { stdout: args[0], stderr: null };
+      } else {
+        return { stdout: null, stderr: null };
       }
 
     }
@@ -126,16 +134,6 @@ test('imagesToDelete commits + merge commits', (t) => {
   t.end();
 });
 
-test('imagesToDelete commits + merge commits + tags', (t) => {
-  // Create an array with 899 elements: 849 of which are regular commits and 50
-  // of which are a mix of tags + merge commits. None should be returned as 
-  // images that need to be deleted.
-  let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(25).fill(imagesNoToken.imageDetails[2])).concat(Array(25).fill(imagesNoToken.imageDetails[3]));
-  let result = file.imagesToDelete(images);
-  t.deepEqual(result, []);
-  t.end();
-});
-
 test('imagesToDelete commits + tags', (t) => {
   // Create an array with 899 elements: 849 of which are regular commits (new)
   // and 50 of which are a mix of tags + commits (old). None should be
@@ -153,7 +151,7 @@ test('imagesToDelete > 849 commits', (t) => {
 
   const result = file.imagesToDelete(images);
   t.deepEqual(result, [{
-    imageDigest: 'sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh'
+    imageDigest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
   }]);
   t.end();
 });
@@ -163,7 +161,7 @@ test('imagesToDelete > 50 merge-commits', (t) => {
   images.push(imagesNoToken.imageDetails[4]);
 
   const result = file.imagesToDelete(images);
-  t.deepEqual(result, [{ imageDigest: 'sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' }]);
+  t.deepEqual(result, [{ imageDigest: 'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' }]);
   t.end();
 });
 

@@ -3,32 +3,12 @@
     {
       "registryId": "111111111111",
       "repositoryName": "test-repo",
-      "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-      "imageTags": [
-        "0000000000000000000000000000000000000000"
-      ],
-      "imageSizeInBytes": 422883048,
-      "imagePushedAt": "2016-12-16T00:05:00.000Z"
-    },
-    {
-      "registryId": "111111111111",
-      "repositoryName": "test-repo",
-      "imageDigest": "sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
-      "imageTags": [
-        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
-      ],
-      "imageSizeInBytes": 4228,
-      "imagePushedAt": "2016-11-08T02:17:58.000Z"
-    },
-    {
-      "registryId": "111111111111",
-      "repositoryName": "test-repo",
       "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "imageTags": [
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
-      "imageSizeInBytes": 261996765,
-      "imagePushedAt": "2016-11-08T09:28:00.000Z"
+      "imageSizeInBytes": 422883048,
+      "imagePushedAt": "2016-12-16T00:05:00.000Z"
     },
     {
       "registryId": "111111111111",
@@ -37,15 +17,35 @@
       "imageTags": [
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ],
+      "imageSizeInBytes": 4228,
+      "imagePushedAt": "2016-11-08T02:17:58.000Z"
+    },
+    {
+      "registryId": "111111111111",
+      "repositoryName": "test-repo",
+      "imageDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "imageTags": [
+        "cccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "imageSizeInBytes": 261996765,
+      "imagePushedAt": "2016-11-08T09:28:00.000Z"
+    },
+    {
+      "registryId": "111111111111",
+      "repositoryName": "test-repo",
+      "imageDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "imageTags": [
+        "dddddddddddddddddddddddddddddddddddddddd"
+      ],
       "imageSizeInBytes": 2619955,
       "imagePushedAt": "2016-11-08T06:23:00.000Z"
     },
     {
       "registryId": "111111111111",
       "repositoryName": "test-repo",
-      "imageDigest": "sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "imageDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       "imageTags": [
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
       ],
       "imageSizeInBytes": 261985543,
       "imagePushedAt": "2016-11-08T09:01:00.000Z"
@@ -53,9 +53,9 @@
     {
       "registryId": "111111111111",
       "repositoryName": "test-repo",
-      "imageDigest": "sha256:mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+      "imageDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "imageTags": [
-        "hajmolammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"
+        "ffffffffffffffffffffffffffffffffffffffff"
       ],
       "imageSizeInBytes": 261996,
       "imagePushedAt": "2016-11-08T02:28:00.000Z"

@@ -3,10 +3,9 @@
     {
       "registryId": "111111111111",
       "repositoryName": "test-repo",
-      "imageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "imageTags": [
-        "0000000000000000000000000000000000000000",
-        "0000000000000000000000000000000000000000"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "imageSizeInBytes": 422883048,
       "imagePushedAt": "2016-12-16T00:05:00.000Z"
