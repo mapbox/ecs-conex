@@ -6,6 +6,7 @@ var watcher = watchbot.template({
   prefix: 'Watchbot',
   service: 'ecs-conex',
   serviceVersion: cf.ref('GitSha'),
+  family: cf.ref('Family'),
   workers: cf.ref('NumberOfWorkers'),
   reservation: { memory: 512 },
   env: {
@@ -76,6 +77,11 @@ var conex = {
       Description: 'The ARN of a Lambda function that will receive log events from CloudWatch',
       Type: 'String',
       Default: 'none'
+    },
+    Family: {
+      Description: 'An optional family name for ecs-conex tasks',
+      Type: 'String',
+      Default: 'ecs-conex'
     }
   },
   Resources: {
