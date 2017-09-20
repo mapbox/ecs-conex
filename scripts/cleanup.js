@@ -17,9 +17,13 @@ if (!module.parent) {
     if (err) handleCb(err);
 
     if (res.length < MAX_IMAGES)
-      handleCb(null, 'No images to delete');
+      return handleCb(null, 'No images to delete');
 
     const imageIds = imagesToDelete(res);
+
+    if (!imageIds.length)
+      return handleCb(null, 'No images to delete');
+
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
       if (res) handleCb(null, res);
