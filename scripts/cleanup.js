@@ -3,7 +3,8 @@
 'use strict';
 
 /* eslint-disable no-console */
-
+const MAX_IMAGES = 10;
+const MAX_PRIORITY_IMAGES = 5;
 const AWS = require('aws-sdk');
 const region = process.argv[2];
 const repo = process.argv[3];
@@ -15,7 +16,7 @@ if (!module.parent) {
 
     if (err) handleCb(err);
 
-    if (res.length < 850)
+    if (res.length < MAX_IMAGES)
       handleCb(null, 'No images to delete');
 
     const imageIds = imagesToDelete(res);
@@ -72,10 +73,10 @@ function imagesToDelete(images) {
   }
 
   let digests = [];
-  digests = digests.concat(cruftDigests.slice(0, (digests.length - 849)));
+  digests = digests.concat(cruftDigests.slice(0, (digests.length - (MAX_IMAGES - 1))));
 
-  if (deployDigests.length > 50)
-    digests = digests.concat(deployDigests.slice(0, (deployDigests.length - 50)));
+  if (deployDigests.length > MAX_PRIORITY_IMAGES)
+    digests = digests.concat(deployDigests.slice(0, (deployDigests.length - MAX_PRIORITY_IMAGES)));
 
   return digests;
 }
