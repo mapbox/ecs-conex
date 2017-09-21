@@ -13,16 +13,16 @@ const tmpdir = process.argv[4];
 if (!module.parent) {
 
   getImages(region, repo, (err, res) => {
-
+    console.log(`region: ${region}, repo: ${repo}, tmpdir: ${tmpdir}`);
     if (err) handleCb(err);
 
     if (res.length < MAX_IMAGES)
-      return handleCb(null, 'No images to delete');
+      return handleCb(null, 'No images to delete, ECR has fewer than ${MAX_IMAGES}');
 
     const imageIds = imagesToDelete(res);
 
     if (!imageIds.length)
-      return handleCb(null, 'No images to delete');
+      return handleCb(null, 'No images were marked for deletion');
     console.log(`Deleting ${imageIds.join(',')}`);
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
@@ -69,6 +69,7 @@ function imagesToDelete(images) {
 
   for(let img of images) {
     let type = commitType(img.imageTags[0]);
+    console.log(`commitType ${img.imageTags[0]}: ${type}`);
     if (type === 'commit') {
       cruftDigests.push({ imageDigest: img.imageDigest });
     } else if (type != 'custom'){
@@ -76,12 +77,16 @@ function imagesToDelete(images) {
     }
   }
 
+  console.log('cruftDigests: ', cruftDigests.join(','));
+  console.log('deployDigests: ', deployDigests.join(','));
+
   let digests = [];
   digests = digests.concat(cruftDigests.slice(0, (digests.length - (MAX_IMAGES - 1))));
 
   if (deployDigests.length > MAX_PRIORITY_IMAGES)
     digests = digests.concat(deployDigests.slice(0, (deployDigests.length - MAX_PRIORITY_IMAGES)));
 
+  console.log('digests ', digests.join(','));
   return digests;
 }
 
