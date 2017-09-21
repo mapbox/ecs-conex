@@ -105,21 +105,31 @@ module.exports.commitType = commitType;
 function commitType(sha) {
   const spawn = require('child_process').spawnSync;
 
-  //First check if it's a merge commit
-  let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}', spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout]);
-  if (mergeCommit.stdout >= 2 && !mergeCommit.stderr)
+  // First check if it's a merge commit
+  // git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}' => every merge commit has two parents
+  let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}'], {
+    input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout.toString('utf-8').trim()
+  });
+  if (mergeCommit.stdout.toString('utf-8').trim() >= 2 && !mergeCommit.stderr.length) {
     return 'merge-commit';
+  }
 
   //No? Check if it's a tag
-  let tag = spawn('grep', [sha, spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout]);
-  if ((tag.stdout === sha) && !tag.stderr)
+  //git --git-dir=${tmpdir}/.git tag | grep ${sha}
+  let tag = spawn('grep', [sha], {
+    input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout.toString('utf-8').trim()
+  });
+  if ((tag.stdout.toString('utf-8').trim() === sha) && !tag.stderr.length) {
     return 'tag';
+  }
 
   //No? Check if it's a regular commit
+  //git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}
   let commit = spawn('git', [`--git-dir=${tmpdir}/.git`, 'rev-parse', '--verify', sha]);
-  if ((commit.stdout === sha) && !commit.stderr) 
+  if ((commit.stdout.toString('utf-8').trim() === sha) && !commit.stderr.length) {
     return 'commit';
-  else
-    return 'custom';
+  }
+
+  return 'custom';
 
 }
