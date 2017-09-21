@@ -9,6 +9,7 @@ const AWS = require('aws-sdk');
 const region = process.argv[2];
 const repo = process.argv[3];
 const tmpdir = `${process.argv[4]}/${repo}`;
+const queue = require('d3-queue').queue;
 
 if (!module.parent) {
 
@@ -19,14 +20,14 @@ if (!module.parent) {
     if (res.length < MAX_IMAGES)
       return handleCb(null, 'No images to delete, ECR has fewer than ${MAX_IMAGES}');
 
-    const imageIds = imagesToDelete(res);
-
-    if (!imageIds.length)
-      return handleCb(null, 'No images were marked for deletion');
-    console.log(`Deleting ${imageIds.join(',')}`);
-    deleteImages(region, repo, imageIds, (err, res) => {
+    imagesToDelete(res, (err, imageIds) => {
       if (err) handleCb(err);
-      if (res) handleCb(null, res);
+      else if (!imageIds.length) return handleCb(null, 'No images were marked for deletion');
+      console.log(`Deleting ${imageIds.join(',')}`);
+      deleteImages(region, repo, imageIds, (err, res) => {
+        if (err) handleCb(err);
+        if (res) handleCb(null, res);
+      });
     });
 
   });
@@ -59,8 +60,8 @@ function getImages(region, repo, callback) {
 }
 
 module.exports.imagesToDelete = imagesToDelete;
-function imagesToDelete(images) {
-
+function imagesToDelete(images, callback) {
+  const q = queue(1);
   images = images.sort((a, b) => { return (new Date(a.imagePushedAt) - new Date(b.imagePushedAt));
   });
 
@@ -68,14 +69,20 @@ function imagesToDelete(images) {
   let deployDigests = [];
 
   for(let img of images) {
-    let type = commitType(img.imageTags[0]);
-    console.log(`commitType ${img.imageTags[0]}: ${type}`);
-    if (type === 'commit') {
-      cruftDigests.push({ imageDigest: img.imageDigest });
-    } else if (type != 'custom'){
-      deployDigests.push({ imageDigest: img.imageDigest });
-    }
+    q.defer(commitType, img.imageTags[0], img.imageDigest);
   }
+
+  q.awaitAll((err, data) => {
+    if (err) return callback(err);
+
+    for (let d of data) {
+      for (let digest in d) {
+        if (d[digest] === 'commit') cruftDigests.push({ imageDigest: digest });
+        else if (d[digest] !== 'custom') deployDigests.push({ imageDigest: digest });
+      }
+    }
+
+  });
 
   console.log('cruftDigests: ', cruftDigests.join(','));
   console.log('deployDigests: ', deployDigests.join(','));
@@ -87,7 +94,7 @@ function imagesToDelete(images) {
     digests = digests.concat(deployDigests.slice(0, (deployDigests.length - MAX_PRIORITY_IMAGES)));
 
   console.log('digests ', digests.join(','));
-  return digests;
+  return callback(null, digests);
 }
 
 module.exports.deleteImages = deleteImages;
@@ -102,40 +109,47 @@ function deleteImages(region, repo, imageIds, callback) {
 }
 
 module.exports.commitType = commitType;
-function commitType(sha) {
-  const spawn = require('child_process').spawnSync;
+function commitType(sha, digest, callback) {
+  const spawn = require('child_process').spawn;
+  let type = {}; type[digest] = '';
+  function shspawn(command, callback) {
+    const cmd = spawn('sh', ['-c', command], { stdio: 'inherit' });
+    console.log(cmd, ': stderr ', cmd.stderr.toString('utf-8').trim(), ' stdout: ', cmd.stdout.toString('utf-8').trim());
+    return callback(cmd.stderr.toString('utf-8').trim(), cmd.stdout.toString('utf-8').trim());
+  } 
 
-  // First check if it's a merge commit
-  // git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}' => every merge commit has two parents
-  let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}'], {
-    input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout.toString('utf-8').trim()
+  shspawn(`git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`, (err, mergeCommitData) => {
+    if (err.length) return callback(err);
+    else {
+      if (mergeCommitData >= 2) {
+        type[digest] = 'merge-commit';
+        return callback(null, type);
+      }
+      else {
+        shspawn(`git--git-dir=${tmpdir}/.git tag | grep ${sha}`, (err, tagData) => {
+          if (err.length) return callback(err);
+          else {
+            if (tagData === sha) {
+              type[digest] = 'tag';
+              return callback(null, type);
+            } else {
+              shspawn(`git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}`, (err, commitData) => {
+                if (err.length) return callback(err);
+                else {
+                  if (commitData === sha) {
+                    type[digest] = 'commit';
+                    return callback(null, type);
+                  } else {
+                    type[digest] = 'custom';
+                    return callback(null, type);
+                  }
+                }
+              });
+            }
+          }
+        });
+      }
+    }
   });
-  console.log(`mergeCommit.stdout: ${mergeCommit.stdout.toString('utf-8')}`);
-  console.log(`mergeCommit.stderr: ${mergeCommit.stderr.toString('utf-8')}`);
-  if (mergeCommit.stdout.toString('utf-8').trim() >= 2 && !mergeCommit.stderr.length) {
-    return 'merge-commit';
-  }
-
-  //No? Check if it's a tag
-  //git --git-dir=${tmpdir}/.git tag | grep ${sha}
-  let tag = spawn('grep', [sha], {
-    input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout.toString('utf-8').trim()
-  });
-  console.log(`tag.stdout: ${tag.stdout.toString('utf-8')}`);
-  console.log(`tag.stderr: ${tag.stderr.toString('utf-8')}`);
-  if ((tag.stdout.toString('utf-8').trim() === sha) && !tag.stderr.length) {
-    return 'tag';
-  }
-
-  //No? Check if it's a regular commit
-  //git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}
-  let commit = spawn('git', [`--git-dir=${tmpdir}/.git`, 'rev-parse', '--verify', sha]);
-  console.log(`commit.stdout: ${commit.stdout.toString('utf-8')}`);
-  console.log(`commit.stderr: ${commit.stderr.toString('utf-8')}`);
-  if ((commit.stdout.toString('utf-8').trim() === sha) && !commit.stderr.length) {
-    return 'commit';
-  }
-
-  return 'custom';
 
 }

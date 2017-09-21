@@ -25,7 +25,7 @@
   "dependencies": {
     "@mapbox/cloudfriend": "^1.8.1",
     "aws-sdk": "^2.4.13",
-    "d3-queue": "^3.0.2",
+    "d3-queue": "^3.0.7",
     "inquirer": "^1.1.2",
     "minimist": "^1.2.0",
     "moment": "^2.14.1",
