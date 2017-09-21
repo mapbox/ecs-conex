@@ -8,7 +8,7 @@ const MAX_PRIORITY_IMAGES = 5;
 const AWS = require('aws-sdk');
 const region = process.argv[2];
 const repo = process.argv[3];
-const tmpdir = `${process.argv[4]}/${repo}`;
+const tmpdir = process.argv[4];
 const queue = require('d3-queue').queue;
 
 if (!module.parent) {
@@ -111,30 +111,44 @@ function deleteImages(region, repo, imageIds, callback) {
 module.exports.commitType = commitType;
 function commitType(sha, digest, callback) {
   const spawn = require('child_process').spawn;
+
   let type = {}; type[digest] = '';
   function shspawn(command, callback) {
-    const cmd = spawn('sh', ['-c', command], { stdio: 'inherit' });
-    console.log(cmd, ': stderr ', cmd.stderr.toString('utf-8').trim(), ' stdout: ', cmd.stdout.toString('utf-8').trim());
-    return callback(cmd.stderr.toString('utf-8').trim(), cmd.stdout.toString('utf-8').trim());
+    let cmd = spawn('sh', ['-c', command]);
+    let stdout, stderr;
+    cmd.stderr.on('data', err => {
+      stderr = err.toString('utf-8').trim();
+    });
+    cmd.stdout.on('data', out => {
+      stdout = out.toString('utf-8').trim();
+    });
+    cmd.on('close', () => {
+      // An error is just the git command erroring, which means that the
+      // output of the current command is void for determining type, as
+      // opposed to a true error in the script. So, just return null,
+      // instead of erroring.
+      if (stderr && stderr.length) return callback(null, null);
+      else return callback(null, stdout);
+    });
   } 
 
   shspawn(`git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`, (err, mergeCommitData) => {
-    if (err.length) return callback(err);
+    if (err) return callback(err);
     else {
       if (mergeCommitData >= 2) {
         type[digest] = 'merge-commit';
         return callback(null, type);
       }
       else {
-        shspawn(`git--git-dir=${tmpdir}/.git tag | grep ${sha}`, (err, tagData) => {
-          if (err.length) return callback(err);
+        shspawn(`git --git-dir=${tmpdir}/.git tag | grep ${sha}`, (err, tagData) => {
+          if (err) return callback(err);
           else {
             if (tagData === sha) {
               type[digest] = 'tag';
               return callback(null, type);
             } else {
               shspawn(`git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}`, (err, commitData) => {
-                if (err.length) return callback(err);
+                if (err) return callback(err);
                 else {
                   if (commitData === sha) {
                     type[digest] = 'commit';
