@@ -23,7 +23,7 @@ if (!module.parent) {
 
     if (!imageIds.length)
       return handleCb(null, 'No images to delete');
-
+    console.log(`Deleting ${imageIds.join(',')}`);
     deleteImages(region, repo, imageIds, (err, res) => {
       if (err) handleCb(err);
       if (res) handleCb(null, res);
