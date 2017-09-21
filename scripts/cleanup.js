@@ -110,6 +110,8 @@ function commitType(sha) {
   let mergeCommit = spawn('grep', ['-Ec', '^parent [a-z0-9]{40}'], {
     input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'cat-file', '-p', sha]).stdout.toString('utf-8').trim()
   });
+  console.log(`mergeCommit.stdout: ${mergeCommit.stdout.toString('utf-8')}`);
+  console.log(`mergeCommit.stderr: ${mergeCommit.stderr.toString('utf-8')}`);
   if (mergeCommit.stdout.toString('utf-8').trim() >= 2 && !mergeCommit.stderr.length) {
     return 'merge-commit';
   }
@@ -119,6 +121,8 @@ function commitType(sha) {
   let tag = spawn('grep', [sha], {
     input: spawn('git', [`--git-dir=${tmpdir}/.git`, 'tag']).stdout.toString('utf-8').trim()
   });
+  console.log(`tag.stdout: ${tag.stdout.toString('utf-8')}`);
+  console.log(`tag.stderr: ${tag.stderr.toString('utf-8')}`);
   if ((tag.stdout.toString('utf-8').trim() === sha) && !tag.stderr.length) {
     return 'tag';
   }
@@ -126,6 +130,8 @@ function commitType(sha) {
   //No? Check if it's a regular commit
   //git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}
   let commit = spawn('git', [`--git-dir=${tmpdir}/.git`, 'rev-parse', '--verify', sha]);
+  console.log(`commit.stdout: ${commit.stdout.toString('utf-8')}`);
+  console.log(`commit.stderr: ${commit.stderr.toString('utf-8')}`);
   if ((commit.stdout.toString('utf-8').trim() === sha) && !commit.stderr.length) {
     return 'commit';
   }
