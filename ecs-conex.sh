@@ -23,7 +23,6 @@ function main() {
   check_receives
 
   echo "parsing received message"
-  #${sha_tag} is populated at this point
   parse_message
 
   echo "processing commit ${after} by ${user} to ${ref} of ${owner}/${repo}"
@@ -47,12 +46,8 @@ function main() {
 
   echo "building new image"
 
-<<<<<<< HEAD
-  docker build --no-cache ${args} --tag ${repo}:${after} ${tmpdir}
+  docker build --no-cache --quiet ${args} --tag ${repo}:"${after}" ${tmpdir}
 
-=======
-  docker build --no-cache --quiet ${args} --tag ${repo}:"${sha_tag}-${after}" ${tmpdir}
->>>>>>> one tag alone
   docker_push
 
   echo "completed successfully"

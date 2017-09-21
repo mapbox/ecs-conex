@@ -155,7 +155,6 @@ watcher.Resources.WatchbotWebhookFunction.Properties.Code.ZipFile = cf.join('\n'
   '    after: event.body.after,',
   '    before: event.body.before,',
   '    deleted: event.body.deleted,',
-  '    default_branch: event.body.repository.default_branch,',
   '    repository: {',
   '      name: event.body.repository.name,',
   '      owner: { name: event.body.repository.owner.name }',

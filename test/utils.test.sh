@@ -14,7 +14,6 @@ tag_test "after_image with 1 param"
 export AccountId=1
 export repo=repo
 export after=2
-export sha_tag=""
 
 log=$(after_image us-east-1)
 expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:2"
@@ -344,7 +343,6 @@ assert "equal" "${log}" "All good"
 
 # docker_push() test
 tag_test "docker_push"
-sha_tag=""
 regions=(us-east-1)
 repo="test"
 after="test"
