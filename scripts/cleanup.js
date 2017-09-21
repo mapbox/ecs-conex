@@ -8,7 +8,7 @@ const MAX_PRIORITY_IMAGES = 5;
 const AWS = require('aws-sdk');
 const region = process.argv[2];
 const repo = process.argv[3];
-const tmpdir = process.argv[4];
+const tmpdir = `${process.argv[4]}/${repo}`;
 
 if (!module.parent) {
 
