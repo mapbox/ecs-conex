@@ -33,4 +33,4 @@ CMD eval $(decrypt-kms-env) \
   && tar -xzf docker-${docker_version}.tgz \
   && cp docker/docker /usr/local/bin/docker \
   && chmod 755 /usr/local/bin/docker \
-  && ./ecs-conex.sh
+  && timeout 3600 ./ecs-conex.sh
