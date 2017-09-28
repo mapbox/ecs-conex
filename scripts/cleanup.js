@@ -137,6 +137,7 @@ function commitType(sha, digest, callback) {
     else {
       if (mergeCommitData >= 2) {
         type[digest] = 'merge-commit';
+        console.log(sha, type[digest]);
         return callback(null, type);
       }
       else {
@@ -152,9 +153,11 @@ function commitType(sha, digest, callback) {
                 else {
                   if (commitData === sha) {
                     type[digest] = 'commit';
+                    console.log(sha, type[digest]);
                     return callback(null, type);
                   } else {
                     type[digest] = 'custom';
+                    console.log(sha, type[digest]);
                     return callback(null, type);
                   }
                 }
