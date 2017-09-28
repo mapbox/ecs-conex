@@ -110,6 +110,7 @@ function deleteImages(region, repo, imageIds, callback) {
 
 module.exports.commitType = commitType;
 function commitType(sha, digest, callback) {
+  console.log('sha ', sha);
   const spawn = require('child_process').spawn;
 
   let type = {}; type[digest] = '';
@@ -133,6 +134,7 @@ function commitType(sha, digest, callback) {
   } 
 
   shspawn(`git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`, (err, mergeCommitData) => {
+    console.log('mergeCommitData ', mergeCommitData);
     if (err) return callback(err);
     else {
       if (mergeCommitData >= 2) {
@@ -142,6 +144,7 @@ function commitType(sha, digest, callback) {
       }
       else {
         shspawn(`git --git-dir=${tmpdir}/.git tag | grep ${sha}`, (err, tagData) => {
+          console.log('tagData ', tagData);
           if (err) return callback(err);
           else {
             if (tagData === sha) {
@@ -149,6 +152,7 @@ function commitType(sha, digest, callback) {
               return callback(null, type);
             } else {
               shspawn(`git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}`, (err, commitData) => {
+                console.log('commitData ', commitData);
                 if (err) return callback(err);
                 else {
                   if (commitData === sha) {
