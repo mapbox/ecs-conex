@@ -23,16 +23,11 @@
   },
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
-    "@mapbox/cloudfriend": "^1.8.1",
     "aws-sdk": "^2.4.13",
-    "d3-queue": "^3.0.7",
-    "inquirer": "^1.1.2",
-    "minimist": "^1.2.0",
-    "moment": "^2.14.1",
-    "request": "^2.74.0",
-    "underscore": "^1.8.3"
+    "d3-queue": "^3.0.7"
   },
   "devDependencies": {
+    "@mapbox/cloudfriend": "^1.8.1",
     "@mapbox/mock-aws-sdk-js": "0.0.4",
     "@mapbox/watchbot": "^3.2.0",
     "eslint": "^3.2.0",
