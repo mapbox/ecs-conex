@@ -1,187 +1,284 @@
 'use strict';
 
 /* eslint-disable no-console */
-process.argv[4] = '.';
+
+const child_process = require('child_process');
 const AWS = require('@mapbox/mock-aws-sdk-js');
 const sinon = require('sinon');
 const test = require('tape');
-const file = require(`${__dirname}/../scripts/cleanup`);
+const cleanup = require(`${__dirname}/../scripts/cleanup`);
+
 const region = 'us-east-1';
 const repo = 'some-repo';
 const token = 'sometoken';
-const error = 'some error';
-const success = 'some success';
+const tmpdir = '/path/to/cloned/repo';
+
 const imagesNoToken = require(`${__dirname}/fixtures/imagesNoToken.test.json`);
 const imagesToken = require(`${__dirname}/fixtures/imagesToken.test.json`);
 const imageDetails = imagesNoToken.imageDetails.concat(imagesToken.imageDetails);
-const imageIds = [{ imageDigest: imagesNoToken.imageDetails[1].imageDigest }];
 
-test('mockSpawn', (t) => {
-  let gitMergeCommitStdout;
-  let spawns = (command, args) => {
-    switch(command) {
-    case 'git':
-      if(args[3] === 'cccccccccccccccccccccccccccccccccccccccc' || args[3] === 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
-        t.equals(args[0], `--git-dir=${process.argv[4]}/.git`);
-        t.equals(args[1], 'cat-file');
-        t.equals(args[2], '-p');
-        gitMergeCommitStdout = 'tree 0d940225e15e857ed0976a877f7cdc0456d88e90 \n\
-        parent 568ba934652ab30828ac0925c53b3bcd1634c31d \n\
-        parent 377a27d42a61c62758087869d87d3f12ef10530f \n\
-        author Brendan McFarland <brendan@mapbox.com> 1502743733 -0400 \n\
-        committer GitHub <noreply@github.com> 1502743733 -0400 \n\
-        \n\
-        Merge pull request #15 from mapbox/categorizer';
-        return { stdout: gitMergeCommitStdout };
-      } else if(args[3] === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' || args[3] === 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb') {
-        t.equals(args[0], `--git-dir=${process.argv[4]}/.git`);
-        t.ok((args[1] === 'cat-file' || args[1] === 'rev-parse'), 'cat-file or rev-parse');
-        t.ok((args[2] === '-p' || args[2] === '--verify'), '-p or verify');
-        return { stdout: args[3], stderr: null };
-      } else if(args[3] === 'dddddddddddddddddddddddddddddddddddddddd') {
-        return { stdout: args[3], stderr: null };
-      }else if (args[1] === 'tag') {
-        return { stdout: null, stderr: null };
+
+const exec = {
+  restore: () => child_process.exec.restore(),
+
+  mock: () => {
+    return sinon.stub(child_process, 'exec', (cmd, callback) => {
+      const commandParts = cmd.split(' ');
+      const command = commandParts[2];
+
+      const sha = {
+        'cat-file': commandParts[4],
+        tag: commandParts[5],
+        'rev-parse': commandParts[4]
+      }[command];
+
+      let stdout = '';
+
+      switch (command) {
+      case 'cat-file':
+        if (sha === 'cccccccccccccccccccccccccccccccccccccccc' ||
+            sha === 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+          stdout = '2'; // these are merge commits
+        } else {
+          stdout = '0';
+        }
+
+        break;
+
+      case 'tag':
+        if (sha === 'dddddddddddddddddddddddddddddddddddddddd')
+          stdout = sha; // this one is a tag
+
+        break;
+
+      case 'rev-parse':
+        if (sha !== 'this-is-an-image-i-named-myself')
+          stdout = sha; // everything is a commit except this one image tag
+
+        break;
       }
-      break;
-    case 'grep':
-      if (args[2] === gitMergeCommitStdout) {
-        return { stdout: '2', stderr: null };
-      } else if (args[1] === 'tag' && args[0] === 'dddddddddddddddddddddddddddddddddddddddd') {
-        return { stdout: 'tag', stderr: null };
-      } else if ((args[0] === 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' || args[0] === 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb') && args[1]) {
-        t.equals(args[1], args[0]);
-        return { stdout: args[0], stderr: null };
-      } else {
-        return { stdout: null, stderr: null };
-      }
 
-    }
-  };
-  require('child_process').spawnSync = spawns;
-  t.end();
-});
+      callback(null, stdout);
+    });
+  }
+};
 
-test('handleCb, error', (t) => {
-  let stub = sinon.stub(process, 'exit');
-  let log = sinon.stub(console, 'log');
-  file.handleCb(error);
-  console.log.restore();
-  t.equal(stub.getCall(0).args[0], 1, 'error should exit 1');
-  t.equal(log.getCall(0).args[0], error, 'should log error');
-  process.exit.restore();
-  t.end();
-});
+test('getImages, error', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages').yields(new Error('foo'));
 
-test('handleCb, error', (t) => {
-  let stub = sinon.stub(process, 'exit');
-  let log = sinon.stub(console, 'log');
-  file.handleCb(null, success);
-  console.log.restore();
-  t.equal(stub.getCall(0).args[0], 0, 'success should exit 0');
-  t.equal(log.getCall(0).args[0], success, 'should log success');
-  process.exit.restore();
-  t.end();
-});
+  cleanup.getImages(region, repo, (err) => {
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
 
-test('getImages, error', (t) => {
-  let stub = AWS.stub('ECR', 'describeImages').yields(error);
-  file.getImages(region, repo, (err) => {
-    t.deepEqual(stub.getCall(0).args[0], { repositoryName: repo }, 'ecr.describeImages is passed repositoryName param');
-    t.equal(err, error, 'yields expected error message');
+    assert.equal(err.message, 'foo', 'yields expected error message');
+
     AWS.ECR.restore();
-    t.end();
+    assert.end();
   });
 });
 
-test('getImages, success (no nextToken)', (t) => {
-  let stub = AWS.stub('ECR', 'describeImages').yields(null, imagesNoToken);
-  file.getImages(region, repo, (err, res) => {
-    t.deepEqual(stub.getCall(0).args[0], { repositoryName: repo }, 'ecr.describeImages is passed repositoryName param');
-    t.deepEqual(res, imagesNoToken.imageDetails, 'yields expected imageDetails array');
+test('getImages, success (no nextToken)', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages').yields(null, imagesNoToken);
+
+  cleanup.getImages(region, repo, (err, res) => {
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
+
+    assert.deepEqual(
+      res,
+      imagesNoToken.imageDetails,
+      'yields expected imageDetails array'
+    );
+
     AWS.ECR.restore();
-    t.end();
+    assert.end();
   });
 });
 
-test('getImages, success (nextToken)', (t) => {
-  let stub = AWS.stub('ECR', 'describeImages');
+test('getImages, success (nextToken)', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages');
   stub.onCall(0).yields(null, imagesToken);
   stub.onCall(1).yields(null, imagesNoToken);
-  file.getImages(region, repo, (err, res) => {
-    t.equal(stub.callCount, 2, 'ecr.describeImages should be called twice');
-    t.deepEqual(stub.getCall(0).args[0], { repositoryName: repo }, 'ecr.describeImages is passed repositoryName param');
-    t.deepEqual(stub.getCall(1).args[0], { repositoryName: repo, nextToken: token }, 'ecr.describeImages is passed repositoryName and nextToken params');
+
+  cleanup.getImages(region, repo, (err, res) => {
+    assert.equal(stub.callCount, 2, 'ecr.describeImages should be called twice');
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
+
+    assert.ok(
+      stub.calledWith({ repositoryName: repo, nextToken: token }),
+      'ecr.describeImages is passed repositoryName and nextToken params'
+    );
+
     const sortedRes = res.sort(function(a, b) {
       return a.imageSizeInBytes - b.imageSizeInBytes;
     });
     const sortedImageDetails = imageDetails.sort(function(a, b) {
       return a.imageSizeInBytes - b.imageSizeInBytes;
     });
-    t.deepEqual(sortedRes, sortedImageDetails, 'yields concatenated imageDetails from both ecr.describeImages calls');
+    assert.deepEqual(
+      sortedRes,
+      sortedImageDetails,
+      'yields concatenated imageDetails from both ecr.describeImages calls'
+    );
+
     AWS.ECR.restore();
-    t.end();
+    assert.end();
   });
 });
 
-test('imagesToDelete commits + merge commits', (t) => {
-  // Create an array with 899 elements: 849 of which are regular commits and 50
-  // of which are merge commits. None should be returned as 
-  // images that need to be deleted.
-  let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(50).fill(imagesNoToken.imageDetails[2]));
-  let result = file.imagesToDelete(images);
-  t.deepEqual(result, []);
-  t.end();
-});
+test('imagesToDelete less than max images', (assert) => {
+  const run = exec.mock();
 
-test('imagesToDelete commits + tags', (t) => {
-  // Create an array with 899 elements: 849 of which are regular commits (new)
-  // and 50 of which are a mix of tags + commits (old). None should be
-  // returned as images that need to be deleted, because the high
-  // priority pattern "tag" must be considered for the latter
-  let images = Array(849).fill(imagesNoToken.imageDetails[0]).concat(Array(50).fill(imagesNoToken.imageDetails[2]));
-  let result = file.imagesToDelete(images);
-  t.deepEqual(result, []);
-  t.end();
-});
+  // Create an array with 899 elements: 849 of which are generic commits and 50
+  // of which are priority commits. None should be returned as images that need
+  // to be deleted.
 
-test('imagesToDelete > 849 commits', (t) => {
-  const images = Array(849).fill(imagesNoToken.imageDetails[0]);
-  images.push(imagesNoToken.imageDetails[1]);
+  const images = Array(849)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(50).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    );
 
-  const result = file.imagesToDelete(images);
-  t.deepEqual(result, [{
-    imageDigest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
-  }]);
-  t.end();
-});
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+    assert.deepEqual(result, [], 'no images deleted');
 
-test('imagesToDelete > 50 merge-commits', (t) => {
-  const images = Array(50).fill(imagesNoToken.imageDetails[2]);
-  images.push(imagesNoToken.imageDetails[4]);
-
-  const result = file.imagesToDelete(images);
-  t.deepEqual(result, [{ imageDigest: 'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' }]);
-  t.end();
-});
-
-test('deleteimages, error', (t) => {
-  let stub = AWS.stub('ECR', 'batchDeleteImage').yields(error);
-  file.deleteImages(region, repo, imageIds, (err) => {
-    t.deepEqual(stub.getCall(0).args[0], { imageIds: imageIds, repositoryName: repo }, 'ecr.batchDeleteImage is passed imageIds and repositoryName params');
-    t.equal(err, error, 'yields expected error message');
-    AWS.ECR.restore();
-    t.end();
+    run.restore();
+    assert.end();
   });
 });
 
-test('deleteimages, success', (t) => {
-  let stub = AWS.stub('ECR', 'batchDeleteImage').yields(null, success);
-  file.deleteImages(region, repo, imageIds, (err, res) => {
-    t.deepEqual(stub.getCall(0).args[0], { imageIds: imageIds, repositoryName: repo }, 'ecr.batchDeleteImage is passed imageIds and repositoryName params');
-    t.ifError(err, 'should not error');
-    t.equal(res, success, 'yields expected success message');
+test('imagesToDelete more than max images', (assert) => {
+  const run = exec.mock();
+
+  // Create an array with 901 elements: 861 of which are generic
+  // and 40 of which are priority. Should select 1 generic commit
+  // for deletion.
+
+  const images = Array(861)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(40).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    );
+
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+
+    assert.deepEqual(result, [
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
+    ], 'removes 1 generic commit image');
+
+    run.restore();
+    assert.end();
+  });
+});
+
+test('imagesToDelete heavy on priority and custom commits', (assert) => {
+  const run = exec.mock();
+
+  // Create an array with 910 elements: 5 of which are generic
+  // and 52 of which are priority, 853 are custom. Should select 2 priority
+  // commits and 5 generic commits for deletion. Cannot reach 900, since it
+  // should refuse to delete custom commits.
+
+  const images = Array(5)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(52).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    )
+    .concat(
+      Array(853).fill({
+        imageDigest: 'sha256:custom',
+        imageTags: ['this-is-an-image-i-named-myself']
+      })
+    );
+
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+
+    assert.deepEqual(result, [
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc' },
+      { imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc' }
+    ], 'removes 5 generic, 2 priority images');
+
+    run.restore();
+    assert.end();
+  });
+});
+
+test('deleteimages, error', (assert) => {
+  const stub = AWS.stub('ECR', 'batchDeleteImage').yields(new Error('foo'));
+
+  const imageIds = [
+    { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
+  ];
+
+  cleanup.deleteImages(region, repo, imageIds, (err) => {
+    assert.equal(err.message, 'foo', 'yields expected error message');
+
+    assert.ok(
+      stub.calledWith({ imageIds: imageIds, repositoryName: repo }),
+      'ecr.batchDeleteImage is passed imageIds and repositoryName params'
+    );
+
     AWS.ECR.restore();
-    t.end();
+    assert.end();
+  });
+});
+
+test('deleteimages, success', (assert) => {
+  const stub = AWS.stub('ECR', 'batchDeleteImage').yields();
+
+  const imageIds = Array(150)
+    .fill({ imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' });
+
+  cleanup.deleteImages(region, repo, imageIds, (err) => {
+    assert.ifErr(err, 'success');
+
+    assert.equal(stub.callCount, 2, 'split images into 2 batches');
+
+    assert.ok(
+      stub.args.every((args) => args[0].imageIds.length <= 100),
+      'batches have at most 100 images'
+    );
+
+    assert.equal(
+      stub.args.reduce((count, args) => count + args[0].imageIds.length, 0),
+      150,
+      'deleted all 150 images'
+    );
+
+    AWS.ECR.restore();
+    assert.end();
   });
 });
