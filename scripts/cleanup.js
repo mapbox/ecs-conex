@@ -13,7 +13,7 @@
  * to get to 900, we begin deleting old "priority" images, but always leave at
  * least 50 of them in the repository.
  */
-const MAX_IMAGES = 900;
+const MAX_IMAGES = 1;
 const MIN_PRIORITY_IMAGES = 50;
 
 const AWS = require('aws-sdk');
