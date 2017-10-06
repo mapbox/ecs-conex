@@ -152,7 +152,6 @@ function docker_push() {
       continue
     fi
 
-    echo "making space in the registry"
     ecr_cleanup ${region} ${repo}
 
     echo "pushing ${after} to ${region}"

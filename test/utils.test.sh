@@ -397,7 +397,7 @@ function git() {
 
 log=$(docker_push)
 assert "equal" "$?" "0"
-assert "contains" "${log}" "pushing \"test\" to us-east-1"
+assert "contains" "${log}" "pushing test to us-east-1"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # docker_push() test to region with existing images
@@ -412,8 +412,8 @@ function image_exists() {
 regions=(us-east-1 us-west-2)
 log=$(docker_push)
 assert "equal" "$?" "0"
-assert "contains" "${log}" "pushing \"test\" to us-east-1"
-assert "contains" "${log}" "found existing image for \"test\" in us-west-2, skipping push"
+assert "contains" "${log}" "pushing test to us-east-1"
+assert "contains" "${log}" "found existing image for test in us-west-2, skipping push"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()
