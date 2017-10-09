@@ -133,10 +133,15 @@ function ecr_logins() {
 }
 
 function ecr_cleanup() {
-  local region=$1
-  local repo=$2
-  local workdir=${cleanup_location:-/usr/local/src/ecs-conex}
-  node ${workdir}/cleanup.js ${region} ${repo} ${tmpdir}
+  local repo=${1}
+  local gitdir=${2}
+
+  # ${regions} are the regions to clean up, set at the top of ecs-conex.sh
+
+  for region in "${regions[@]}"; do
+    echo "cleaning up ECR in ${region}"
+    node /usr/local/src/ecs-conex/cleanup.js ${region} ${repo} ${gitdir}
+  done
 }
 
 function docker_push() {
@@ -151,8 +156,6 @@ function docker_push() {
       echo "found existing image for ${after} in ${region}, skipping push"
       continue
     fi
-
-    ecr_cleanup ${region} ${repo}
 
     echo "pushing ${after} to ${region}"
 

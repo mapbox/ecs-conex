@@ -45,9 +45,12 @@ function main() {
   ecr_logins "${regions[@]}"
 
   echo "building new image"
-
   docker build --no-cache --quiet ${args} --tag ${repo}:"${after}" ${tmpdir}
 
+  echo "cleaning up ECR repositories"
+  ecr_cleanup ${repo} ${tmpdir}
+
+  echo "pusing images to ECR"
   docker_push
 
   echo "completed successfully"

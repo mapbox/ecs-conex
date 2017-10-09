@@ -28,7 +28,7 @@ function handleCb(err, res) {
 if (!module.parent) {
   const region = process.argv[2];
   const repo = process.argv[3];
-  const tmpdir = process.argv[4];
+  const gitdir = process.argv[4];
 
   getImages(region, repo, (err, res) => {
     if (err) return handleCb(err);
@@ -36,7 +36,7 @@ if (!module.parent) {
     if (res.length < MAX_IMAGES)
       return handleCb(null, `No images to delete, ECR has fewer than ${MAX_IMAGES}`);
 
-    imagesToDelete(res, tmpdir, (err, imageIds) => {
+    imagesToDelete(res, gitdir, (err, imageIds) => {
       if (err) return handleCb(err);
       else if (!imageIds.length)
         return handleCb(null, 'No images were marked for deletion');
@@ -49,9 +49,7 @@ if (!module.parent) {
         if (res) handleCb(null, res);
       });
     });
-
   });
-
 }
 
 module.exports.getImages = getImages;
@@ -77,7 +75,7 @@ function getImages(region, repo, callback) {
 }
 
 module.exports.imagesToDelete = imagesToDelete;
-function imagesToDelete(images, tmpdir, callback) {
+function imagesToDelete(images, gitdir, callback) {
   const q = queue(1);
   const generic = [];
   const priority = [];
@@ -85,7 +83,7 @@ function imagesToDelete(images, tmpdir, callback) {
   // Sort oldest to newest, categorize each image
   images
     .sort((a, b) => new Date(a.imagePushedAt) - new Date(b.imagePushedAt))
-    .forEach((img) => q.defer(commitType, img.imageTags[0], img.imageDigest, tmpdir));
+    .forEach((img) => q.defer(commitType, img.imageTags[0], img.imageDigest, gitdir));
 
   q.awaitAll((err, data) => {
     if (err) return callback(err);
@@ -142,7 +140,7 @@ function deleteImages(region, repositoryName, images, callback) {
 }
 
 module.exports.commitType = commitType;
-function commitType(sha, digest, tmpdir, callback) {
+function commitType(sha, digest, gitdir, callback) {
   const result = { digest, type: '' };
 
   function run(command, callback) {
@@ -152,9 +150,9 @@ function commitType(sha, digest, tmpdir, callback) {
     });
   }
 
-  const merge = `git --git-dir=${tmpdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`;
-  const tag = `git --git-dir=${tmpdir}/.git tag | grep ${sha}`;
-  const commit = `git --git-dir=${tmpdir}/.git rev-parse --verify ${sha}`;
+  const merge = `git --git-dir=${gitdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`;
+  const tag = `git --git-dir=${gitdir}/.git tag | grep ${sha}`;
+  const commit = `git --git-dir=${gitdir}/.git rev-parse --verify ${sha}`;
 
   run(merge, (err, mergeCommitData) => {
     if (err) return callback(err);
