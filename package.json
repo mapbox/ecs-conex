@@ -5,7 +5,7 @@
   "main": "ecs-conex.sh",
   "scripts": {
     "pretest": "eslint cloudformation test",
-    "test": "test/utils.test.sh && test/watch.test.sh && tape test/*.test.js",
+    "test": "test/utils.test.sh && test/watch.test.sh && tape test/*.test.js | tap-spec",
     "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
   "bin": {
@@ -33,6 +33,7 @@
     "eslint": "^3.2.0",
     "p-queue": "^2.2.0",
     "sinon": "^1.17.5",
+    "tap-spec": "^4.1.1",
     "tape": "^4.6.0"
   }
 }

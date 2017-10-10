@@ -20,33 +20,39 @@ const AWS = require('aws-sdk');
 const queue = require('d3-queue').queue;
 const child_process = require('child_process');
 
-function handleCb(err, res) {
-  err ? console.log(err) : console.log(res);
-  err ? process.exit(1) : process.exit(0);
-}
-
 if (!module.parent) {
   const region = process.argv[2];
   const repo = process.argv[3];
   const gitdir = process.argv[4];
 
+  cleanup(region, repo, gitdir, (err, res) => {
+    err ? console.log(err) : console.log(res);
+    err ? process.exit(1) : process.exit(0);
+  });
+}
+
+module.exports.cleanup = cleanup;
+function cleanup(region, repo, gitdir, callback) {
   getImages(region, repo, (err, res) => {
-    if (err) return handleCb(err);
+    if (err) return callback(err);
 
-    if (res.length < MAX_IMAGES)
-      return handleCb(null, `No images to delete, ECR has fewer than ${MAX_IMAGES}`);
+    if (res.length <= MAX_IMAGES) {
+      console.log(`No images to delete, ECR has ${MAX_IMAGES} or fewer images`);
+      return callback();
+    }
 
-    imagesToDelete(res, gitdir, (err, imageIds) => {
-      if (err) return handleCb(err);
-      else if (!imageIds.length)
-        return handleCb(null, 'No images were marked for deletion');
+    imagesToDelete(res, gitdir, (err, images) => {
+      if (err) return callback(err);
+      else if (!images.length)
+        return callback(null, 'No images were marked for deletion');
 
-      console.log(`Deleting ${imageIds.length} images`);
-      console.log(JSON.stringify(imageIds));
+      console.log(images.map((i) => `Delete image tagged ${JSON.stringify(i.tags)}`).join('\n'));
+
+      const imageIds = images.map((i) => ({ imageDigest: i.digest }));
 
       deleteImages(region, repo, imageIds, (err, res) => {
-        if (err) handleCb(err);
-        if (res) handleCb(null, res);
+        if (err) callback(err);
+        else callback(null, res);
       });
     });
   });
@@ -83,7 +89,7 @@ function imagesToDelete(images, gitdir, callback) {
   // Sort oldest to newest, categorize each image
   images
     .sort((a, b) => new Date(a.imagePushedAt) - new Date(b.imagePushedAt))
-    .forEach((img) => q.defer(commitType, img.imageTags[0], img.imageDigest, gitdir));
+    .forEach((img) => q.defer(commitType, img.imageTags, img.imageDigest, gitdir));
 
   q.awaitAll((err, data) => {
     if (err) return callback(err);
@@ -91,9 +97,9 @@ function imagesToDelete(images, gitdir, callback) {
     // Select generic images and priority images
     data.forEach((result) => {
       if (result.type === 'generic')
-        generic.push({ imageDigest: result.digest });
+        generic.push(result);
       if (result.type === 'priority')
-        priority.push({ imageDigest: result.digest });
+        priority.push(result);
     });
 
     // We want to leave the repository with MAX_IMAGES number of images in it.
@@ -140,9 +146,7 @@ function deleteImages(region, repositoryName, images, callback) {
 }
 
 module.exports.commitType = commitType;
-function commitType(sha, digest, gitdir, callback) {
-  const result = { digest, type: '' };
-
+function commitType(tags, digest, gitdir, callback) {
   function run(command, callback) {
     child_process.exec(command, (err, stdout) => {
       if (err) return callback();
@@ -150,31 +154,42 @@ function commitType(sha, digest, gitdir, callback) {
     });
   }
 
-  const merge = `git --git-dir=${gitdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`;
-  const tag = `git --git-dir=${gitdir}/.git tag | grep ${sha}`;
-  const commit = `git --git-dir=${gitdir}/.git rev-parse --verify ${sha}`;
+  const eachTag = (sha, callback) => {
+    const merge = `git --git-dir=${gitdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`;
+    const tag = `git --git-dir=${gitdir}/.git tag | grep ${sha}`;
+    const commit = `git --git-dir=${gitdir}/.git rev-parse --verify ${sha}`;
 
-  run(merge, (err, mergeCommitData) => {
-    if (err) return callback(err);
-    if (mergeCommitData >= 2) {
-      result.type = 'priority';
-      return callback(null, result);
-    }
-
-    run(tag, (err, tagData) => {
+    run(merge, (err, mergeCommitData) => {
       if (err) return callback(err);
-      if (tagData === sha) {
-        result.type = 'priority';
-        return callback(null, result);
-      }
+      if (mergeCommitData >= 2)
+        return callback(null, 'priority');
 
-      run(commit, (err, commitData) => {
+
+      run(tag, (err, tagData) => {
         if (err) return callback(err);
-        result.type = commitData === sha
-          ? 'generic' : 'custom';
+        if (tagData === sha)
+          return callback(null, 'priority');
 
-        return callback(null, result);
+        run(commit, (err, commitData) => {
+          if (err) return callback(err);
+          const type = commitData === sha
+            ? 'generic' : 'custom';
+
+          return callback(null, type);
+        });
       });
     });
+  };
+
+  const q = queue(1);
+  tags.forEach((tag) => q.defer(eachTag, tag));
+  q.awaitAll((err, results) => {
+    if (err) return callback(err);
+
+    let type = 'generic';
+    if (results.find((r) => r === 'custom')) type = 'custom';
+    if (results.find((r) => r === 'priority')) type = 'priority';
+
+    callback(null, { tags, digest, type });
   });
 }
