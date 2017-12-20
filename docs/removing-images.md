@@ -8,6 +8,7 @@ The cleanup script accepts the following options:
 
 * `--maximum` The number of images to keep in the ECR registry. For example, if you want to keep 700 images in the ECR registry, you would wave the `--maximum=700` flag. The default value is 750.
 * `--blacklist` A comma-separated list of imageTags not subject to deletion. For example, if you want to ensure that imageTag `<tag-1>` and `<tag-2>` are not deleted, you would wave the `--blacklist=<tag-1>,<tag-2>` flag.
+* `--region` The AWS region to clean up. Defaults to `us-east-1`. If a registry exists in multiple regions, you'll need to run cleanup for each.
 
 You will need to have two environment parameters set in your terminal:
 
