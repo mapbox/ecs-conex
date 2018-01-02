@@ -29,6 +29,17 @@ function create_repo() {
     --repository-name ${repo} > /dev/null
 }
 
+function set_policy() {
+  local region=$1
+  if [ -n "${RepositoryPermissionPolicy}" ]
+  then
+    aws ecr set-repository-policy \
+      --region ${region} \
+      --repository-name ${repo} \
+      --policy-text ${RepositoryPermissionPolicy}
+  fi
+}
+
 function image_exists() {
   local region=$1
   local imgtag=${2:-${after}}
@@ -138,6 +149,7 @@ function docker_push() {
 
   for region in "${regions[@]}"; do
     ensure_repo ${region}
+    set_policy ${region}
 
     # tag + add current image to queue by exact tag match (omitted if no exact match)
     queue="${queue} $(exact_match)"

@@ -131,6 +131,40 @@ create_repo ${test_region}
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
+# set_policy() test
+tag_test "set_policy()"
+repo=repo
+test_region=us-east-1
+RepositoryPermissionPolicy="test policy"
+FAILURE_MESSAGE=""
+OUTPUT_POLICY=""
+
+function aws() {
+  if [ "${1}" != "ecr" ]; then
+    FAILURE_MESSAGE="First argument must be ecr"
+  elif [ "$2" != "set-repository-policy" ]; then
+    FAILURE_MESSAGE="Second argument must be set-repository-policy"
+  elif [ "$4" != "${test_region}" ]; then
+    FAILURE_MESSAGE="Fourth argument must be region"
+  elif [ "$6" != "repo" ]; then
+    FAILURE_MESSAGE="Sixth argument must be repo"
+  else
+    OUTPUT_POLICY=$RepositoryPermissionPolicy
+  fi
+}
+
+# test with policy
+export RepositoryPermissionPolicy=$RepositoryPermissionPolicy
+set_policy ${test_region}
+assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
+assert "equal" "${OUTPUT_POLICY}" "${RepositoryPermissionPolicy}"
+
+# test without policy
+export RepositoryPermissionPolicy=""
+log=$(set_policy ${test_region})
+assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
+assert equal "${log}" "" "output empty"
+
 # image_exists() test
 tag_test "image_exists()"
 
