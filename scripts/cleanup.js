@@ -1,233 +1,195 @@
 #!/usr/bin/env node
 
-var AWS = require('aws-sdk');
-var inquirer = require('inquirer');
-var minimist = require('minimist');
-var moment = require('moment');
-var queue = require('d3-queue').queue;
-var request = require('request');
-var _ = require('underscore');
+'use strict';
 
-module.exports = {
-  validateInputs: validateInputs,
-  confirmInputs: confirmInputs,
-  listImages: listImages,
-  validateECRSize: validateECRSize,
-  isGitSha: isGitSha,
-  isBlacklisted: isBlacklisted,
-  getTimeStamps: getTimeStamps,
-  assignTimeStamps: assignTimeStamps,
-  dateCheck: dateCheck,
-  toDelete: toDelete,
-  deleteImages: deleteImages,
-  mergeByProperty: mergeByProperty,
-  wontDelete: wontDelete,
-  willDelete: willDelete
-};
+/* eslint-disable no-console */
+
+/**
+ * "Generic" images are those that were built by conex for individual git
+ * commits. "Priority" images are those built by conex for merge commits or
+ * tags. We want there to never be more than 900 images in the repository. If
+ * the number of images in the repository is greater than 900, we begin by
+ * deleting the oldest "generic" images. If we still need to delete more images
+ * to get to 900, we begin deleting old "priority" images, but always leave at
+ * least 50 of them in the repository.
+ */
+const MAX_IMAGES = 900;
+const MIN_PRIORITY_IMAGES = 50;
+
+const AWS = require('aws-sdk');
+const queue = require('d3-queue').queue;
+const child_process = require('child_process');
 
 if (!module.parent) {
-  var arguments = process.argv.slice(2);
-  validateInputs(arguments, function(err, params) {
-    if (err) throw new Error(err);
-    confirmInputs(params, function(confirmation) {
-      if (confirmation === false) process.exit(1);
-      var ecr = new AWS.ECR({ region: params.region });
-      listImages(ecr, params, function(err, res) {
-        if (err) throw new Error(err);
-        var result = res.imageIds;
-        validateECRSize(result, params);
-        isGitSha(result);
-        isBlacklisted(result, params);
-        getTimeStamps(result, params, function(err, res) {
-          if (err) throw new Error(err);
-          assignTimeStamps(result, res);
-          dateCheck(result);
-          var imagesToDelete = toDelete(result, params);
-          deleteImages(ecr, params, imagesToDelete, function(err) {
-            if (err) throw new Error(err);
-            else console.log('[info] Successfully removed images from ECR');
-          });
-        });
+  const region = process.argv[2];
+  const repo = process.argv[3];
+  const gitdir = process.argv[4];
+
+  cleanup(region, repo, gitdir, (err, res) => {
+    err ? console.log(err) : console.log(res);
+    err ? process.exit(1) : process.exit(0);
+  });
+}
+
+module.exports.cleanup = cleanup;
+function cleanup(region, repo, gitdir, callback) {
+  getImages(region, repo, (err, res) => {
+    if (err) return callback(err);
+
+    if (res.length <= MAX_IMAGES) {
+      console.log(`No images to delete, ECR has ${MAX_IMAGES} or fewer images`);
+      return callback();
+    }
+
+    imagesToDelete(res, gitdir, (err, images) => {
+      if (err) return callback(err);
+      else if (!images.length)
+        return callback(null, 'No images were marked for deletion');
+
+      console.log(images.map((i) => `Delete image tagged ${JSON.stringify(i.tags)}`).join('\n'));
+
+      const imageIds = images.map((i) => ({ imageDigest: i.digest }));
+
+      deleteImages(region, repo, imageIds, (err, res) => {
+        if (err) callback(err);
+        else callback(null, res);
       });
     });
   });
 }
 
-function validateInputs(arguments, callback) {
-  var params = {};
-  var argv = minimist(arguments);
+module.exports.getImages = getImages;
+function getImages(region, repo, callback) {
+  let details = [];
+  let ecr = new AWS.ECR({ region: region });
+  describeImages(repo, null, callback);
 
-  if (!argv._[0] || !argv._[1]) return callback('GitHub user name and repository name are required');
-  if (argv.maximum && !_.isNumber(argv.maximum)) return callback('Desired maximum number of images to leave in ECR should be a number');
-  if (argv.maximum && (argv.maximum < 0 || argv.maximum > 1000)) return callback('Desired maximum number of images to leave in ECR should be between 0 and 1000');
-  if (argv.blacklist) try {
-    var blacklistArr = argv.blacklist.split(',');
-  } catch(err) {
-    return callback('Blacklisted imageTags must be a comma-separated list');
-  }
-  if (!process.env.GithubAccessToken) return callback(new Error('GithubAccessToken env var must be set'));
+  function describeImages(repo, token) {
+    let params = { repositoryName: repo };
+    if (token) params.nextToken = token;
 
-  params.user = argv._[0];
-  params.repo = argv._[1];
-  params.region = argv.region || process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  params.maximum = argv.maximum || 750;
-  params.blacklist = (blacklistArr) ? blacklistArr : [];
-  params.githubAccessToken = process.env.GithubAccessToken;
-  params.registryId = process.env.RegistryId;
+    ecr.describeImages(params, (err, data) => {
+      if (err) return callback(err);
+      details = details.concat(data.imageDetails);
 
-  return callback(null, params);
-}
+      if (!data.nextToken) return callback(null, details);
 
-function confirmInputs(params, callback) {
-  console.log('');
-  console.log(_.omit(params, 'githubAccessToken', 'registryId'));
-  console.log('');
-  inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'confirmation',
-      message: 'Ready to delete images? Any imageTags not blacklisted above are subject to deletion.',
-      default: false
-    }
-  ]).then(function(answer) {
-    return callback(answer.confirmation);
-  });
-}
-
-function listImages(ecr, params, callback) {
-  var data = { imageIds:[] };
-  ecr.listImages({ repositoryName: params.repo }).eachItem(function(err, item) {
-    if (err) {
-      callback && callback(err);
-      callback = false;
-    } else if (!item) {
-      callback(null, data);
-    } else {
-      data.imageIds.push(item);
-    }
-  });
-}
-
-function validateECRSize(array, params) {
-  var count = array.length;
-  if (count < params.maximum) {
-    throw new Error('The repository ' + params.user + '/' + params.repo + ' has ' + count + ' images, which is less than the desired ' + params.maximum + ' image maximum. No clean-up required.');
-  }
-}
-
-function isGitSha(array) {
-  for (var i = 0; i < array.length; i++) {
-    if (array[i].imageTag !== undefined && array[i].imageTag.match(/^[a-z0-9]{40}$/)) {
-      array[i]['ableToDelete'] = true;
-    } else {
-      wontDelete(array[i], 'Did not resemble a GitSha', true);
-    }
-  }
-}
-
-function isBlacklisted(array, params) {
-  for (var i = 0; i < array.length; i++) {
-    if (params.blacklist !== null && params.blacklist.indexOf(array[i].imageTag) !== -1) {
-      wontDelete(array[i], 'ImageTag is blacklisted', true);
-    }
-  }
-}
-
-function getTimeStamps(array, params, callback) {
-  var q = queue(10);
-  for (var i = 0; i < array.length; i++) {
-    var match = _.isMatch(array[i], { ableToDelete: true });
-    if (match) {
-      var options = {
-        url: 'https://api.github.com/repos/' + params.user + '/' + params.repo + '/commits/' + array[i].imageTag + '?access_token=' + params.githubAccessToken,
-        headers: { 'User-agent': 'request' }
-      };
-      q.defer(request, options);
-    }
-  }
-
-  q.awaitAll(function(error, response) {
-    if (error) return callback(error);
-    return callback(null, response);
-  });
-}
-
-function assignTimeStamps(array, response) {
-  var dates = [];
-  for (var i = 0; i < response.length; i++) {
-    if (response[i].statusCode !== 200) {
-      var commit = response[i].request.uri.pathname.match(/\/([a-z0-9]*)$/)[1];
-      wontDelete(array[i], 'ImageTag could not be retrieved from GitHub');
-      dates.push({ imageTag: commit, ableToDelete: false });
-    } else {
-      var result = JSON.parse(response[i].body);
-      dates.push({ imageTag: result.sha, date: moment(result.commit.author.date).unix() });
-    }
-  }
-
-  mergeByProperty(array, dates, 'imageTag');
-  return array;
-}
-
-function dateCheck(array) {
-  for (var i = 0; i < array.length; i++) {
-    if (array[i].ableToDelete === true && !array[i].date) {
-      wontDelete(array[i], 'ImageTag date could not be mapped from GitHub', true);
-    }
-  }
-}
-
-function toDelete(array, params) {
-  var ableToDelete = [];
-  for (var i = 0; i < array.length; i++) {
-    var deletable = _.isMatch(array[i], { ableToDelete: true });
-    if (deletable) ableToDelete.push(array[i]);
-  }
-
-  var deleteCount = array.length - params.maximum;
-  var sorted = _.sortBy(ableToDelete, function(o) { return o.date; });
-  var toDelete = sorted.splice(0, deleteCount);
-  return toDelete;
-}
-
-function deleteImages(ecr, params, array, callback) {
-  for (var i = 0; i < array.length; i++) {
-    willDelete(array, i);
-    array[i] = _.pick(array[i], 'imageTag', 'imageDigest');
-  }
-
-  var q = queue(1);
-
-  while (array.length) {
-    q.defer(ecr.batchDeleteImage.bind(ecr), {
-      imageIds: array.splice(0, 100),
-      repositoryName: params.repo,
-      registryId: params.registryId
+      describeImages(repo, data.nextToken, callback);
     });
   }
 
-  q.awaitAll(function(err, data) {
+}
+
+module.exports.imagesToDelete = imagesToDelete;
+function imagesToDelete(images, gitdir, callback) {
+  const q = queue(1);
+  const generic = [];
+  const priority = [];
+
+  // Sort oldest to newest, categorize each image
+  images
+    .sort((a, b) => new Date(a.imagePushedAt) - new Date(b.imagePushedAt))
+    .forEach((img) => q.defer(commitType, img.imageTags, img.imageDigest, gitdir));
+
+  q.awaitAll((err, data) => {
     if (err) return callback(err);
-    return callback(err, _(data).flatten());
-  });
-}
 
-// Utility functions
-
-function mergeByProperty(arr1, arr2, prop) {
-  _.each(arr2, function(arr2object) {
-    var arr1object = _.find(arr1, function(arr1object) {
-      return arr1object[prop] === arr2object[prop];
+    // Select generic images and priority images
+    data.forEach((result) => {
+      if (result.type === 'generic')
+        generic.push(result);
+      if (result.type === 'priority')
+        priority.push(result);
     });
-    arr1object ? _.extend(arr1object, arr2object) : console.log('[warning] Image tag ' + arr2object.imageTag + ' was queried for a commit date, but does not map to an ECR image.');
+
+    // We want to leave the repository with MAX_IMAGES number of images in it.
+    let imagesToDelete;
+    let excessImages = images.length - MAX_IMAGES;
+    if (excessImages <= 0) return callback(null, []);
+
+    // First take old images from generic commits
+    imagesToDelete = []
+      .concat(generic.slice(0, excessImages));
+
+    // Determine whether we still need to delete more images
+    excessImages = excessImages - imagesToDelete.length;
+    if (excessImages <= 0) return callback(null, imagesToDelete);
+
+    // Make sure that we always leave at least 50 priority images
+    excessImages = Math.max(
+      Math.min(priority.length - MIN_PRIORITY_IMAGES, excessImages),
+      0
+    );
+
+    // Select the oldest priority images for removal
+    imagesToDelete = imagesToDelete
+      .concat(priority.slice(0, excessImages));
+
+    return callback(null, imagesToDelete);
   });
 }
 
-function wontDelete(object, message, tag) {
-  console.log('[wont-delete] [' + object.imageDigest + '] [' + object.imageTag + '] ' + message);
-  if (tag) object['ableToDelete'] = false;
+module.exports.deleteImages = deleteImages;
+function deleteImages(region, repositoryName, images, callback) {
+  const ecr = new AWS.ECR({ region: region });
+
+  // Must delete images in batches of 100 max
+  const remaining = JSON.parse(JSON.stringify(images));
+  const imageIds = remaining.splice(0, 100);
+
+  if (!imageIds.length) return callback();
+
+  ecr.batchDeleteImage({ imageIds, repositoryName }, (err) => {
+    if (err) return callback(err);
+    deleteImages(region, repositoryName, remaining, callback);
+  });
 }
 
-function willDelete(array, index) {
-  console.log('[will-delete] [' + array[index].imageDigest + '] [' + array[index].imageTag + '] Deleting image ' + (index + 1) + ' of ' + array.length);
+module.exports.commitType = commitType;
+function commitType(tags, digest, gitdir, callback) {
+  function run(command, callback) {
+    child_process.exec(command, (err, stdout) => {
+      if (err) return callback();
+      callback(null, stdout.trim());
+    });
+  }
+
+  const eachTag = (sha, callback) => {
+    const merge = `git --git-dir=${gitdir}/.git cat-file -p ${sha} | grep -Ec '^parent [a-z0-9]{40}'`;
+    const tag = `git --git-dir=${gitdir}/.git tag | grep ${sha}`;
+    const commit = `git --git-dir=${gitdir}/.git rev-parse --verify ${sha}`;
+
+    run(merge, (err, mergeCommitData) => {
+      if (err) return callback(err);
+      if (mergeCommitData >= 2)
+        return callback(null, 'priority');
+
+
+      run(tag, (err, tagData) => {
+        if (err) return callback(err);
+        if (tagData === sha)
+          return callback(null, 'priority');
+
+        run(commit, (err, commitData) => {
+          if (err) return callback(err);
+          const type = commitData === sha
+            ? 'generic' : 'custom';
+
+          return callback(null, type);
+        });
+      });
+    });
+  };
+
+  const q = queue(1);
+  tags.forEach((tag) => q.defer(eachTag, tag));
+  q.awaitAll((err, results) => {
+    if (err) return callback(err);
+
+    let type = 'generic';
+    if (results.find((r) => r === 'custom')) type = 'custom';
+    if (results.find((r) => r === 'priority')) type = 'priority';
+
+    callback(null, { tags, digest, type });
+  });
 }

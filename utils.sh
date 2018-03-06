@@ -72,6 +72,7 @@ function parse_message() {
   user=$(node -e "console.log(${Message}.pusher.name);")
   deleted=$(node -e "console.log(${Message}.deleted);")
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
+
 }
 
 function credentials() {
@@ -83,12 +84,10 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
-
   GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
   if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
   fi
-
 
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   if [[ -z $role ]]; then
@@ -133,6 +132,18 @@ function ecr_logins() {
   done
 }
 
+function ecr_cleanup() {
+  local repo=${1}
+  local gitdir=${2}
+
+  # ${regions} are the regions to clean up, set at the top of ecs-conex.sh
+
+  for region in "${regions[@]}"; do
+    echo "cleaning up ECR in ${region}"
+    node /usr/local/src/ecs-conex/cleanup.js ${region} ${repo} ${gitdir}
+  done
+}
+
 function docker_push() {
   local queue=""
 
@@ -141,7 +152,6 @@ function docker_push() {
 
     # tag + add current image to queue by exact tag match (omitted if no exact match)
     queue="${queue} $(exact_match)"
-
     if image_exists ${region}; then
       echo "found existing image for ${after} in ${region}, skipping push"
       continue

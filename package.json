@@ -5,11 +5,11 @@
   "main": "ecs-conex.sh",
   "scripts": {
     "pretest": "eslint cloudformation test",
-    "test": "test/utils.test.sh && test/watch.test.sh && tape test/template.test.js && tape test/cleanup.test.js",
+    "test": "test/utils.test.sh && test/watch.test.sh && tape test/*.test.js | tap-spec",
     "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
   "bin": {
-    "cleanup": "scripts/cleanup.js",
+    "cleanup_ecr": "scripts/cleanup.js",
     "ecs-conex-watch": "scripts/watch.sh"
   },
   "repository": {
@@ -23,20 +23,17 @@
   },
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
-    "@mapbox/cloudfriend": "^1.8.1",
     "aws-sdk": "^2.4.13",
-    "d3-queue": "^3.0.2",
-    "inquirer": "^1.1.2",
-    "minimist": "^1.2.0",
-    "moment": "^2.14.1",
-    "request": "^2.74.0",
-    "underscore": "^1.8.3"
+    "d3-queue": "^3.0.7"
   },
   "devDependencies": {
+    "@mapbox/cloudfriend": "^1.8.1",
+    "@mapbox/mock-aws-sdk-js": "0.0.4",
     "@mapbox/watchbot": "^3.2.0",
     "eslint": "^3.2.0",
-    "pinkie-promise": "^2.0.1",
+    "p-queue": "^2.2.0",
     "sinon": "^1.17.5",
+    "tap-spec": "^4.1.1",
     "tape": "^4.6.0"
   }
 }

@@ -1,345 +1,316 @@
-var cleanup = require(__dirname + '/../scripts/cleanup.js');
-var inquirer = require('inquirer');
-var Promise = require('pinkie-promise');
-var sinon = require('sinon');
-var test = require('tape');
-var _ = require('underscore');
+'use strict';
 
-test('validateInputs: no user', function(assert) {
-  var arguments = ['repo', '--maximum=1', '--blacklist=tag1,tag2'];
+/* eslint-disable no-console */
 
-  cleanup.validateInputs(arguments, function(err, res) {
-    assert.equal(err, 'GitHub user name and repository name are required');
-    assert.equal(res, undefined);
-    assert.end();
-  });
-});
+const child_process = require('child_process');
+const AWS = require('@mapbox/mock-aws-sdk-js');
+const sinon = require('sinon');
+const test = require('tape');
+const cleanup = require(`${__dirname}/../scripts/cleanup`);
 
-test('validateInputs: no repo', function(assert) {
-  var arguments = ['user', '--maximum=1', '--blacklist=tag1,tag2'];
+const region = 'us-east-1';
+const repo = 'some-repo';
+const token = 'sometoken';
+const tmpdir = '/path/to/cloned/repo';
 
-  cleanup.validateInputs(arguments, function(err, res) {
-    assert.equal(err, 'GitHub user name and repository name are required');
-    assert.equal(res, undefined);
-    assert.end();
-  });
-});
+const imagesNoToken = require(`${__dirname}/fixtures/imagesNoToken.test.json`);
+const imagesToken = require(`${__dirname}/fixtures/imagesToken.test.json`);
+const imageDetails = imagesNoToken.imageDetails.concat(imagesToken.imageDetails);
 
-test('validateInputs: no maximum', function(assert) {
-  var arguments = ['user', 'repo', '--blacklist=tag1,tag2'];
 
-  cleanup.validateInputs(arguments, function(err, res) {
-    assert.equal(err, null);
-    assert.equal(res.maximum, 750);
-    assert.end();
-  });
-});
+const exec = {
+  restore: () => child_process.exec.restore(),
 
-test('validateInputs: no blacklist', function(assert) {
-  var arguments = ['user', 'repo', '--maximum=1'];
+  mock: () => {
+    return sinon.stub(child_process, 'exec', (cmd, callback) => {
+      const commandParts = cmd.split(' ');
+      const command = commandParts[2];
 
-  cleanup.validateInputs(arguments, function(err, res) {
-    assert.equal(err, null);
-    assert.deepEqual(res.blacklist, []);
-    assert.end();
-  });
-});
+      const sha = {
+        'cat-file': commandParts[4],
+        tag: commandParts[5],
+        'rev-parse': commandParts[4]
+      }[command];
 
-test('validateInputs', function(assert) {
-  var arguments = ['user', 'repo', '--maximum=1', '--blacklist=tag1,tag2'];
+      let stdout = '';
 
-  cleanup.validateInputs(arguments, function(err, res) {
-    assert.equal(err, null);
-    assert.equal(res.user, 'user');
-    assert.equal(res.repo, 'repo');
-    assert.equal(res.maximum, 1);
-    assert.deepEqual(res.blacklist, ['tag1', 'tag2']);
-    assert.end();
-  });
-});
-
-test('confirmInputs: true', function(assert) {
-  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
-  sinon.stub(inquirer, 'prompt', function(questions) {
-    assert.deepEqual(questions, [{
-      type: 'confirm',
-      name: 'confirmation',
-      message: 'Ready to delete images? Any imageTags not blacklisted above are subject to deletion.',
-      default: false
-    }]);
-
-    return Promise.resolve({ confirmation: true });
-  });
-
-  cleanup.confirmInputs(params, function(answer) {
-    assert.equal(answer, true);
-    inquirer.prompt.restore();
-    assert.end();
-  });
-});
-
-test('confirmInputs: false', function(assert) {
-  var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
-
-  assert.plan(2);
-  sinon.stub(inquirer, 'prompt', function(questions) {
-    assert.deepEqual(questions, [{
-      type: 'confirm',
-      name: 'confirmation',
-      message: 'Ready to delete images? Any imageTags not blacklisted above are subject to deletion.',
-      default: false
-    }]);
-
-    return Promise.resolve({ confirmation: false });
-  });
-
-  cleanup.confirmInputs(params, function(answer) {
-    assert.equal(answer, false);
-    inquirer.prompt.restore();
-  });
-});
-
-test('listImages', function(assert) {
-  var params = { repo: 'repo' };
-
-  assert.plan(1);
-  var ecr = {
-    listImages: function(object) {
-      assert.deepEqual(object, { repositoryName: 'repo' });
-      var counter = 0;
-      var eachItem = function(handler) {
-        if (++counter >= 5) {
-          handler(null, null);
+      switch (command) {
+      case 'cat-file':
+        if (sha === 'cccccccccccccccccccccccccccccccccccccccc' ||
+            sha === 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+          stdout = '2'; // these are merge commits
         } else {
-          handler(null, {});
+          stdout = '0';
         }
-      };
-      return { eachItem: eachItem };
-    }
-  };
 
-  cleanup.listImages(ecr, params, function() {});
-});
+        break;
 
-test('validateECRSize', function(assert) {
-  var result = [
-    { imageTag: 'tag1' },
-    { imageTag: 'tag2' },
-    { imageTag: 'tag3' }
-  ];
+      case 'tag':
+        if (sha === 'dddddddddddddddddddddddddddddddddddddddd')
+          stdout = sha; // this one is a tag
 
-  assert.equal(cleanup.validateECRSize(result, { maximum: 2 }), undefined);
-  assert.equal(cleanup.validateECRSize(result, { maximum: 3 }), undefined);
-  assert.throws(function() { cleanup.validateECRSize(result, { maximum: 4 }); }, /The repository undefined\/undefined has 3 images, which is less than the desired 4 image maximum. No clean-up required./);
-  assert.end();
-});
+        break;
 
-test('isGitSha: true', function(assert) {
-  var array = [{ imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f48' }];
-  cleanup.isGitSha(array);
+      case 'rev-parse':
+        if (sha !== 'this-is-an-image-i-named-myself')
+          stdout = sha; // everything is a commit except this one image tag
 
-  assert.equal(array[0].ableToDelete, true);
-  assert.end();
-});
-
-test('isGitSha: false', function(assert) {
-  var array = [
-    {  },
-    { imageTag: '' },
-    { imageTag: 'v0.1.0' },
-    { imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f4' },
-    { imageTag: 'c5332a6c78cf23d86f28b8987a3ca78af46b7f488' },
-    { imageTag: 'C5332A6C78Cf23D86F28B8987A3CA78AF46B7F48' }
-  ];
-  cleanup.isGitSha(array);
-
-  _.each(array, function(e) {
-    assert.equal(e.ableToDelete, false);
-  });
-  assert.end();
-});
-
-test('isBlacklisted: true', function(assert) {
-  var params = { blacklist: ['tag'] };
-  var array = [{ imageTag: 'tag', ableToDelete: true }];
-  cleanup.isBlacklisted(array, params);
-
-  assert.equal(array[0].ableToDelete, false);
-  assert.end();
-});
-
-test('isBlacklisted: false', function(assert) {
-  var params = { blacklist: ['tag'] };
-  var array = [{ imageTag: '', ableToDelete: true }];
-  cleanup.isBlacklisted(array, params);
-
-  assert.equal(array[0].ableToDelete, true);
-  assert.end();
-});
-
-test('getTimestamps', function(assert) {
-  var array = [{ imageTag: 'tag', ableToDelete: true }];
-  var params = { user: 'user', repo: 'repo', githubAccessToken: 'token' };
-
-  assert.plan(3);
-  cleanup.getTimeStamps(array, params, function(err, res) {
-    assert.ok(res[0].statusCode);
-    assert.ok(res[0].request.uri.pathname);
-    assert.ok(res[0].body);
-  });
-});
-
-test('assignTimeStamps: 200 status code', function(assert) {
-  var array = [{ imageTag: 'tag', ableToDelete: true }];
-  var response = [{ statusCode: 200, body: '{"sha":"tag","commit":{"author":{"date":"2016-07-20T18:27:53Z"}}}', request: { uri: { pathname: '/repos/user/repo/commits/tag' } } }];
-  cleanup.assignTimeStamps(array, response);
-
-  assert.equal(array[0].imageTag, 'tag');
-  assert.equal(array[0].ableToDelete, true);
-  assert.equal(array[0].date, 1469039273);
-  assert.end();
-});
-
-test('assignTimeStamps: 401 status code', function(assert) {
-  var array = [{ imageTag: 'tag', ableToDelete: true }];
-  var response = [{ statusCode: 401, body: '{"sha":"tag","commit":{"author":{"date":"2016-07-20T18:27:53Z"}}}', request: { uri: { pathname: '/repos/user/repo/commits/tag' } } }];
-  cleanup.assignTimeStamps(array, response);
-
-  assert.equal(array[0].imageTag, 'tag');
-  assert.equal(array[0].ableToDelete, false);
-  assert.ok(!array[0].date);
-  assert.end();
-});
-
-test('dateCheck: true', function(assert) {
-  var array = [{ imageTag: 'tag', imageDigest: 'digest', date: 1469641800, ableToDelete: true }];
-  cleanup.dateCheck(array);
-
-  assert.equal(array[0].ableToDelete, true);
-  assert.end();
-});
-
-test('dateCheck: false', function(assert) {
-  var array = [{ imageTag: 'tag', imageDigest: 'digest', ableToDelete: true }];
-  cleanup.dateCheck(array);
-
-  assert.equal(array[0].ableToDelete, false);
-  assert.end();
-});
-
-test('toDelete', function(assert) {
-  var results = [
-    { imageTag: 'tag1', imageDigest: 'digest1', ableToDelete: true,  date: 5 },
-    { imageTag: 'tag2', imageDigest: 'digest2', ableToDelete: true,  date: 4 },
-    { imageTag: 'tag3', imageDigest: 'digest3', ableToDelete: true,  date: 3 },
-    { imageTag: 'tag4', imageDigest: 'digest4', ableToDelete: true,  date: 2 },
-    { imageTag: 'tag5', imageDigest: 'digest5', ableToDelete: false, date: 1 }
-  ];
-
-  var max1 = cleanup.toDelete(results, { maximum: 1 });
-  var max2 = cleanup.toDelete(results, { maximum: 2 });
-  var max3 = cleanup.toDelete(results, { maximum: 3 });
-  var max4 = cleanup.toDelete(results, { maximum: 4 });
-  var max5 = cleanup.toDelete(results, { maximum: 5 });
-
-  assert.equal(max1.length, 4);
-  assert.equal(_.first(max1).date, 2);
-  assert.equal(_.last(max1).date, 5);
-
-  assert.equal(max2.length, 3);
-  assert.equal(_.first(max2).date, 2);
-  assert.equal(_.last(max2).date, 4);
-
-  assert.equal(max3.length, 2);
-  assert.equal(_.first(max3).date, 2);
-  assert.equal(_.last(max3).date, 3);
-
-  assert.equal(max4.length, 1);
-  assert.equal(max4[0].date, 2);
-
-  assert.equal(max5.length, 0);
-  assert.end();
-});
-
-test('deleteImages', function(assert) {
-  var array = [];
-  for (var i = 0; i < 250; i++) {
-    array.push({ imageTag: 'tag' + i, imageDigest: 'digest' });
-  }
-  var params = { repo: 'repo', registryId: 'registryId' };
-
-  var counter = 0;
-  var ecr = {
-    batchDeleteImage: function(params, callback) {
-      if (counter++ < 2) {
-        assert.deepEqual(params.imageIds.length, 100);
-      } else {
-        assert.deepEqual(params.imageIds.length, 50);
+        break;
       }
-      assert.equal(params.repositoryName, 'repo');
-      assert.equal(params.registryId, 'registryId');
-      callback(null, params.imageIds);
-    }
-  };
 
-  cleanup.deleteImages(ecr, params, array, function(err, list) {
-    assert.ifError(err);
-    assert.equal(list.length, 250);
+      callback(null, stdout);
+    });
+  }
+};
+
+test('getImages, error', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages').yields(new Error('foo'));
+
+  cleanup.getImages(region, repo, (err) => {
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
+
+    assert.equal(err.message, 'foo', 'yields expected error message');
+
+    AWS.ECR.restore();
     assert.end();
   });
 });
 
-test('mergeByProperty: mergable', function(assert) {
-  var params = { deleteCount: 0 };
-  var arr1 = [{ imageTag: 'tag', imageDigest: 'digest', ableToDelete: true }];
-  var arr2 = [{ imageTag: 'tag', date: 1469641800 }];
-  cleanup.mergeByProperty(arr1, arr2, 'imageTag', params);
+test('getImages, success (no nextToken)', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages').yields(null, imagesNoToken);
 
-  assert.equal(arr1.length, 1);
-  assert.equal(arr1[0].imageTag, 'tag');
-  assert.equal(arr1[0].imageDigest, 'digest');
-  assert.equal(arr1[0].ableToDelete, true);
-  assert.equal(arr1[0].date, 1469641800);
-  assert.end();
-});
+  cleanup.getImages(region, repo, (err, res) => {
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
 
-test('mergeByProperty: not mergable', function(assert) {
-  var params = { deleteCount: 0 };
-  var arr1 = [{ imageTag: 'tag1', imageDigest: 'digest', ableToDelete: true }];
-  var arr2 = [{ imageTag: 'tag2', date: 1469641800 }];
-  cleanup.mergeByProperty(arr1, arr2, 'imageTag', params);
+    assert.deepEqual(
+      res,
+      imagesNoToken.imageDetails,
+      'yields expected imageDetails array'
+    );
 
-  assert.equal(arr1.length, 1);
-  assert.equal(arr1[0].imageTag, 'tag1');
-  assert.equal(arr1[0].imageDigest, 'digest');
-  assert.equal(arr1[0].ableToDelete, true);
-  assert.ok(!arr1[0].date);
-  assert.end();
-});
-
-test('wontDelete', function(assert) {
-  var object = { imageDigest: 'digest', imageTag: 'tag' };
-  var message = 'test';
-
-  assert.plan(2);
-  sinon.stub(console, 'log', function(msg) {
-    console.log.restore();
-    assert.equal(msg, '[wont-delete] [digest] [tag] test');
+    AWS.ECR.restore();
+    assert.end();
   });
-
-  cleanup.wontDelete(object, message, true);
-  assert.equal(object.ableToDelete, false);
 });
 
-test('willDelete', function(assert) {
-  var array = [{ imageDigest: 'digest', imageTag: 'tag' }];
-  var index = 0;
+test('getImages, success (nextToken)', (assert) => {
+  const stub = AWS.stub('ECR', 'describeImages');
+  stub.onCall(0).yields(null, imagesToken);
+  stub.onCall(1).yields(null, imagesNoToken);
 
-  assert.plan(1);
-  sinon.stub(console, 'log', function(msg) {
-    console.log.restore();
-    assert.equal(msg, '[will-delete] [digest] [tag] Deleting image 1 of 1');
+  cleanup.getImages(region, repo, (err, res) => {
+    assert.equal(stub.callCount, 2, 'ecr.describeImages should be called twice');
+    assert.ok(
+      stub.calledWith({ repositoryName: repo }),
+      'ecr.describeImages is passed repositoryName param'
+    );
+
+    assert.ok(
+      stub.calledWith({ repositoryName: repo, nextToken: token }),
+      'ecr.describeImages is passed repositoryName and nextToken params'
+    );
+
+    const sortedRes = res.sort(function(a, b) {
+      return a.imageSizeInBytes - b.imageSizeInBytes;
+    });
+    const sortedImageDetails = imageDetails.sort(function(a, b) {
+      return a.imageSizeInBytes - b.imageSizeInBytes;
+    });
+    assert.deepEqual(
+      sortedRes,
+      sortedImageDetails,
+      'yields concatenated imageDetails from both ecr.describeImages calls'
+    );
+
+    AWS.ECR.restore();
+    assert.end();
   });
+});
 
-  cleanup.willDelete(array, index);
+test('imagesToDelete less than max images', (assert) => {
+  const run = exec.mock();
+
+  // Create an array with 899 elements: 849 of which are generic commits and 50
+  // of which are priority commits. None should be returned as images that need
+  // to be deleted.
+
+  const images = Array(849)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(50).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    );
+
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+    assert.deepEqual(result, [], 'no images deleted');
+
+    run.restore();
+    assert.end();
+  });
+});
+
+test('imagesToDelete more than max images', (assert) => {
+  const run = exec.mock();
+
+  // Create an array with 901 elements: 861 of which are generic
+  // and 40 of which are priority. Should select 1 generic commit
+  // for deletion.
+
+  const images = Array(861)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(40).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    );
+
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+
+    assert.deepEqual(result, [
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      }
+    ], 'removes 1 generic commit image');
+
+    run.restore();
+    assert.end();
+  });
+});
+
+test('imagesToDelete heavy on priority and custom commits', (assert) => {
+  const run = exec.mock();
+
+  // Create an array with 910 elements: 5 of which are generic
+  // and 52 of which are priority, 853 are custom. Should select 2 priority
+  // commits and 5 generic commits for deletion. Cannot reach 900, since it
+  // should refuse to delete custom commits.
+
+  const images = Array(5)
+    .fill({
+      imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      imageTags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+    })
+    .concat(
+      Array(52).fill({
+        imageDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        imageTags: ['cccccccccccccccccccccccccccccccccccccccc']
+      })
+    )
+    .concat(
+      Array(853).fill({
+        imageDigest: 'sha256:custom',
+        imageTags: ['this-is-an-image-i-named-myself']
+      })
+    );
+
+  cleanup.imagesToDelete(images, tmpdir, (err, result) => {
+    assert.ifError(err, 'success');
+
+    assert.deepEqual(result, [
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      },
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      },
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      },
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      },
+      {
+        digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        tags: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        type: 'generic'
+      },
+      {
+        digest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        tags: ['cccccccccccccccccccccccccccccccccccccccc'],
+        type: 'priority'
+      },
+      {
+        digest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        tags: ['cccccccccccccccccccccccccccccccccccccccc'],
+        type: 'priority'
+      }
+    ], 'removes 5 generic, 2 priority images');
+
+    run.restore();
+    assert.end();
+  });
+});
+
+test('deleteimages, error', (assert) => {
+  const stub = AWS.stub('ECR', 'batchDeleteImage').yields(new Error('foo'));
+
+  const imageIds = [
+    { imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
+  ];
+
+  cleanup.deleteImages(region, repo, imageIds, (err) => {
+    assert.equal(err.message, 'foo', 'yields expected error message');
+
+    assert.ok(
+      stub.calledWith({ imageIds: imageIds, repositoryName: repo }),
+      'ecr.batchDeleteImage is passed imageIds and repositoryName params'
+    );
+
+    AWS.ECR.restore();
+    assert.end();
+  });
+});
+
+test('deleteimages, success', (assert) => {
+  const stub = AWS.stub('ECR', 'batchDeleteImage').yields();
+
+  const imageIds = Array(150)
+    .fill({ imageDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' });
+
+  cleanup.deleteImages(region, repo, imageIds, (err) => {
+    assert.ifErr(err, 'success');
+
+    assert.equal(stub.callCount, 2, 'split images into 2 batches');
+
+    assert.ok(
+      stub.args.every((args) => args[0].imageIds.length <= 100),
+      'batches have at most 100 images'
+    );
+
+    assert.equal(
+      stub.args.reduce((count, args) => count + args[0].imageIds.length, 0),
+      150,
+      'deleted all 150 images'
+    );
+
+    AWS.ECR.restore();
+    assert.end();
+  });
 });

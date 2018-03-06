@@ -1,0 +1,43 @@
+{
+    "imageDetails": [{
+        "imageSizeInBytes": 47152719, 
+        "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 
+        "imageTags": [
+            "a5e3696f0d6450fae530c99a1b8598c71c11d41c"
+        ], 
+        "registryId": "333333333333", 
+        "repositoryName": "ecs-conex-test", 
+        "imagePushedAt": 1502286027.0
+    },
+    {
+        "imageSizeInBytes": 47152719, 
+        "imageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 
+        "imageTags": [
+            "d5e593e26d489bce9ba1407edf40e55bd9174ac1"
+        ], 
+        "registryId": "333333333333", 
+        "repositoryName": "ecs-conex-test", 
+        "imagePushedAt": 1501854217.0
+    },
+    {
+        "imageSizeInBytes": 48649684, 
+        "imageDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", 
+        "imageTags": [
+            "58d077f8357c9f507e106a09d4c73709a09623b6"
+        ], 
+        "registryId": "333333333333", 
+        "repositoryName": "ecs-conex-test", 
+        "imagePushedAt": 1469061715.0
+    },
+    {
+        "imageSizeInBytes": 48649684, 
+        "imageDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", 
+        "imageTags": [
+            "tiger",
+            "v1.1.0"
+        ], 
+        "registryId": "333333333333", 
+        "repositoryName": "ecs-conex-test", 
+        "imagePushedAt": 1469058998.0
+    }]
+}

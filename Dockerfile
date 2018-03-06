@@ -5,7 +5,7 @@ RUN apt-get update -qq && apt-get install -y curl git python-pip parallel jq
 RUN pip install awscli
 RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
 
-# Setup watchbot for logging and env var decryption
+# Setup node dependencies
 RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 
 # Setup application directory
@@ -21,6 +21,11 @@ RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.09
 
 # Copy files into the container
 COPY ./*.sh ./
+COPY ./scripts/cleanup.js ./
+COPY ./package.json ./
+
+# Install node.js runtime dependencies
+RUN npm install --production
 
 # Use docker on the host instead of running docker-in-docker
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/

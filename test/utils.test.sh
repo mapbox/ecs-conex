@@ -10,7 +10,7 @@ PASSED=0
 testId=0
 
 # after_image() 1 param test
-tag_test "after_image() with 1 param"
+tag_test "after_image with 1 param"
 export AccountId=1
 export repo=repo
 export after=2
@@ -20,7 +20,7 @@ expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:2"
 assert "equal" "${log}" "${expected}"
 
 # after_image() 2 param test
-tag_test "after_image() with 2 params"
+tag_test "after_image with 2 params"
 export AccountId=1
 export repo=repo
 export after=2
@@ -30,7 +30,7 @@ expected="1.dkr.ecr.us-east-1.amazonaws.com/repo:v1.0.0"
 assert "equal" "${log}" "${expected}"
 
 # login() test
-tag_test "login()"
+tag_test "login"
 test_region=us-east-1
 
 function aws() {
@@ -50,7 +50,7 @@ expected="All good"
 assert "equal" "${log}" "${expected}"
 
 # ecr_logins() test
-tag_test "ecr_logins()"
+tag_test "ecr_logins"
 test_regions=(us-east-1 us-west-2 eu-west-1)
 logged_into=""
 
@@ -88,7 +88,7 @@ function create_repo() {
 }
 
 # ensure_repo() exists test
-tag_test "ensure_repo() exists"
+tag_test "ensure_repo exists"
 repo=exists
 
 ensure_repo ${test_region}
@@ -96,7 +96,7 @@ assert "equal" "${CALLED}" "0"
 assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 
 # ensure_repo() doesn't exist test
-tag_test "ensure_repo() doesn't exist"
+tag_test "ensure_repo doesn't exist"
 repo="not_exists"
 
 ensure_repo ${test_region}
@@ -107,7 +107,7 @@ assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 copy_func old_create_repo create_repo
 
 # create_repo() test
-tag_test "create_repo()"
+tag_test "create_repo"
 repo=repo
 test_region=us-east-1
 FAILURE_MESSAGE=""
@@ -132,7 +132,7 @@ assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
 # image_exists() test
-tag_test "image_exists()"
+tag_test "image_exists"
 
 function aws() {
   if [ ${4} == "us-east-1" ]; then
@@ -158,7 +158,7 @@ repo=repo after=test image_exists us-east-1 v2.0 || assert "equal" "$?" "1" "fin
 repo=repo after=test image_exists us-east-1 || assert "equal" "$?" "1" "finds no tagged image"
 
 # github_status() test
-tag_test "github_status()"
+tag_test "github_status"
 test_status="good"
 test_description="clear"
 status_url="https://api.github.com/repos/someone/stuff"
@@ -182,7 +182,7 @@ assert "equal" "${FAILURE_MESSAGE}" "" "should not have any failures"
 assert "equal" "${CALLED}" "1"
 
 # check_dockerfile() test
-tag_test "check_dockerfile()"
+tag_test "check_dockerfile"
 filepath="/fake/file/path"
 log=$(check_dockerfile ${filepath})
 assert "equal" "${log}" "no Dockerfile found"
@@ -193,7 +193,7 @@ log=$(check_dockerfile ${filepath})
 assert "equal" "${log}" ""
 
 # check_receives() test
-tag_test "check_receives()"
+tag_test "check_receives"
 ApproximateReceiveCount=3
 check_receives && assert "equal" "$?" "0"
 
@@ -201,7 +201,7 @@ ApproximateReceiveCount=4
 check_receives || assert "equal" "$?" "3"
 
 # parse_message() test
-tag_test "parse_message()"
+tag_test "parse_message"
 Message=$(cat ./test/fixtures/message.test.json)
 GithubAccessToken=test
 parse_message
@@ -211,7 +211,7 @@ assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
 tmpcreds=$(cat ./test/fixtures/creds.test.json)
 
-function curl () {
+function curl() {
   nullRole=$(printenv | grep nullRole | sed 's/.*=//')
   role=test_role
 
@@ -238,35 +238,35 @@ function clear_dockerfile() {
 }
 
 # credentials() no npm token in env test
-tag_test "credentials() missing npm token in env"
+tag_test "credentials missing npm token in env"
 export NPMAccessToken=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
 # credentials() no npm token in dockerfile test
-tag_test "credentials() missing npm token in dockerfile"
+tag_test "credentials missing npm token in dockerfile"
 export NPMAccessToken=test_NPMAccessToken
 clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
 # credentials() no github token in dockerfile test
-tag_test "credentials() missing github token in dockerfile"
+tag_test "credentials missing github token in dockerfile"
 export GithubAccessToken=test_GithubAccessToken
 clear_dockerfile
 credentials ${tmpdocker}
 assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
 
 # credentials() no role test
-tag_test "credentials() missing role"
+tag_test "credentials missing role"
 export nullRole=1
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # credentials() role test
-tag_test "credentials() role"
+tag_test "credentials role"
 export nullRole=""
 write_dockerfile "${tmpcreds}"
 credentials ${tmpdocker}
@@ -277,18 +277,19 @@ assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${cred
 assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
 
 # credentials() missing build arguments in dockerfile test
-tag_test "credentials() missing build arguments in dockerfile"
+tag_test "credentials missing build arguments in dockerfile"
 clear_dockerfile
 credentials ${tmpdocker}
 assert "equal" "${args}" "" "should be empty"
 
 # credentials() missing build arguments in creds test
-tag_test "credentials() missing build arguments in creds"
+tag_test "credentials missing build arguments in creds"
 write_dockerfile "{}"
 credentials ${tmpdocker}
 assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
+tag_test "exact_match"
 AccountId=1
 region=us-east-1
 repo=test
@@ -321,10 +322,30 @@ log="$(exact_match)"
 assert "equal" "$FAILURE" ""
 assert "contains" "$log" ""
 
+# ecr_cleanup()
+tag_test "ecr_cleanup"
+test_region="us-east-1"
+test_repo="test-repo"
+cleanup_location="./scripts"
+
+function ecr_cleanup() {
+  if [ ${1} != "${test_region}" ]; then
+    echo "First argument must be region"
+  elif [ ${2} != "${test_repo}" ]; then
+    echo "Second argument must be repo"
+  else
+    echo "All good"
+  fi
+}
+
+log=$(ecr_cleanup ${test_region} ${test_repo})
+assert "equal" "${log}" "All good"
+
 # docker_push() test
+tag_test "docker_push"
 regions=(us-east-1)
-repo=test
-after=test
+repo="test"
+after="test"
 FAILURE=""
 
 function ensure_repo() {
@@ -339,6 +360,14 @@ function login() {
 
 function image_exists {
   return 1
+}
+
+function ecr_cleanup {
+  if [ "${1}" != "us-east-1" ]; then
+    FAILURE="Region not passed into ecr_cleanup"
+  elif [ "${2}" != "test" ]; then
+    FAILURE="Repository not passed into ecr_cleanup"
+  fi
 }
 
 function after_image {
@@ -358,15 +387,12 @@ function docker() {
     FAILURE="should call docker tag or docker push"
   fi
 }
+
 # export functions explicitly for parallel called from within docker_push
 export -f assert passed failed docker
 
 function git() {
   exit 1
-}
-
-function exact_match() {
-  assert "equal" "${FAILURE}" ""
 }
 
 log=$(docker_push)
@@ -391,7 +417,7 @@ assert "contains" "${log}" "found existing image for test in us-west-2, skipping
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()
-tag_test "cleanup()"
+tag_test "cleanup"
 tmpdir=$(mktemp -d /tmp/ecs-conex-test-XXXXXX)
 Message=$(cat ./test/fixtures/message.test.json)
 GithubAccessToken=test
