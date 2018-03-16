@@ -18,6 +18,7 @@ RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz > docker-17.03.2-ce.tgz
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.06.2-ce.tgz > docker-17.06.2-ce.tgz
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.09.1-ce.tgz > docker-17.09.1-ce.tgz
+RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.12.0-ce.tgz > docker-17.12.0-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
