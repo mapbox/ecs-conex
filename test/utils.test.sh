@@ -398,13 +398,32 @@ log=$(bucket_push)
 expected="nothing to do"
 assert "equal" "${log}" "${expected}"
 
-# docker_save)() no ImageBucketPrefix
+# docker_save() no ImageBucketPrefix
 tag_test "docker_save"
 export ImageBucketPrefix=""
 
 log=$(docker_save)
 expected="nothing to do"
 assert "equal" "${log}" "${expected}"
+
+#docker_save()
+export ImageBucketPrefix="something"
+export tmpdir="test"
+export repo="repo"
+export after=1
+export image_file="file"
+
+function docker(){
+  if [ ${1} == "save" ]; then
+    assert "equal" "$*" "save repo:1" "calls docker save with repo:after" >&2
+  else 
+    FAILURE="should call docker save"
+  fi
+}
+
+log=$(docker_save)
+expected="saving image to test/repo-1.tar.gz"
+assert "equal" "${log}" "${expected}" "saves image to tmpdir/repo-after"
 
 # cleanup()
 tag_test "cleanup()"
