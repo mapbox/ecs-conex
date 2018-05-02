@@ -11,7 +11,7 @@ aws ecr describe-repositories --region us-east-1 --repository-names ecs-conex > 
   aws ecr create-repository --region us-east-1 --repository-name ecs-conex > /dev/null
 
 # Fetch the ECR repository URI
-desc=$(aws ecr describe-repositories --region us-east-1 --repository-names ecs-conex)
+desc=$(aws ecr describe-repositories --region us-east-1 --repository-names ecs-conex --output json)
 uri=$(node -e "console.log(${desc}.repositories[0].repositoryUri);")
 
 # Build the docker image
