@@ -50,7 +50,7 @@ var watcher = watchbot.template({
         's3:PutObject'
       ],
       Resource: [
-        cf.sub('arn:aws:s3:::${ImageBucketPrefix}-${ImageBucketRegion}-*/images/*')
+        cf.sub('arn:aws:s3:::${ImageBucketPrefix}-*/images/*')
       ]
     }
   ]
