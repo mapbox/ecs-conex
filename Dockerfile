@@ -19,7 +19,6 @@ RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.06.2-ce.tgz > docker-17.06.2-ce.tgz
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.09.1-ce.tgz > docker-17.09.1-ce.tgz
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.12.0-ce.tgz > docker-17.12.0-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.12.1-ce.tgz > docker-17.12.1-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
@@ -33,8 +32,7 @@ VOLUME /mnt/data
 
 # Run the worker
 CMD eval $(decrypt-kms-env) \
-  && docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion) \
-  && tar -xzf docker-${docker_version}.tgz \
+  && tar -xzf docker-17.03.1-ce.tgz \
   && cp docker/docker /usr/local/bin/docker \
   && chmod 755 /usr/local/bin/docker \
   && timeout 3600 ./ecs-conex.sh
