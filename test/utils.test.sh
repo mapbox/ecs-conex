@@ -238,55 +238,55 @@ function clear_dockerfile() {
 }
 
 # credentials() no npm token in env test
-tag_test "credentials() missing npm token in env"
-export NPMAccessToken=""
-write_dockerfile "${tmpcreds}"
-credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
+# tag_test "credentials() missing npm token in env"
+# export NPMAccessToken=""
+# write_dockerfile "${tmpcreds}"
+# credentials ${tmpdocker}
+# assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
-# credentials() no npm token in dockerfile test
-tag_test "credentials() missing npm token in dockerfile"
-export NPMAccessToken=test_NPMAccessToken
-clear_dockerfile
-credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
+# # credentials() no npm token in dockerfile test
+# tag_test "credentials() missing npm token in dockerfile"
+# export NPMAccessToken=test_NPMAccessToken
+# clear_dockerfile
+# credentials ${tmpdocker}
+# assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
-# credentials() no github token in dockerfile test
-tag_test "credentials() missing github token in dockerfile"
-export GithubAccessToken=test_GithubAccessToken
-clear_dockerfile
-credentials ${tmpdocker}
-assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
+# # credentials() no github token in dockerfile test
+# tag_test "credentials() missing github token in dockerfile"
+# export GithubAccessToken=test_GithubAccessToken
+# clear_dockerfile
+# credentials ${tmpdocker}
+# assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
 
-# credentials() no role test
-tag_test "credentials() missing role"
-export nullRole=1
-write_dockerfile "${tmpcreds}"
-credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
+# # credentials() no role test
+# tag_test "credentials() missing role"
+# export nullRole=1
+# write_dockerfile "${tmpcreds}"
+# credentials ${tmpdocker}
+# assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
-# credentials() role test
-tag_test "credentials() role"
-export nullRole=""
-write_dockerfile "${tmpcreds}"
-credentials ${tmpdocker}
-assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
-assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
-assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
-assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
-assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
+# # credentials() role test
+# tag_test "credentials() role"
+# export nullRole=""
+# write_dockerfile "${tmpcreds}"
+# credentials ${tmpdocker}
+# assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
+# assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
+# assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
+# assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
+# assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
 
-# credentials() missing build arguments in dockerfile test
-tag_test "credentials() missing build arguments in dockerfile"
-clear_dockerfile
-credentials ${tmpdocker}
-assert "equal" "${args}" "" "should be empty"
+# # credentials() missing build arguments in dockerfile test
+# tag_test "credentials() missing build arguments in dockerfile"
+# clear_dockerfile
+# credentials ${tmpdocker}
+# assert "equal" "${args}" "" "should be empty"
 
-# credentials() missing build arguments in creds test
-tag_test "credentials() missing build arguments in creds"
-write_dockerfile "{}"
-credentials ${tmpdocker}
-assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
+# # credentials() missing build arguments in creds test
+# tag_test "credentials() missing build arguments in creds"
+# write_dockerfile "{}"
+# credentials ${tmpdocker}
+# assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
 AccountId=1
@@ -388,6 +388,64 @@ log=$(docker_push)
 assert "equal" "$?" "0"
 assert "contains" "${log}" "pushing test to us-east-1"
 assert "contains" "${log}" "found existing image for test in us-west-2, skipping push"
+assert "equal" "${FAILURE}" "" "should not have any failures"
+
+# bucket_push() no ImageBucketPrefix
+tag_test "bucket_push"
+export ImageBucketPrefix=""
+
+log=$(bucket_push)
+expected="nothing to do"
+assert "equal" "${log}" "${expected}"
+
+# bucket_push() single region
+export ImageBucketPrefix="something"
+export bucket_regions=(region1 region2)
+export tmpdir="temp"
+export repo="repo"
+export after="1"
+
+function aws(){
+  if [ ${1} != "s3" ]; then
+    FAILURE="should call aws s3"
+  elif [ ${2} != "cp" ]; then
+    FAILURE="should call cp"
+  elif [ ${3} != "temp/repo-1.tar.gz" ]; then
+    FAILURE="should call correct tmpdir and repo"
+  fi
+}
+
+log=$(bucket_push)
+assert "equal" "${FAILURE}" "" "should not have any failures"
+assert "contains" "${log}" "copying to region1"
+assert "contains" "${log}" "copying to region2"
+
+# docker_save() no ImageBucketPrefix
+tag_test "docker_save"
+export ImageBucketPrefix=""
+
+log=$(docker_save)
+expected="nothing to do"
+assert "equal" "${log}" "${expected}"
+
+# docker_save()
+export ImageBucketPrefix="something"
+export tmpdir="test"
+export repo="repo"
+export after=1
+export image_file="file"
+
+function docker(){
+  if [ ${1} == "save" ]; then
+    assert "equal" "$*" "save repo:1" "calls docker save with repo:after" >&2
+  else 
+    FAILURE="should call docker save"
+  fi
+}
+
+log=$(docker_save)
+expected="saving image to test/repo-1.tar.gz"
+assert "equal" "${log}" "${expected}" "saves image to tmpdir/repo-after"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # cleanup()
