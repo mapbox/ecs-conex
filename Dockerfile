@@ -26,7 +26,7 @@ VOLUME /mnt/data
 
 # Run the worker
 CMD eval $(decrypt-kms-env) \
-  && tar -xzf docker-17.03.0-ce.tgz \
+  && tar -xzf docker-17.12.0-ce.tgz \
   && cp docker/docker /usr/local/bin/docker \
   && chmod 755 /usr/local/bin/docker \
   && timeout 3600 ./ecs-conex.sh
