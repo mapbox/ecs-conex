@@ -13,13 +13,13 @@ RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
 RUN local_docker_version="17.2.0"
+RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${local_docker_version}-ce.tgz > docker-${local_docker_version}-ce.tgz
+
 RUN local_docker_version=$(echo "$local_docker_version" | cut -d "." -f 1)
 RUN server_docker_version=$(echo $(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion | cut -d "." -f 1))
 RUN if [ $server_docker_version -ne $local_docker_version ]; then \
   echo "Major versions on the host and ecs-conex do not match. Please update the docker version on ecs-conex"; \
 fi
-
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${local_docker_version}-ce.tgz > docker-${local_docker_version}-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
