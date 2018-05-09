@@ -1,7 +1,7 @@
 function version-check() {
   major_local_docker_version=$(echo "$local_docker_version" | cut -d "." -f 1)
   major_server_docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion | cut -d "." -f 1)
-
+  echo "Host Docker version: ${major_server_docker_version}, Local Docker version: ${major_local_docker_version}"
   if [ $major_server_docker_version -ne $major_local_docker_version ]; then
     aws sns publish \
     --topic-arn ${NotificationTopic} \
