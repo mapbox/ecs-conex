@@ -12,7 +12,7 @@ RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
-ENV local_docker_version "17.12.0"
+ENV local_docker_version "18.03.1"
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${local_docker_version}-ce.tgz > docker-${local_docker_version}-ce.tgz
 
 # Copy files into the container
