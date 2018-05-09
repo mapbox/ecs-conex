@@ -24,4 +24,4 @@ ecs-conex workers do not run the same version of Docker as their host EC2s. Whil
 
 #### Solution
 
-Update the `conex_docker_version` variable in the Dockerfile, to the _most recent version_ of Docker that has the same major version as the host Docker version. For example, if the `host_docker_version` is `18.03.1`, the `conex_docker_version` can be `18.*` (and not necessarily `18.03.1`), but **cannot** be `17.*`. A full list of Docker versions is available on https://download.docker.com/linux/static/stable/aarch64/
+Update the `conex_docker_version` variable in the Dockerfile, to the _most recent version_ of Docker that has the same major version as the host Docker version. For example, if the `host_docker_version` is `18.03.1`, the `conex_docker_version` can be `18.*` (and not necessarily `18.03.1`), but **cannot** be `17.*`. A full list of permissible Docker versions is available on https://download.docker.com/linux/static/stable/aarch64/
