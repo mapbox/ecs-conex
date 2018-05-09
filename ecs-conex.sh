@@ -7,7 +7,6 @@ regions=(us-east-1 us-west-2 eu-west-1)
 bucket_regions=($ImageBucketRegions)
 tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 source utils.sh
-source version-check.sh
 
 function main() {
   echo "checking docker version compatibility"
