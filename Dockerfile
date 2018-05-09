@@ -12,8 +12,8 @@ RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
-ENV local_docker_version="17.2.0"
-ENV server_docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion)
+ENV local_docker_version "17.2.0"
+ENV server_docker_version $(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion)
 
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${local_docker_version}-ce.tgz > docker-${local_docker_version}-ce.tgz
 
