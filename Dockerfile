@@ -12,8 +12,8 @@ RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
-ENV local_docker_version "17.12.1"
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${local_docker_version}-ce.tgz > docker-${local_docker_version}-ce.tgz
+ENV conex_docker_version "17.12.1"
+RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${conex_docker_version}-ce.tgz > docker-${conex_docker_version}-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
@@ -27,7 +27,7 @@ VOLUME /mnt/data
 
 # Run the worker
 CMD eval $(decrypt-kms-env) \
-  && tar -xzf docker-${local_docker_version}-ce.tgz \
+  && tar -xzf docker-${conex_docker_version}-ce.tgz \
   && cp docker/docker /usr/local/bin/docker \
   && chmod 755 /usr/local/bin/docker \
   && timeout 3600 ./ecs-conex.sh

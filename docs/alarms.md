@@ -11,3 +11,17 @@ Long pending times could contribute to backup of minutes to hours for building d
 #### Solution
 
 If the ACS service is getting throttled (see above), check through the running tasks and see if there is one service or particular family of tasks that is starting and stopping very rapidly on the cluster. If it's possible, scale down that process to return conex pending time to normal.
+
+### Docker major version mismatch
+
+#### What
+
+The docker major version on the ecs-conex worker is higher/lower than the docker major version on the host EC2
+
+#### Problem
+
+ecs-conex workers do not run the same version of Docker as their host EC2s. While this is not problematic, we would recommend ensuring that the two versions of Docker at least have matching major versions.
+
+#### Solution
+
+Update the `conex_docker-version` variable in the Dockerfile, to the _most recent version_ of Docker that has the same major version as the host Docker version. For example, if the host_docker_version is `18.03.1`, the conex_docker_version can be `18.*`, but **cannot** be `17.*`. A full list of Docker versions is available on https://download.docker.com/linux/static/stable/aarch64/
