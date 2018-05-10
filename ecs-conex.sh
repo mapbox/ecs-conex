@@ -9,6 +9,9 @@ tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
 source utils.sh
 
 function main() {
+  echo "checking docker version compatibility"
+  version-check
+
   echo "checking docker configuration"
   docker version > /dev/null
 

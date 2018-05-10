@@ -174,6 +174,23 @@ function docker_save() {
   docker save ${repo}:${after} | gzip > ${image_file}
 }
 
+function version-check() {
+  conex_docker_version=${conex_docker_version}
+  host_docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion)
+
+  major_conex_docker_version=$(echo "${conex_docker_version}" | cut -d "." -f 1)
+  major_host_docker_version=$(echo "${host_docker_version}" | cut -d "." -f 1)
+
+  if [ $major_host_docker_version -ne $major_conex_docker_version ]; then
+    echo "Docker versions don't match on the client and the host."
+    aws sns publish \
+    --topic-arn ${NotificationTopic} \
+    --subject "Version mismatch between docker on ecs-conex and the host" \
+    --message "The docker versions don't match on ecs-conex and the host EC2. Host Docker version: ${host_docker_version} and Local Docker version: ${conex_docker_version}. For more information, look at: https://github.com/mapbox/ecs-conex/blob/master/docs/alarms.md#docker-version-mismatch"
+  fi
+}
+
+
 function cleanup() {
   exit_code=$?
 

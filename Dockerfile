@@ -12,14 +12,8 @@ RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
 RUN mkdir -p /usr/local/src/ecs-conex
 WORKDIR /usr/local/src/ecs-conex
 
-# Download several versions of docker
-RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz > docker-1.12.6.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03.1-ce.tgz > docker-17.03.1-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz > docker-17.03.2-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.06.2-ce.tgz > docker-17.06.2-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.09.1-ce.tgz > docker-17.09.1-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.12.0-ce.tgz > docker-17.12.0-ce.tgz
-RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.12.1-ce.tgz > docker-17.12.1-ce.tgz
+ENV conex_docker_version "17.12.1"
+RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${conex_docker_version}-ce.tgz > docker-${conex_docker_version}-ce.tgz
 
 # Copy files into the container
 COPY ./*.sh ./
@@ -33,8 +27,7 @@ VOLUME /mnt/data
 
 # Run the worker
 CMD eval $(decrypt-kms-env) \
-  && docker_version=$(curl -s --unix-socket /var/run/docker.sock http://localhost/info | jq -r .ServerVersion) \
-  && tar -xzf docker-${docker_version}.tgz \
+  && tar -xzf docker-${conex_docker_version}-ce.tgz \
   && cp docker/docker /usr/local/bin/docker \
   && chmod 755 /usr/local/bin/docker \
   && timeout 3600 ./ecs-conex.sh

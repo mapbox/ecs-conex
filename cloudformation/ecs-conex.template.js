@@ -16,7 +16,8 @@ var watcher = watchbot.template({
     GithubAccessToken: cf.ref('GithubAccessToken'),
     NPMAccessToken: cf.ref('NPMAccessToken'),
     ImageBucketPrefix: cf.ref('ImageBucketPrefix'),
-    ImageBucketRegions: cf.ref('ImageBucketRegions')
+    ImageBucketRegions: cf.ref('ImageBucketRegions'),
+    NotificationTopic: cf.ref('AlarmSNSTopic')
   },
   mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
   webhook: true,
