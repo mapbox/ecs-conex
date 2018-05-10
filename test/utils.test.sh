@@ -238,55 +238,55 @@ function clear_dockerfile() {
 }
 
 # credentials() no npm token in env test
-# tag_test "credentials() missing npm token in env"
-# export NPMAccessToken=""
-# write_dockerfile "${tmpcreds}"
-# credentials ${tmpdocker}
-# assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
+tag_test "credentials() missing npm token in env"
+export NPMAccessToken=""
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
-# # credentials() no npm token in dockerfile test
-# tag_test "credentials() missing npm token in dockerfile"
-# export NPMAccessToken=test_NPMAccessToken
-# clear_dockerfile
-# credentials ${tmpdocker}
-# assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
+# credentials() no npm token in dockerfile test
+tag_test "credentials() missing npm token in dockerfile"
+export NPMAccessToken=test_NPMAccessToken
+clear_dockerfile
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "NPMAccessToken=${NPMAccessToken}"
 
-# # credentials() no github token in dockerfile test
-# tag_test "credentials() missing github token in dockerfile"
-# export GithubAccessToken=test_GithubAccessToken
-# clear_dockerfile
-# credentials ${tmpdocker}
-# assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
+# credentials() no github token in dockerfile test
+tag_test "credentials() missing github token in dockerfile"
+export GithubAccessToken=test_GithubAccessToken
+clear_dockerfile
+credentials ${tmpdocker}
+assert "doesNotContain" "${args}" "GithubAccessToken=${GithubAccessToken}"
 
-# # credentials() no role test
-# tag_test "credentials() missing role"
-# export nullRole=1
-# write_dockerfile "${tmpcreds}"
-# credentials ${tmpdocker}
-# assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
+# credentials() no role test
+tag_test "credentials() missing role"
+export nullRole=1
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
-# # credentials() role test
-# tag_test "credentials() role"
-# export nullRole=""
-# write_dockerfile "${tmpcreds}"
-# credentials ${tmpdocker}
-# assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
-# assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
-# assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
-# assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
-# assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
+# credentials() role test
+tag_test "credentials() role"
+export nullRole=""
+write_dockerfile "${tmpcreds}"
+credentials ${tmpdocker}
+assert "contains" "${args}" "NPMAccessToken=${NPMAccessToken}"
+assert "contains" "${args}" "GithubAccessToken=${GithubAccessToken}"
+assert "contains" "${args}" "AWS_ACCESS_KEY_ID=$(node -e "console.log(${creds}.AccessKeyId)")"
+assert "contains" "${args}" "AWS_SECRET_ACCESS_KEY=$(node -e "console.log(${creds}.SecretAccessKey)")"
+assert "contains" "${args}" "AWS_SESSION_TOKEN=$(node -e "console.log(${creds}.SessionToken)")"
 
-# # credentials() missing build arguments in dockerfile test
-# tag_test "credentials() missing build arguments in dockerfile"
-# clear_dockerfile
-# credentials ${tmpdocker}
-# assert "equal" "${args}" "" "should be empty"
+# credentials() missing build arguments in dockerfile test
+tag_test "credentials() missing build arguments in dockerfile"
+clear_dockerfile
+credentials ${tmpdocker}
+assert "equal" "${args}" "" "should be empty"
 
-# # credentials() missing build arguments in creds test
-# tag_test "credentials() missing build arguments in creds"
-# write_dockerfile "{}"
-# credentials ${tmpdocker}
-# assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
+# credentials() missing build arguments in creds test
+tag_test "credentials() missing build arguments in creds"
+write_dockerfile "{}"
+credentials ${tmpdocker}
+assert "equal" "${args}" "--build-arg NPMAccessToken=test_NPMAccessToken --build-arg GithubAccessToken=test_GithubAccessToken"
 
 # exact_match() test
 AccountId=1
@@ -438,7 +438,7 @@ export image_file="file"
 function docker(){
   if [ ${1} == "save" ]; then
     assert "equal" "$*" "save repo:1" "calls docker save with repo:after" >&2
-  else 
+  else
     FAILURE="should call docker save"
   fi
 }
