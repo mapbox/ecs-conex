@@ -186,7 +186,7 @@ function version-check() {
     aws sns publish \
     --topic-arn ${NotificationTopic} \
     --subject "Version mismatch between docker on ecs-conex and the host" \
-    --message "The docker versions don't match on ecs-conex and the host EC2. Host Docker version: ${host_docker_version} and Local Docker version: ${conex_docker_version}. For more information, look at: https://github.com/mapbox/ecs-conex/blob/master/docs/alarms.md#docker-version-mismatch"
+    --message "The docker versions don't match on ecs-conex and the host EC2. Host Docker version: ${host_docker_version} and Local Docker version: ${conex_docker_version}. For more information, look at: https://github.com/mapbox/ecs-conex/blob/master/docs/alarms.md#docker-major-version-mismatch"
   fi
 }
 
