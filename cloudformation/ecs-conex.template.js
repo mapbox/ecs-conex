@@ -8,7 +8,7 @@ var watcher = watchbot.template({
   serviceVersion: cf.ref('GitSha'),
   family: cf.ref('Family'),
   workers: cf.ref('NumberOfWorkers'),
-  reservation: { memory: 512 },
+  reservation: { memory: 4096, cpu: 1024 },
   env: {
     AWS_DEFAULT_REGION: cf.region,
     StackRegion: cf.region,
