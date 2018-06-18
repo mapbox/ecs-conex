@@ -3,10 +3,10 @@ FROM ubuntu
 # Installations
 RUN apt-get update -qq && apt-get install -y curl git python-pip parallel jq
 RUN pip install awscli
-RUN curl -s https://s3.amazonaws.com/mapbox/apps/install-node/v2.0.0/run | NV=4.4.2 NP=linux-x64 OD=/usr/local sh
+RUN curl https://nodejs.org/dist/v8.9.4/node-v8.9.4-linux-x64.tar.gz | tar zxC /usr/local --strip-components=1
 
 # Setup watchbot for logging and env var decryption
-RUN npm install -g watchbot@^1.0.3 decrypt-kms-env@^2.0.1
+RUN npm install -g @mapbox/watchbot@^4.0.0 decrypt-kms-env@^2.0.1
 
 # Setup application directory
 RUN mkdir -p /usr/local/src/ecs-conex
@@ -14,6 +14,7 @@ WORKDIR /usr/local/src/ecs-conex
 
 ENV conex_docker_version "17.12.1"
 RUN curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-${conex_docker_version}-ce.tgz > docker-${conex_docker_version}-ce.tgz
+RUN tar -xzf docker-${conex_docker_version}-ce.tgz && cp docker/docker /usr/local/bin/docker && chmod 755 /usr/local/bin/docker
 
 # Copy files into the container
 COPY ./*.sh ./
@@ -21,13 +22,3 @@ COPY ./*.sh ./
 # Use docker on the host instead of running docker-in-docker
 # https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
 VOLUME /var/run/docker.sock
-
-# tmp data written to the host
-VOLUME /mnt/data
-
-# Run the worker
-CMD eval $(decrypt-kms-env) \
-  && tar -xzf docker-${conex_docker_version}-ce.tgz \
-  && cp docker/docker /usr/local/bin/docker \
-  && chmod 755 /usr/local/bin/docker \
-  && timeout 3600 ./ecs-conex.sh

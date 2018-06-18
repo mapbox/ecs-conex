@@ -24,6 +24,7 @@
   "homepage": "https://github.com/mapbox/ecs-conex#readme",
   "dependencies": {
     "@mapbox/cloudfriend": "^1.8.1",
+    "@mapbox/hookshot": "^5.0.1",
     "aws-sdk": "^2.4.13",
     "d3-queue": "^3.0.2",
     "inquirer": "^1.1.2",
@@ -33,7 +34,7 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "@mapbox/watchbot": "^3.2.0",
+    "@mapbox/watchbot": "^4.0.0",
     "eslint": "^3.2.0",
     "pinkie-promise": "^2.0.1",
     "sinon": "^1.17.5",

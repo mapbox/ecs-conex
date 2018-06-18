@@ -5,7 +5,7 @@ set -o pipefail
 
 regions=(us-east-1 us-west-2 eu-west-1)
 bucket_regions=($ImageBucketRegions)
-tmpdir="$(mktemp -d /mnt/data/XXXXXX)"
+tmpdir="$(mktemp -d /tmp/XXXXXX)"
 source utils.sh
 
 function main() {
@@ -64,4 +64,4 @@ function main() {
 }
 
 trap "cleanup" EXIT
-main 2>&1 | watchbot-log
+main 2>&1
