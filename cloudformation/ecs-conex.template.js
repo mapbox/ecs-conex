@@ -1,5 +1,9 @@
+'use strict';
 var watchbot = require('@mapbox/watchbot');
 var cf = require('@mapbox/cloudfriend');
+var hookshot = require('@mapbox/hookshot');
+
+var webhook = hookshot.github('ConexWebhookFunction', 'WatchbotWebhook');
 
 // Build watchbot resources
 var watcher = watchbot.template({
@@ -7,8 +11,10 @@ var watcher = watchbot.template({
   service: 'ecs-conex',
   serviceVersion: cf.ref('GitSha'),
   family: cf.ref('Family'),
-  workers: cf.ref('NumberOfWorkers'),
+  maxSize: 10,
+  minSize: 1,
   reservation: { memory: 512 },
+  mounts: '/root',
   env: {
     AWS_DEFAULT_REGION: cf.region,
     StackRegion: cf.region,
@@ -19,9 +25,7 @@ var watcher = watchbot.template({
     ImageBucketRegions: cf.ref('ImageBucketRegions'),
     NotificationTopic: cf.ref('AlarmSNSTopic')
   },
-  mounts: '/mnt/data:/mnt/data,/var/run/docker.sock:/var/run/docker.sock',
-  webhook: true,
-  user: true,
+  command: 'eval $(decrypt-kms-env) && timeout 3600 ./ecs-conex.sh',
   notificationTopic: cf.ref('AlarmSNSTopic'),
   cluster: cf.ref('Cluster'),
   alarmOnEachFailure: true,
@@ -134,6 +138,118 @@ var conex = {
         MetricName: cf.join(['WatchbotWorkerPending', cf.stackName]),
         AlarmActions: [cf.ref('AlarmSNSTopic')]
       }
+    },
+    ConexWebhookFunction: {
+      Type: 'AWS::Lambda::Function',
+      Properties: {
+        Role: cf.getAtt('ConexWebhookFunctionRole', 'Arn'),
+        Description: cf.join(['watchbot webhooks for ', cf.stackName]),
+        Handler: 'index.webhooks',
+        Runtime: 'nodejs4.3',
+        Timeout: 30,
+        MemorySize: 128,
+        Code: {
+          ZipFile: cf.join('\n', [
+            'var AWS = require("aws-sdk");',
+            cf.join(['var sns = new AWS.SNS({ region: "', cf.region, '" });']),
+            cf.join(['var topic = "', watcher.ref.topic, '";']),
+            cf.join(['var secret = "', cf.ref('WatchbotUserKey'), '";']),
+            'var crypto = require("crypto");',
+            'module.exports.webhooks = function(event, context) {',
+            '  var body = event.body',
+            '  var hash = "sha1=" + crypto.createHmac("sha1", secret).update(new Buffer(JSON.stringify(body))).digest("hex");',
+            '  if (event.signature !== hash) return context.done("invalid: signature does not match");',
+            '  if (body.zen) return context.done(null, "ignored ping request");',
+            '  var push = {',
+            '    ref: event.body.ref,',
+            '    after: event.body.after,',
+            '    before: event.body.before,',
+            '    deleted: event.body.deleted,',
+            '    repository: {',
+            '      name: event.body.repository.name,',
+            '      owner: { name: event.body.repository.owner.name }',
+            '    },',
+            '    pusher: { name: event.body.pusher.name }',
+            '  };',
+            '  var params = {',
+            '    TopicArn: topic,',
+            '    Subject: "webhook",',
+            '    Message: JSON.stringify(push)',
+            '  };',
+            '  sns.publish(params, function(err) {',
+            '    if (err) return context.done("error: " + err.message);',
+            '    context.done(null, "success");',
+            '  });',
+            '};'
+          ])
+        }
+      }
+    },
+    ConexWebhookFunctionRole: {
+      Type: 'AWS::IAM::Role',
+      Properties: {
+        AssumeRolePolicyDocument: {
+          Statement: [
+            {
+              Sid: 'webhookrole',
+              Effect: 'Allow',
+              Principal: { Service: 'lambda.amazonaws.com' },
+              Action: 'sts:AssumeRole'
+            }
+          ]
+        },
+        Policies: [
+          {
+            PolicyName: 'WatchbotWebhookPolicy',
+            PolicyDocument: {
+              Statement: [
+                {
+                  Effect: 'Allow',
+                  Action: ['logs:*'],
+                  Resource: ['arn:aws:logs:*:*:*']
+                },
+                {
+                  Effect: 'Allow',
+                  Action: ['sns:Publish'],
+                  Resource: [watcher.ref.topic]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    WatchbotUserKey: {
+      Type: 'AWS::IAM::AccessKey',
+      Description: 'AWS access keys to authenticate as the Watchbot user',
+      Properties: {
+        Status: 'Active',
+        UserName: cf.ref('WatchbotUser')
+      }
+    },
+    WatchbotUser: {
+      Type: 'AWS::IAM::User',
+      Description: 'An AWS user with permission to publish the the work topic',
+      Properties: {
+        Policies: [
+          {
+            PolicyName: cf.join('', [cf.stackName, 'publish-to-sns']),
+            PolicyDocument: {
+              Statement: [
+                {
+                  Effect: 'Allow',
+                  Action: [
+                    'sns:Publish'
+                  ],
+                  Resource: [
+                    cf.ref('WatchbotTopic')
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
     }
   },
   Outputs: {
@@ -144,70 +260,30 @@ var conex = {
     LogGroup: {
       Description: 'The name of the CloudWatch LogGroup where ecs-conex logs are sent',
       Value: watcher.ref.logGroup
-    },
-    AccessKeyId: {
-      Description: 'An access key with permission to publish messages to ecs-conex',
-      Value: watcher.ref.accessKeyId
-    },
-    SecretAccessKey: {
-      Description: 'A secret access key with permission to publish messages to ecs-conex',
-      Value: watcher.ref.secretAccessKey
-    },
-    WebhookEndpoint: {
-      Description: 'The HTTPS endpoint used to send webhooks to ecs-conex',
-      Value: watcher.ref.webhookEndpoint
     }
   }
 };
 
-// Override aspects of watchbot's default webhook
-watcher.Resources.WatchbotWebhookFunction.Properties.Code.ZipFile = cf.join('\n', [
-  'var AWS = require("aws-sdk");',
-  cf.join(['var sns = new AWS.SNS({ region: "', cf.region, '" });']),
-  cf.join(['var topic = "', watcher.ref.topic, '";']),
-  cf.join(['var secret = "', watcher.ref.accessKeyId, '";']),
-  'var crypto = require("crypto");',
-  'module.exports.webhooks = function(event, context) {',
-  '  var body = event.body',
-  '  var hash = "sha1=" + crypto.createHmac("sha1", secret).update(new Buffer(JSON.stringify(body))).digest("hex");',
-  '  if (event.signature !== hash) return context.done("invalid: signature does not match");',
-  '  if (body.zen) return context.done(null, "ignored ping request");',
-  '  var push = {',
-  '    ref: event.body.ref,',
-  '    after: event.body.after,',
-  '    before: event.body.before,',
-  '    deleted: event.body.deleted,',
-  '    repository: {',
-  '      name: event.body.repository.name,',
-  '      owner: { name: event.body.repository.owner.name }',
-  '    },',
-  '    pusher: { name: event.body.pusher.name }',
-  '  };',
-  '  var params = {',
-  '    TopicArn: topic,',
-  '    Subject: "webhook",',
-  '    Message: JSON.stringify(push)',
-  '  };',
-  '  sns.publish(params, function(err) {',
-  '    if (err) return context.done("error: " + err.message);',
-  '    context.done(null, "success");',
-  '  });',
-  '};'
-]);
+webhook.Resources.WatchbotWebhookStage.Properties.StageName = 'watchbot';
+webhook.Resources.WatchbotWebhookResource.Properties.PathPart = 'webhooks';
+webhook.Resources.WatchbotWebhookPermission.Properties.FunctionName = cf.ref('ConexWebhookFunction');
+webhook.Resources.WatchbotWebhookMethod.Properties.Integration.Uri = cf.sub('arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConexWebhookFunction.Arn}/invocations');
 
-watcher.Resources.WatchbotWebhookMethod.Properties.Integration.RequestTemplates = {
+webhook.Resources.WatchbotWebhookMethod.Properties.Integration.RequestTemplates = {
   'application/json': '{"signature":"$input.params(\'X-Hub-Signature\')","body":$input.json(\'$\')}'
 };
 
-watcher.Resources.WatchbotWebhookMethod.Properties.Integration.IntegrationResponses.push({
-  StatusCode: 403,
-  SelectionPattern: '^invalid.*'
+watcher.Resources.WatchbotTask.Properties.ContainerDefinitions[0].MountPoints.push({
+  ContainerPath: '/var/run/docker.sock',
+  SourceVolume: 'docker-sock'
 });
 
-watcher.Resources.WatchbotWebhookMethod.Properties.MethodResponses.push({
-  StatusCode: '403',
-  ResponseModels: { 'application/json': 'Empty' }
+watcher.Resources.WatchbotTask.Properties.Volumes.push({
+  Host: {
+    SourcePath: '/var/run/docker.sock'
+  },
+  Name: 'docker-sock'
 });
 
 // Rollup the template
-module.exports = watchbot.merge(watcher, conex);
+module.exports = cf.merge(watcher, conex, webhook);
