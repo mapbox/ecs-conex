@@ -4,7 +4,7 @@
   "description": "ECS Container Express",
   "main": "ecs-conex.sh",
   "scripts": {
-    "pretest": "eslint cloudformation test",
+    "pretest": "eslint cloudformation test *.js",
     "test": "test/utils.test.sh && test/watch.test.sh && tape test/template.test.js && tape test/cleanup.test.js",
     "template": "node_modules/.bin/build-template cloudformation/ecs-conex.template.js"
   },
@@ -27,6 +27,7 @@
     "@mapbox/hookshot": "^5.0.1",
     "aws-sdk": "^2.4.13",
     "d3-queue": "^3.0.2",
+    "got": "^8.0.3",
     "inquirer": "^1.1.2",
     "minimist": "^1.2.0",
     "moment": "^2.14.1",
