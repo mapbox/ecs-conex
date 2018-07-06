@@ -22,3 +22,9 @@ docker tag ecs-conex "${uri}:$(git rev-parse head)"
 
 # Push the image into the ECR repository
 docker push "${uri}:$(git rev-parse head)"
+
+# if we're on latest master commit, push that as "latest" tag
+if [[ "$(git rev-parse head)" -eq "$(git rev-parse master)" ]] ; then
+  docker tag ecs-conex "${uri}:latest"
+  docker push "${uri}:latest"
+fi
