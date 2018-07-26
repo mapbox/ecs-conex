@@ -74,6 +74,18 @@ function parse_message() {
   status_url="https://api.github.com/repos/${owner}/${repo}/statuses/${after}?access_token=${GithubAccessToken}"
 }
 
+function check_secretsmanager() {
+  if [[ "$GithubAccessTokenSecretName" != "none" ]]; then
+      GithubAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${GithubAccessTokenSecretName})
+      echo "fetched GithubAccessToken from ${GithubAccessTokenSecretName}"
+  fi
+
+  if [[ "$NPMAccessTokenSecretName" != "none" ]]; then
+      NPMAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${NPMAccessTokenSecretName} | jq '.SecretString | fromjson | .token')
+      echo "fetched NPMAccessToken from ${NPMAccessTokenSecretName}"
+  fi
+}
+
 function credentials() {
   filepath=${1}
   args=""
