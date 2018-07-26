@@ -145,7 +145,7 @@ var conex = {
         Role: cf.getAtt('ConexWebhookFunctionRole', 'Arn'),
         Description: cf.join(['watchbot webhooks for ', cf.stackName]),
         Handler: 'index.webhooks',
-        Runtime: 'nodejs4.3',
+        Runtime: 'nodejs8.10',
         Timeout: 30,
         MemorySize: 128,
         Code: {
