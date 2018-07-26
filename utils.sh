@@ -76,12 +76,12 @@ function parse_message() {
 
 function check_secretsmanager() {
   if [[ "$GithubAccessTokenSecretName" != "none" ]]; then
-      GithubAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${GithubAccessTokenSecretName})
+      GithubAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${GithubAccessTokenSecretName} | jq -r '.SecretString')
       echo "fetched GithubAccessToken from ${GithubAccessTokenSecretName}"
   fi
 
   if [[ "$NPMAccessTokenSecretName" != "none" ]]; then
-      NPMAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${NPMAccessTokenSecretName} | jq '.SecretString | fromjson | .token')
+      NPMAccessToken=$(aws secretsmanager get-secret-value --region ${StackRegion} --secret-id ${NPMAccessTokenSecretName} | jq -r '.SecretString | fromjson | .token')
       echo "fetched NPMAccessToken from ${NPMAccessTokenSecretName}"
   fi
 }

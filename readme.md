@@ -23,3 +23,4 @@ You only need to run ecs-conex's `watch.sh` script once to subscribe your reposi
 - [Logging](./docs/logging.md)
 - [Debugging failures](./docs/debugging-failures.md)
 - [Removing old ECR registry images](./docs/removing-images.md)
+- [Using AWS Secrets Manager](./docs/using-secrets-manager.md)

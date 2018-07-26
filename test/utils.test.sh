@@ -228,7 +228,7 @@ function aws() {
   elif [ "${6}" != "${GithubAccessTokenSecretName}" ]; then
       echo "Sixth argument must be secret name"
   else
-    echo "new"
+    echo "{\"SecretString\": \"new\"}"
   fi
 }
 
