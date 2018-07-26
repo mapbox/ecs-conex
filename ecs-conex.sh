@@ -23,6 +23,18 @@ function main() {
   StackRegion=${StackRegion}
   ApproximateReceiveCount=${ApproximateReceiveCount}
 
+  echo "fetching secrets from AWS secrets manager"
+
+  if [[ "$GithubAccessTokenSecretName" -ne "none" ]]; then
+      GithubAccessToken=$(aws secretsmanager --region ${StackRegion} --secret-id ${GithubAccessTokenSecretName})
+      echo "fetched GithubAccessToken from ${GithubAccessTokenName}"
+  fi
+
+  if [[ "$NPMAccessTokenSecretName" -ne "none" ]]; then
+      NPMAccessToken=$(aws secretsmanager --region ${StackRegion} --secret-id ${NPMAccessTokenSecretName} | jq '.SecretString | fromjson | .token')
+      echo "fetched GithubAccessToken from ${NPMAccessTokenSecretName}"
+  fi
+
   echo "checking job receive count"
   check_receives
 
