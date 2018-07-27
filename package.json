@@ -38,7 +38,7 @@
     "@mapbox/watchbot": "^4.10.0",
     "eslint": "^5.2.0",
     "pinkie-promise": "^2.0.1",
-    "sinon": "^6.1.4",
+    "sinon": "^1.17.5",
     "tape": "^4.6.0"
   }
 }
