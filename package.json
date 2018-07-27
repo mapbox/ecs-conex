@@ -25,6 +25,7 @@
   "dependencies": {
     "@mapbox/cloudfriend": "^1.10.0",
     "@mapbox/hookshot": "^5.0.1",
+    "ajv": "^6.0.0",
     "aws-sdk": "^2.282.1",
     "d3-queue": "^3.0.2",
     "inquirer": "^6.0.0",

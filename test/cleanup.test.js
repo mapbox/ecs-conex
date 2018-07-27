@@ -1,3 +1,5 @@
+/* eslint-disable no-console*/
+
 var cleanup = require(__dirname + '/../scripts/cleanup.js');
 var inquirer = require('inquirer');
 var Promise = require('pinkie-promise');
