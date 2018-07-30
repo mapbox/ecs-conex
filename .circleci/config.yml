@@ -1,0 +1,7 @@
+version: 2
+jobs:
+  build:
+    services:
+      - docker
+    docker:
+      image: circleci/node:8-browsers
