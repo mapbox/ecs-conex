@@ -4,7 +4,9 @@ jobs:
     docker:
       - image: circleci/node:8.11
     steps:
+      - setup_remote_docker:
+        docker_layer_caching:
       - checkout
-      - run: service docker start
+      - run: docker info >/dev/null 2>&1 || service docker start
       - run: npm install
       - run: npm test
