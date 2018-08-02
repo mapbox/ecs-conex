@@ -1,9 +1,12 @@
 version: 2
 jobs:
     build:
-        docker:
+         working_directory: ~/mapbox/ecs-conex
+         parallelism: 1
+         shell: /bin/bash --login
+         docker:
             - image: circleci/node:8.11
-        steps:
+         steps:
             - checkout
             - setup_remote_docker:
                 docker_layer_caching: true
