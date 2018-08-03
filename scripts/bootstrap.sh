@@ -18,7 +18,7 @@ uri=$(node -e "console.log(${desc}.repositories[0].repositoryUri);")
 docker build -t ecs-conex ./
 
 # Tag the image into the ECR repository
-docker tag ecs-conex "${uri}:$(git rev-parse head)"
+docker tag ecs-conex "${uri}:$(git rev-parse HEAD)"
 
 # Push the image into the ECR repository
-docker push "${uri}:$(git rev-parse head)"
+docker push "${uri}:$(git rev-parse HEAD)"
