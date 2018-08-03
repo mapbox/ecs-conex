@@ -8,8 +8,8 @@ region=$(echo $stack | cut -d : -f 1)
 name=$(echo $stack | cut -d : -f 2)
 
 outputs=$(aws cloudformation describe-stacks --region ${region} --stack-name ${name} --query 'Stacks[0].Outputs' --output json)
-secret=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey === 'AccessKeyId'}).OutputValue);")
-url=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey === 'WebhookEndpoint'}).OutputValue);")
+secret=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey === 'WatchbotWebhookSecretOutput'}).OutputValue);")
+url=$(node -e "console.log(${outputs}.find(function(o) { return o.OutputKey === 'WatchbotWebhookEndpointOutput'}).OutputValue);")
 
 remote=$(git config --get remote.origin.url)
 repo=$(node -e "console.log(require('path').basename('${remote}', '.git'));")
