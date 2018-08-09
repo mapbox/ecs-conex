@@ -322,6 +322,7 @@ assert "equal" "$FAILURE" ""
 assert "contains" "$log" ""
 
 # docker_push() test
+tag_test "docker_push()"
 regions=(us-east-1)
 repo=test
 after=test
@@ -375,6 +376,7 @@ assert "contains" "${log}" "pushing test to us-east-1"
 assert "equal" "${FAILURE}" "" "should not have any failures"
 
 # docker_push() test to region with existing images
+tag_test "docker_push() test to region with existing images"
 function image_exists() {
   if [ "$1" == "us-west-2" ]; then
     return 0

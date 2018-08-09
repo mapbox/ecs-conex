@@ -1,0 +1,15 @@
+version: 2
+jobs:
+    build:
+         working_directory: ~/mapbox/ecs-conex
+         environment:
+           SHELL: /bin/bash
+         docker:
+            - image: circleci/node:8.11
+         steps:
+            - checkout
+            - setup_remote_docker:
+                docker_layer_caching: true
+            - run: docker info >/dev/null 2>&1 || service docker start
+            - run: npm install
+            - run: npm test
