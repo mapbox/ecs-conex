@@ -323,7 +323,6 @@ assert "contains" "$log" ""
 
 # docker_push() test
 tag_test "docker_push()"
-echo `which bash`
 regions=(us-east-1)
 repo=test
 after=test
