@@ -2,13 +2,10 @@ version: 2
 jobs:
     build:
          working_directory: ~/mapbox/ecs-conex
-         parallelism: 1
-         shell: /bin/bash
          environment:
            SHELL: /bin/bash
          docker:
             - image: circleci/node:8.11
-              command: /sbin/init
          steps:
             - checkout
             - setup_remote_docker:
