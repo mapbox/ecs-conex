@@ -1,3 +1,5 @@
+/* eslint-disable no-console*/
+
 var cleanup = require(__dirname + '/../scripts/cleanup.js');
 var inquirer = require('inquirer');
 var Promise = require('pinkie-promise');
@@ -60,7 +62,7 @@ test('validateInputs', function(assert) {
 
 test('confirmInputs: true', function(assert) {
   var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
-  sinon.stub(inquirer, 'prompt', function(questions) {
+  sinon.stub(inquirer, 'prompt').callsFake(function(questions) {
     assert.deepEqual(questions, [{
       type: 'confirm',
       name: 'confirmation',
@@ -82,7 +84,7 @@ test('confirmInputs: false', function(assert) {
   var params = { user: 'user', repo: 'repo', maximum: 1, blacklist: ['tag1', 'tag2'] };
 
   assert.plan(2);
-  sinon.stub(inquirer, 'prompt', function(questions) {
+  sinon.stub(inquirer, 'prompt').callsFake(function(questions) {
     assert.deepEqual(questions, [{
       type: 'confirm',
       name: 'confirmation',
@@ -322,7 +324,7 @@ test('wontDelete', function(assert) {
   var message = 'test';
 
   assert.plan(2);
-  sinon.stub(console, 'log', function(msg) {
+  sinon.stub(console, 'log').callsFake(function(msg) {
     console.log.restore();
     assert.equal(msg, '[wont-delete] [digest] [tag] test');
   });
@@ -336,7 +338,7 @@ test('willDelete', function(assert) {
   var index = 0;
 
   assert.plan(1);
-  sinon.stub(console, 'log', function(msg) {
+  sinon.stub(console, 'log').callsFake(function(msg) {
     console.log.restore();
     assert.equal(msg, '[will-delete] [digest] [tag] Deleting image 1 of 1');
   });
