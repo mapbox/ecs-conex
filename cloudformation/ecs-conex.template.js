@@ -32,6 +32,7 @@ var watcher = watchbot.template({
   alarmThreshold: 20,
   alarmPeriods: 6,
   messageTimeout: 1200,
+  maxJobDuration: 0,
   permissions: [
     {
       Effect: 'Allow',
