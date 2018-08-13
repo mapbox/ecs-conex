@@ -26,3 +26,9 @@ jobs:
             - run: docker info >/dev/null 2>&1 || service docker start
             - run: npm install
             - run: npm test
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - node6
