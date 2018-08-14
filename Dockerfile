@@ -6,7 +6,9 @@ RUN pip install awscli
 RUN curl https://nodejs.org/dist/v8.9.4/node-v8.9.4-linux-x64.tar.gz | tar zxC /usr/local --strip-components=1
 
 # Setup watchbot for logging and env var decryption
-RUN npm install -g @mapbox/watchbot@^4.0.0 decrypt-kms-env@^2.0.1
+RUN wget https://s3.amazonaws.com/watchbot-binaries/linux/v4.10.0/watchbot -O /usr/local/bin/watchbot
+RUN chmod +x /usr/local/bin/watchbot
+RUN npm install -g decrypt-kms-env@^2.0.1
 
 # Setup application directory
 RUN mkdir -p /usr/local/src/ecs-conex
