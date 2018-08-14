@@ -1,7 +1,7 @@
 FROM ubuntu
 
 # Installations
-RUN apt-get update -qq && apt-get install -y curl git python-pip parallel jq
+RUN apt-get update -qq && apt-get install -y curl git python-pip parallel jq wget
 RUN pip install awscli
 RUN curl https://nodejs.org/dist/v8.9.4/node-v8.9.4-linux-x64.tar.gz | tar zxC /usr/local --strip-components=1
 
