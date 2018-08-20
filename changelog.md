@@ -1,3 +1,9 @@
+### v0.5.0
+- Pushes tarballs of images to S3 optionally
+- Detects the appropriate Docker versions to include, and alarms if missing
+- Documentation updates
+- Runs on @mapbox/ecs-watchbot version 4+
+
 ### v0.4.0
 
 - ecs-conex's container can now run on a host using Docker 1.12.6 or 17.03.1-ce
