@@ -1,6 +1,6 @@
 {
   "name": "ecs-conex",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "ECS Container Express",
   "main": "ecs-conex.sh",
   "scripts": {
