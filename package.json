@@ -35,7 +35,7 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "@mapbox/watchbot": "^4.11.1",
+    "@mapbox/watchbot": "^4.11.2",
     "eslint": "^5.2.0",
     "pinkie-promise": "^2.0.1",
     "sinon": "^6.1.4",
