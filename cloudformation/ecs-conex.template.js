@@ -260,6 +260,10 @@ var conex = {
     LogGroup: {
       Description: 'The name of the CloudWatch LogGroup where ecs-conex logs are sent',
       Value: watcher.ref.logGroup
+    },
+    WatchbotUserKey: {
+      Description: 'WatchbotUserKey',
+      Value: cf.ref('WatchbotUserKey')
     }
   }
 };
