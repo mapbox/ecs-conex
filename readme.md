@@ -1,4 +1,7 @@
-# ecs-conex
+# [deprecated] ecs-conex
+
+:warning: This repository is deprecated and will no longer be maintained :warning:.
+> If you’re looking for alternatives to building docker images for AWS ECS, we recommend checking out AWS CodeBuild.
 
 ## What is ecs-conex?
 
