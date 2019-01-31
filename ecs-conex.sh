@@ -23,6 +23,9 @@ function main() {
   StackRegion=${StackRegion}
   ApproximateReceiveCount=${ApproximateReceiveCount}
 
+  echo "fetching secrets from AWS secrets manager"
+  check_secretsmanager
+
   echo "checking job receive count"
   check_receives
 

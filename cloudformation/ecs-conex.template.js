@@ -23,7 +23,9 @@ var watcher = watchbot.template({
     NPMAccessToken: cf.ref('NPMAccessToken'),
     ImageBucketPrefix: cf.ref('ImageBucketPrefix'),
     ImageBucketRegions: cf.ref('ImageBucketRegions'),
-    NotificationTopic: cf.ref('AlarmSNSTopic')
+    NotificationTopic: cf.ref('AlarmSNSTopic'),
+    NPMAccessTokenSecretName: cf.ref('NPMAccessTokenSecretName'),
+    GithubAccessTokenSecretName: cf.ref('GithubAccessTokenSecretName')
   },
   command: 'eval $(decrypt-kms-env) && timeout 3600 ./ecs-conex.sh',
   notificationTopic: cf.ref('AlarmSNSTopic'),
@@ -57,6 +59,30 @@ var watcher = watchbot.template({
       Resource: [
         cf.sub('arn:aws:s3:::${ImageBucketPrefix}-*/images/*')
       ]
+    },
+    {
+      Effect: 'Allow',
+      Action: 'secretsmanager:GetSecretValue',
+      Resource: [
+        cf.join([
+          'arn:aws:secretsmanager:',
+          cf.region,
+          ':',
+          cf.accountId,
+          ':secret:',
+          cf.ref('GithubAccessTokenSecretName'),
+          '-??????'
+        ]),
+        cf.join([
+          'arn:aws:secretsmanager:',
+          cf.region,
+          ':',
+          cf.accountId,
+          ':secret:',
+          cf.ref('NPMAccessTokenSecretName'),
+          '-??????'
+        ])
+      ]
     }
   ]
 });
@@ -72,10 +98,20 @@ var conex = {
       Description: '[secure] A Github access token with permission to clone private repositories',
       Type: 'String'
     },
+    GithubAccessTokenSecretName: {
+      Type: 'String',
+      Description: '(optional) Name of AWS Secrets Manager secret for Github access token. If not "none", overrides GitHubAccessToken value',
+      Default: 'none'
+    },
     NPMAccessToken: {
       Type: 'String',
       Description: '[secure] npm access token used to install private packages',
       Default: ''
+    },
+    NPMAccessTokenSecretName: {
+      Type: 'String',
+      Description: '(optional) Name of AWS Secrets Manager secret for npm access token. If not "none", overrides NpmAccessToken value',
+      Default: 'none'
     },
     ImageBucketPrefix: {
       Type: 'String',

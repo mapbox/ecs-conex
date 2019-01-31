@@ -207,6 +207,34 @@ GithubAccessToken=test
 parse_message
 assert "equal" "${status_url}" "https://api.github.com/repos/test/test/statuses/test?access_token=test"
 
+# check_secretsmanager() test
+tag_test "check_secretsmanager() non-overridden GithubAccessToken"
+GithubAccessToken="old"
+GithubAccessTokenSecretName="none"
+NPMAccessTokenSecretName="none"
+StackRegion="us-east-1"
+
+check_secretsmanager
+assert "equal" "${GithubAccessToken}" "old" "GithubAccessToken not overridden"
+
+tag_test "check_secretsmanager() overridden GithubAccessToken"
+GithubAccessTokenSecretName="ecs-conex/github/secret"
+
+function aws() {
+  if [ "${1}" != "secretsmanager" ]; then
+      echo "First argument must be ecr"
+  elif [ "${2}" != "get-secret-value" ]; then
+      echo "Second argument must be get-login"
+  elif [ "${6}" != "${GithubAccessTokenSecretName}" ]; then
+      echo "Sixth argument must be secret name"
+  else
+    echo "{\"SecretString\": \"new\"}"
+  fi
+}
+
+check_secretsmanager
+assert "equal" "${GithubAccessToken}" "new" "GithubAccessToken overridden"
+
 # credentials() setup
 tmpdocker=$(mktemp /tmp/dockerfile-XXXXXX)
 tmpcreds=$(cat ./test/fixtures/creds.test.json)
