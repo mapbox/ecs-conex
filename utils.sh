@@ -42,7 +42,7 @@ function image_exists() {
 function github_status() {
   local status=$1
   local description=$2
-  curl -s \
+  curl -s -S \
     --request POST \
     --header "Content-Type: application/json" \
     --data "{\"state\":\"${status}\",\"description\":\"${description}\",\"context\":\"ecs-conex\"}" \
